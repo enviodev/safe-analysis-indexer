@@ -1,0 +1,117 @@
+# yaml-language-server: $schema=./node_modules/envio/evm.schema.json
+name: envio-indexer
+contracts:
+- name: SafeProxyFactory
+  handler: src/EventHandlers.ts
+  events:
+  - event: ProxyCreation(address indexed proxy, address singleton)
+networks:
+- id: 1
+  start_block: 0
+  contracts:
+  - name: SafeProxyFactory
+    address:
+    - 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
+- id: 10
+  start_block: 0
+  contracts:
+  - name: SafeProxyFactory
+    address:
+    - 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
+- id: 14
+  start_block: 0
+  contracts:
+  - name: SafeProxyFactory
+    address:
+    - 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
+- id: 56
+  start_block: 0
+  contracts:
+  - name: SafeProxyFactory
+    address:
+    - 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
+- id: 100
+  start_block: 0
+  contracts:
+  - name: SafeProxyFactory
+    address:
+    - 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
+- id: 137
+  start_block: 0
+  contracts:
+  - name: SafeProxyFactory
+    address:
+    - 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
+- id: 169
+  start_block: 0
+  contracts:
+  - name: SafeProxyFactory
+    address:
+    - 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
+- id: 2818
+  start_block: 0
+  contracts:
+  - name: SafeProxyFactory
+    address:
+    - 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
+- id: 5000
+  start_block: 0
+  contracts:
+  - name: SafeProxyFactory
+    address:
+    - 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
+- id: 8453
+  start_block: 0
+  contracts:
+  - name: SafeProxyFactory
+    address:
+    - 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
+- id: 34443
+  start_block: 0
+  contracts:
+  - name: SafeProxyFactory
+    address:
+    - 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
+- id: 42161
+  start_block: 0
+  contracts:
+  - name: SafeProxyFactory
+    address:
+    - 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
+- id: 42220
+  start_block: 0
+  contracts:
+  - name: SafeProxyFactory
+    address:
+    - 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
+- id: 43114
+  start_block: 0
+  contracts:
+  - name: SafeProxyFactory
+    address:
+    - 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
+- id: 57073
+  start_block: 0
+  contracts:
+  - name: SafeProxyFactory
+    address:
+    - 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
+- id: 59144
+  start_block: 0
+  contracts:
+  - name: SafeProxyFactory
+    address:
+    - 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
+- id: 81457
+  start_block: 0
+  contracts:
+  - name: SafeProxyFactory
+    address:
+    - 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
+- id: 534352
+  start_block: 0
+  contracts:
+  - name: SafeProxyFactory
+    address:
+    - 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
+raw_events: true

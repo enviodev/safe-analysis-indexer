@@ -1,0 +1,6 @@
+type SafeProxyFactory_ProxyCreation {
+  id: ID!
+  proxy: String!
+  singleton: String!
+}
+
