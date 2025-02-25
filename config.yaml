@@ -17,13 +17,13 @@ networks:
     address:
     - 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
   - name: SafeProxy
-- id: 10
-  start_block: 0
-  contracts:
-  - name: SafeProxyFactory
-    address:
-    - 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
-  - name: SafeProxy    
+# - id: 10
+#   start_block: 0
+#   contracts:
+#   - name: SafeProxyFactory
+#     address:
+#     - 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
+#   - name: SafeProxy    
 # - id: 14 # no events on flare
 #   start_block: 0
 #   contracts:
@@ -86,13 +86,13 @@ networks:
     address:
     - 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
   - name: SafeProxy    
-- id: 42161
-  start_block: 0
-  contracts:
-  - name: SafeProxyFactory
-    address:
-    - 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
-  - name: SafeProxy    
+# - id: 42161
+#   start_block: 0
+#   contracts:
+#   - name: SafeProxyFactory
+#     address:
+#     - 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
+#   - name: SafeProxy    
 - id: 42220
   start_block: 0
   contracts:
