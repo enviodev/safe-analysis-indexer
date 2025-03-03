@@ -1,6 +1,8 @@
-type SafeProxyFactory_ProxyCreation {
+type ECR20_Approval {
   id: ID!
-  proxy: String!
-  singleton: String!
+  owner: String! @index
+  spender: String! @index
+  value: BigInt!
+  token: String! @index
+  hash: String!  
 }
-
