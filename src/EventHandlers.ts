@@ -1,19 +1,41 @@
 import {
   ECR20,
-  ECR20_Approval,
+  Approval,
 } from "generated";
 
 ECR20.Approval.handler(async ({ event, context }) => {
 
-  const entity: ECR20_Approval = {
-    id: `${event.chainId}_${event.block.number}_${event.logIndex}`,
-    owner: event.params.owner,
-    spender: event.params.spender,
-    value: event.params.value,
-    token: event.srcAddress,    
-    hash: event.transaction.hash,
-  };
-  
+  const { owner, spender, value } = event.params;
+  const token = event.srcAddress;
+  const hash = event.transaction.hash;
 
-  context.ECR20_Approval.set(entity);
+  const entity: Approval = {
+    id: `${owner}-${token}-${spender}`,
+    owner: owner,
+    token: token,    
+    spender: spender,
+    value: value,
+    hash: hash,
+  };  
+
+  context.Approval.set(entity);
+
 }, {wildcard: true});
+
+ECR20.Transfer.handler(async ({ event, context }) => {
+  const { from, value } = event.params;
+  const token = event.srcAddress;
+  
+  const approvalId = `${from}-${token}-${event.transaction.from}`; // spender is `event.transaction.from`
+  const existingApproval = await context.Approval.get(approvalId);
+
+  if (existingApproval) {    
+    const updatedApproval: Approval = {
+      ...existingApproval,
+      value: existingApproval.value - value,
+    };
+
+    context.Approval.set(updatedApproval);
+  }
+  
+}, { wildcard: true });

@@ -1,8 +1,9 @@
-type ECR20_Approval {
-  id: ID!
+type Approval {
+  id: ID! # owner - token - spender
   owner: String! @index
+  token: String! @index
   spender: String! @index
   value: BigInt!
-  token: String! @index
   hash: String!  
 }
+
