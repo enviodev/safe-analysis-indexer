@@ -1,9 +1,8 @@
-type Approval {
-  id: ID! # owner - token - spender
-  owner: String! @index
-  token: String! @index
-  spender: String! @index
-  value: BigInt!
-  hash: String!  
+type Safe {
+  id: ID!
+  proxy: String!
+  singleton: String!
+  chainId: Int!
+  version: Int!
 }
 

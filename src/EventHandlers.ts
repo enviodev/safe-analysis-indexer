@@ -1,41 +1,70 @@
-import {
-  ECR20,
-  Approval,
+import {  
+  SafeProxyFactoryL2V4,
+  GnosisSafeL2Factory,
+  GnosisSafeL2FactoryOld,
+  Safe,
 } from "generated";
 
-ECR20.Approval.handler(async ({ event, context }) => {
+// SafeProxyFactoryL2V4.ProxyCreation.contractRegister(
+//    ({ event, context }) => {
+//     context.addGnosisSafeL2(event.params.proxy);
+//   },
+//   { wildcard: true }
+// );
 
-  const { owner, spender, value } = event.params;
-  const token = event.srcAddress;
-  const hash = event.transaction.hash;
+SafeProxyFactoryL2V4.ProxyCreation.handler(
+  async ({ event, context }) => {
+    const entity: Safe = {
+    id: `${event.chainId}_${event.block.number}_${event.logIndex}`,
+    proxy: event.params.proxy,
+    singleton: event.params.singleton,
+    chainId: event.chainId,
+    version: 4,
+  };
 
-  const entity: Approval = {
-    id: `${owner}-${token}-${spender}`,
-    owner: owner,
-    token: token,    
-    spender: spender,
-    value: value,
-    hash: hash,
-  };  
+  context.Safe.set(entity);
+  },
+  { wildcard: true }
+);
 
-  context.Approval.set(entity);
+// GnosisSafeL2Factory.ProxyCreation.contractRegister(
+//   async ({ event, context }) => {
+//     context.addGnosisSafeL2(event.params.proxy);
+//   }
+// );
 
-}, {wildcard: true});
+GnosisSafeL2Factory.ProxyCreation.handler(
+  async ({ event, context }) => {
+      const entity: Safe = {
+    id: `${event.chainId}_${event.block.number}_${event.logIndex}`,
+    proxy: event.params.proxy,
+    singleton: event.params.singleton,
+    chainId: event.chainId,
+    version: 3
+  };
 
-ECR20.Transfer.handler(async ({ event, context }) => {
-  const { from, value } = event.params;
-  const token = event.srcAddress;
-  
-  const approvalId = `${from}-${token}-${event.transaction.from}`; // spender is `event.transaction.from`
-  const existingApproval = await context.Approval.get(approvalId);
+  context.Safe.set(entity);
+  },
+  { wildcard: true }
+);
 
-  if (existingApproval) {    
-    const updatedApproval: Approval = {
-      ...existingApproval,
-      value: existingApproval.value - value,
-    };
+// GnosisSafeL2FactoryOld.ProxyCreation.contractRegister(
+//   async ({ event, context }) => {
+//     context.addGnosisSafeL2(event.params.proxy);
+//   }
+// );
 
-    context.Approval.set(updatedApproval);
-  }
-  
-}, { wildcard: true });
+GnosisSafeL2FactoryOld.ProxyCreation.handler(
+  async ({ event, context }) => {
+  const entity: Safe = {
+    id: `${event.chainId}_${event.block.number}_${event.logIndex}`,
+    proxy: event.params.proxy,
+    singleton: "factory-old",
+    chainId: event.chainId,
+    version: 2
+  };
+
+  context.Safe.set(entity);
+  },
+  { wildcard: true }
+);

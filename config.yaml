@@ -1,17 +1,134 @@
 # yaml-language-server: $schema=./node_modules/envio/evm.schema.json
-name: approval_indexer
+name: envio-indexer
+contracts:
+- name: SafeProxyFactoryL2V4    
+  handler: src/EventHandlers.ts
+  events:
+  - event: ProxyCreation(address indexed proxy, address singleton)
+- name: GnosisSafeL2Factory    
+  handler: src/EventHandlers.ts
+  events:
+    - event: ProxyCreation(address proxy, address singleton)
+- name: GnosisSafeL2FactoryOld    
+  handler: src/EventHandlers.ts
+  events:
+    - event: ProxyCreation(address proxy)
 networks:
 - id: 1
   start_block: 0
-  contracts:
-  - name: ECR20
-    handler: src/EventHandlers.ts
-    events:
-    - event: Approval(address indexed owner, address indexed spender, uint256 value)
-      field_selection:
-        transaction_fields:          
-          - "hash"        
-    - event: Transfer(address indexed from, address indexed to, uint256 value)
-      field_selection:
-        transaction_fields:          
-          - "from"           
+  contracts: 
+  - name: SafeProxyFactoryL2V4
+  - name: GnosisSafeL2Factory
+  - name: GnosisSafeL2FactoryOld
+- id: 10
+  start_block: 0
+  contracts: 
+  - name: SafeProxyFactoryL2V4
+  - name: GnosisSafeL2Factory
+  - name: GnosisSafeL2FactoryOld
+- id: 100
+  start_block: 0
+  contracts: 
+  - name: SafeProxyFactoryL2V4
+  - name: GnosisSafeL2Factory
+  - name: GnosisSafeL2FactoryOld
+- id: 56
+  start_block: 0
+  contracts: 
+  - name: SafeProxyFactoryL2V4
+  - name: GnosisSafeL2Factory
+  - name: GnosisSafeL2FactoryOld
+- id: 137
+  start_block: 0
+  contracts: 
+  - name: SafeProxyFactoryL2V4
+  - name: GnosisSafeL2Factory
+  - name: GnosisSafeL2FactoryOld
+- id: 480
+  start_block: 0
+  contracts: 
+  - name: SafeProxyFactoryL2V4
+  - name: GnosisSafeL2Factory
+  - name: GnosisSafeL2FactoryOld
+- id: 1101
+  start_block: 0
+  contracts: 
+  - name: SafeProxyFactoryL2V4
+  - name: GnosisSafeL2Factory
+  - name: GnosisSafeL2FactoryOld
+- id: 5000
+  start_block: 0
+  contracts: 
+  - name: SafeProxyFactoryL2V4
+  - name: GnosisSafeL2Factory
+  - name: GnosisSafeL2FactoryOld
+- id: 8453
+  start_block: 0
+  contracts: 
+  - name: SafeProxyFactoryL2V4
+  - name: GnosisSafeL2Factory
+  - name: GnosisSafeL2FactoryOld
+- id: 42161
+  start_block: 0
+  contracts: 
+  - name: SafeProxyFactoryL2V4
+  - name: GnosisSafeL2Factory
+  - name: GnosisSafeL2FactoryOld
+- id: 42220
+  start_block: 0
+  contracts: 
+  - name: SafeProxyFactoryL2V4
+  - name: GnosisSafeL2Factory
+  - name: GnosisSafeL2FactoryOld
+- id: 43114
+  start_block: 0
+  contracts: 
+  - name: SafeProxyFactoryL2V4
+  - name: GnosisSafeL2Factory
+  - name: GnosisSafeL2FactoryOld
+- id: 59144
+  start_block: 0
+  contracts: 
+  - name: SafeProxyFactoryL2V4
+  - name: GnosisSafeL2Factory
+  - name: GnosisSafeL2FactoryOld
+- id: 81457
+  start_block: 0
+  contracts: 
+  - name: SafeProxyFactoryL2V4
+  - name: GnosisSafeL2Factory
+  - name: GnosisSafeL2FactoryOld
+- id: 534352
+  start_block: 0
+  contracts: 
+  - name: SafeProxyFactoryL2V4
+  - name: GnosisSafeL2Factory
+  - name: GnosisSafeL2FactoryOld
+- id: 1313161554
+  start_block: 0
+  contracts: 
+  - name: SafeProxyFactoryL2V4
+  - name: GnosisSafeL2Factory
+  - name: GnosisSafeL2FactoryOld
+
+  # - name: GnosisSafeL2
+  #   handler: src/EventHandlers.ts
+  #   events:
+  #     - event: ExecutionSuccess(bytes32 txHash, uint256 payment)
+  #     - event: ExecutionSuccess(bytes32 indexed txHash, uint256 payment)
+  #       name: ExecutionSuccessV4
+  #     - event: ExecutionFailure(bytes32 txHash, uint256 payment)
+  #     - event: ExecutionFailure(bytes32 indexed txHash, uint256 payment)
+  #       name: ExecutionFailureV4
+  #     - event: SafeMultiSigTransaction(address to, uint256 value, bytes data, uint8 operation, uint256 safeTxGas, uint256 baseGas, uint256 gasPrice, address gasToken, address refundReceiver, bytes signatures, bytes additionalInfo)
+  #     - event: SafeReceived(address indexed sender, uint256 value)
+  #     - event: SafeSetup(address indexed initiator, address[] owners, uint256 threshold, address initializer, address fallbackHandler)
+  #     - event: SafeModuleTransaction(address module, address to, uint256 value, bytes data, uint8 operation)
+  #     - event: AddedOwner(address owner)
+  #     - event: AddedOwnerV4(address indexed owner)
+  #       name: AddedOwnerV4
+  #     - event: ChangedThreshold(uint256 threshold)
+  #     - event: RemovedOwner(address owner)
+  #     - event: RemovedOwner(address indexed owner)
+  #       name: RemovedOwnerV4
+unordered_multichain_mode: true
