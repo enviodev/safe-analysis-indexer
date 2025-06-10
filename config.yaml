@@ -1,18 +1,6 @@
 # yaml-language-server: $schema=./node_modules/envio/evm.schema.json
 name: envio-indexer
 contracts:
-- name: SafeProxyFactoryL2V4    
-  handler: src/EventHandlers.ts
-  events:
-  - event: ProxyCreation(address indexed proxy, address singleton)
-- name: GnosisSafeL2Factory    
-  handler: src/EventHandlers.ts
-  events:
-    - event: ProxyCreation(address proxy, address singleton)
-- name: GnosisSafeL2FactoryOld    
-  handler: src/EventHandlers.ts
-  events:
-    - event: ProxyCreation(address proxy)
 - name: GnosisSafeL2
   handler: src/EventHandlers.ts
   events:
@@ -40,113 +28,65 @@ networks:
 - id: 1
   start_block: 0
   contracts: 
-  - name: SafeProxyFactoryL2V4
-  - name: GnosisSafeL2Factory
-  - name: GnosisSafeL2FactoryOld
   - name: GnosisSafeL2
 - id: 10
   start_block: 0
   contracts: 
-  - name: SafeProxyFactoryL2V4
-  - name: GnosisSafeL2Factory
-  - name: GnosisSafeL2FactoryOld
   - name: GnosisSafeL2
 - id: 100
   start_block: 0
   contracts: 
-  - name: SafeProxyFactoryL2V4
-  - name: GnosisSafeL2Factory
-  - name: GnosisSafeL2FactoryOld
   - name: GnosisSafeL2
 - id: 56
   start_block: 0
   contracts: 
-  - name: SafeProxyFactoryL2V4
-  - name: GnosisSafeL2Factory
-  - name: GnosisSafeL2FactoryOld
   - name: GnosisSafeL2
 - id: 137
   start_block: 0
   contracts: 
-  - name: SafeProxyFactoryL2V4
-  - name: GnosisSafeL2Factory
-  - name: GnosisSafeL2FactoryOld
   - name: GnosisSafeL2
 - id: 480
   start_block: 0
   contracts: 
-  - name: SafeProxyFactoryL2V4
-  - name: GnosisSafeL2Factory
-  - name: GnosisSafeL2FactoryOld
   - name: GnosisSafeL2
 - id: 1101
   start_block: 0
   contracts: 
-  - name: SafeProxyFactoryL2V4
-  - name: GnosisSafeL2Factory
-  - name: GnosisSafeL2FactoryOld
   - name: GnosisSafeL2
 - id: 5000
   start_block: 0
   contracts: 
-  - name: SafeProxyFactoryL2V4
-  - name: GnosisSafeL2Factory
-  - name: GnosisSafeL2FactoryOld
   - name: GnosisSafeL2
 - id: 8453
   start_block: 0
   contracts: 
-  - name: SafeProxyFactoryL2V4
-  - name: GnosisSafeL2Factory
-  - name: GnosisSafeL2FactoryOld
   - name: GnosisSafeL2
 - id: 42161
   start_block: 0
   contracts: 
-  - name: SafeProxyFactoryL2V4
-  - name: GnosisSafeL2Factory
-  - name: GnosisSafeL2FactoryOld
   - name: GnosisSafeL2
 - id: 42220
   start_block: 0
   contracts: 
-  - name: SafeProxyFactoryL2V4
-  - name: GnosisSafeL2Factory
-  - name: GnosisSafeL2FactoryOld
   - name: GnosisSafeL2
 - id: 43114
   start_block: 0
   contracts: 
-  - name: SafeProxyFactoryL2V4
-  - name: GnosisSafeL2Factory
-  - name: GnosisSafeL2FactoryOld
   - name: GnosisSafeL2
 - id: 59144
   start_block: 0
   contracts: 
-  - name: SafeProxyFactoryL2V4
-  - name: GnosisSafeL2Factory
-  - name: GnosisSafeL2FactoryOld
   - name: GnosisSafeL2
 - id: 81457
   start_block: 0
   contracts: 
-  - name: SafeProxyFactoryL2V4
-  - name: GnosisSafeL2Factory
-  - name: GnosisSafeL2FactoryOld
   - name: GnosisSafeL2
 - id: 534352
   start_block: 0
   contracts: 
-  - name: SafeProxyFactoryL2V4
-  - name: GnosisSafeL2Factory
-  - name: GnosisSafeL2FactoryOld
   - name: GnosisSafeL2
 - id: 1313161554
   start_block: 0
   contracts: 
-  - name: SafeProxyFactoryL2V4
-  - name: GnosisSafeL2Factory
-  - name: GnosisSafeL2FactoryOld
   - name: GnosisSafeL2  
 unordered_multichain_mode: true
