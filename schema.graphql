@@ -1,8 +1,33 @@
 type Safe {
-  id: ID!
-  proxy: String!
-  singleton: String!
-  chainId: Int!
-  version: Int!
+  id: ID! # chainId-address
+  chainId: Int! @index
+  # version: Int! todo - seperate config contracts for each version and do seperate handlers
+  initiator: String!
+  owners: [String!]!
+  threshold: Int!
+  initializer: String!
+  fallbackHandler: String!
+  safeTransactions: [SafeTransaction!]! @derivedFrom(field: "safe")
+  numberOfSuccessfulExecutions: Int!
+  numberOfFailedExecutions: Int!
+  totalGasSpent: BigInt!
 }
+
+type SafeTransaction {
+  id: ID! # txHash
+  safe: Safe!
+  to: String!
+  value: BigInt!
+  data: String!
+  operation: BigInt!
+  safeTxGas: BigInt!
+  baseGas: BigInt!
+  gasPrice: BigInt!
+  gasToken: String!
+  refundReceiver: String!
+  signatures: String!
+  additionalInfo: String!
+  executionDate: BigInt!  
+}
+
 
