@@ -45,10 +45,10 @@ networks:
   start_block: 0
   contracts: 
   - name: GnosisSafeL2
-- id: 480
-  start_block: 0
-  contracts: 
-  - name: GnosisSafeL2
+# - id: 480
+#   start_block: 0
+#   contracts: 
+#   - name: GnosisSafeL2
 - id: 1101
   start_block: 0
   contracts: 
