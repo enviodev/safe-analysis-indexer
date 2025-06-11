@@ -14,6 +14,8 @@ export const addOwner = async (event: any, context: any) => {
     context.Safe.set({
       ...safe,
       owners: [...safe.owners, owner],
+      numberOfOwners: safe.numberOfOwners + 1,
+      thresholdOwnerRatio: safe.threshold / safe.numberOfOwners + 1,
     })
   }
 };
@@ -32,6 +34,8 @@ export const removeOwner = async (event: any, context: any) => {
     context.Safe.set({
       ...safe,
       owners: safe.owners.filter( (o : string) => o !== owner),
+      numberOfOwners: safe.numberOfOwners - 1,
+      thresholdOwnerRatio: safe.threshold / safe.numberOfOwners - 1,
     })
   }
 };

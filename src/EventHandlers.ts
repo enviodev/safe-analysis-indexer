@@ -13,7 +13,9 @@ GnosisSafeL2.SafeSetup.handler(async ({ event, context }) => {
     id: `${chainId}-${srcAddress}`,
     initiator,
     owners,    
+    numberOfOwners: owners.length,    
     threshold: Number(threshold),
+    thresholdOwnerRatio: Number(threshold) / owners.length,
     initializer,
     fallbackHandler,
     chainId,    
@@ -76,7 +78,7 @@ GnosisSafeL2.SafeModuleTransaction.handler(async ({ event, context }) => {
 });
 
 GnosisSafeL2.AddedOwner.handler(async ({ event, context }) => {
-  await addOwner(event, context);
+  await addOwner(event, context);  
 },{ wildcard: true });
 
 GnosisSafeL2.AddedOwnerV4.handler(async ({ event, context }) => {
@@ -98,6 +100,7 @@ GnosisSafeL2.ChangedThreshold.handler(async ({ event, context }) => {
     context.Safe.set({
       ...safe,
       threshold: Number(threshold),
+      thresholdOwnerRatio: Number(threshold) / safe.numberOfOwners,
     })
   }
 },{ wildcard: true });
