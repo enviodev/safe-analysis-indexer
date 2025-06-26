@@ -1,6 +1,6 @@
 type Safe {
   id: ID! # chainId-address
-  chainId: Int! @index  
+  chainId: Int! @index
   initiator: String!
   owners: [String!]!
   numberOfOwners: Int! @index
@@ -8,10 +8,11 @@ type Safe {
   thresholdOwnerRatio: Float!
   initializer: String!
   fallbackHandler: String!
+  createdAt: BigInt! @index
   safeTransactions: [SafeTransaction!]! @derivedFrom(field: "safe")
   numberOfSuccessfulExecutions: Int! @index
   numberOfFailedExecutions: Int! @index
-  totalGasSpent: BigInt! 
+  totalGasSpent: BigInt!
 }
 
 type SafeTransaction {
@@ -31,4 +32,13 @@ type SafeTransaction {
   executionDate: BigInt! @index
 }
 
-
+type Global {
+  id: ID! # chainId
+  chainId: Int! @index
+  totalSafes: Int! @index
+  totalSafeTransactions: Int! @index
+  totalSuccessfulExecutions: Int! @index
+  totalFailedExecutions: Int! @index
+  totalGasSpent: BigInt! @index
+  totalValueTransferred: BigInt! @index
+}
