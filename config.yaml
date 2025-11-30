@@ -1,92 +1,94 @@
 # yaml-language-server: $schema=./node_modules/envio/evm.schema.json
 name: envio-indexer
+rollback_on_reorg: false
+
 contracts:
-- name: GnosisSafeL2
-  handler: src/EventHandlers.ts
-  events:
-    - event: SafeSetup(address indexed initiator, address[] owners, uint256 threshold, address initializer, address fallbackHandler)
-    - event: ExecutionSuccess(bytes32 txHash, uint256 payment)
-    - event: ExecutionSuccess(bytes32 indexed txHash, uint256 payment)
-      name: ExecutionSuccessV4
-    - event: ExecutionFailure(bytes32 txHash, uint256 payment)
-    - event: ExecutionFailure(bytes32 indexed txHash, uint256 payment)
-      name: ExecutionFailureV4
-    - event: SafeMultiSigTransaction(address to, uint256 value, bytes data, uint8 operation, uint256 safeTxGas, uint256 baseGas, uint256 gasPrice, address gasToken, address refundReceiver, bytes signatures, bytes additionalInfo)
-      field_selection: 
-        transaction_fields:
-          - hash
-    - event: SafeReceived(address indexed sender, uint256 value)
-    - event: SafeModuleTransaction(address module, address to, uint256 value, bytes data, uint8 operation)
-    - event: AddedOwner(address owner)
-    - event: AddedOwnerV4(address indexed owner)
-      name: AddedOwnerV4
-    - event: ChangedThreshold(uint256 threshold)
-    - event: RemovedOwner(address owner)
-    - event: RemovedOwner(address indexed owner)
-      name: RemovedOwnerV4
+  - name: GnosisSafeL2
+    handler: src/EventHandlers.ts
+    events:
+      - event: SafeSetup(address indexed initiator, address[] owners, uint256 threshold, address initializer, address fallbackHandler)
+      - event: ExecutionSuccess(bytes32 txHash, uint256 payment)
+      - event: ExecutionSuccess(bytes32 indexed txHash, uint256 payment)
+        name: ExecutionSuccessV4
+      - event: ExecutionFailure(bytes32 txHash, uint256 payment)
+      - event: ExecutionFailure(bytes32 indexed txHash, uint256 payment)
+        name: ExecutionFailureV4
+      - event: SafeMultiSigTransaction(address to, uint256 value, bytes data, uint8 operation, uint256 safeTxGas, uint256 baseGas, uint256 gasPrice, address gasToken, address refundReceiver, bytes signatures, bytes additionalInfo)
+        field_selection:
+          transaction_fields:
+            - hash
+      - event: SafeReceived(address indexed sender, uint256 value)
+      - event: SafeModuleTransaction(address module, address to, uint256 value, bytes data, uint8 operation)
+      - event: AddedOwner(address owner)
+      - event: AddedOwnerV4(address indexed owner)
+        name: AddedOwnerV4
+      - event: ChangedThreshold(uint256 threshold)
+      - event: RemovedOwner(address owner)
+      - event: RemovedOwner(address indexed owner)
+        name: RemovedOwnerV4
 networks:
-- id: 1
-  start_block: 0
-  contracts: 
-  - name: GnosisSafeL2
-- id: 10
-  start_block: 0
-  contracts: 
-  - name: GnosisSafeL2
-- id: 100
-  start_block: 0
-  contracts: 
-  - name: GnosisSafeL2
-- id: 56
-  start_block: 0
-  contracts: 
-  - name: GnosisSafeL2
-- id: 137
-  start_block: 0
-  contracts: 
-  - name: GnosisSafeL2
-# - id: 480
-#   start_block: 0
-#   contracts: 
-#   - name: GnosisSafeL2
-- id: 1101
-  start_block: 0
-  contracts: 
-  - name: GnosisSafeL2
-- id: 5000
-  start_block: 0
-  contracts: 
-  - name: GnosisSafeL2
-- id: 8453
-  start_block: 0
-  contracts: 
-  - name: GnosisSafeL2
-- id: 42161
-  start_block: 0
-  contracts: 
-  - name: GnosisSafeL2
-- id: 42220
-  start_block: 0
-  contracts: 
-  - name: GnosisSafeL2
-- id: 43114
-  start_block: 0
-  contracts: 
-  - name: GnosisSafeL2
-- id: 59144
-  start_block: 0
-  contracts: 
-  - name: GnosisSafeL2
-- id: 81457
-  start_block: 0
-  contracts: 
-  - name: GnosisSafeL2
-- id: 534352
-  start_block: 0
-  contracts: 
-  - name: GnosisSafeL2
-- id: 1313161554
-  start_block: 0
-  contracts: 
-  - name: GnosisSafeL2  
+  - id: 1
+    start_block: 0
+    contracts:
+      - name: GnosisSafeL2
+  - id: 10
+    start_block: 0
+    contracts:
+      - name: GnosisSafeL2
+  - id: 100
+    start_block: 0
+    contracts:
+      - name: GnosisSafeL2
+  - id: 56
+    start_block: 0
+    contracts:
+      - name: GnosisSafeL2
+  - id: 137
+    start_block: 0
+    contracts:
+      - name: GnosisSafeL2
+  # - id: 480
+  #   start_block: 0
+  #   contracts:
+  #   - name: GnosisSafeL2
+  - id: 1101
+    start_block: 0
+    contracts:
+      - name: GnosisSafeL2
+  - id: 5000
+    start_block: 0
+    contracts:
+      - name: GnosisSafeL2
+  - id: 8453
+    start_block: 0
+    contracts:
+      - name: GnosisSafeL2
+  - id: 42161
+    start_block: 0
+    contracts:
+      - name: GnosisSafeL2
+  - id: 42220
+    start_block: 0
+    contracts:
+      - name: GnosisSafeL2
+  - id: 43114
+    start_block: 0
+    contracts:
+      - name: GnosisSafeL2
+  - id: 59144
+    start_block: 0
+    contracts:
+      - name: GnosisSafeL2
+  - id: 81457
+    start_block: 0
+    contracts:
+      - name: GnosisSafeL2
+  - id: 534352
+    start_block: 0
+    contracts:
+      - name: GnosisSafeL2
+  - id: 1313161554
+    start_block: 0
+    contracts:
+      - name: GnosisSafeL2
 unordered_multichain_mode: true
