@@ -3,4 +3,17 @@ type Safe {
   address: String! @index
   chainId: Int! @index
   owners: [String!]!
+  safeOwners: [SafeOwner!]! @derivedFrom(field: "safe")
+}
+
+type Owner {
+  id: ID! # owner address
+  safes: [String!]!
+  safeOwners: [SafeOwner!]! @derivedFrom(field: "owner")
+}
+
+type SafeOwner {
+  id: ID! # ownerAddress-safeId
+  owner: Owner!
+  safe: Safe!
 }
