@@ -1,34 +1,6 @@
 type Safe {
   id: ID! # chainId-address
-  chainId: Int! @index  
-  initiator: String!
+  address: String! @index
+  chainId: Int! @index
   owners: [String!]!
-  numberOfOwners: Int! @index
-  threshold: Int! @index
-  thresholdOwnerRatio: Float!
-  initializer: String!
-  fallbackHandler: String!
-  safeTransactions: [SafeTransaction!]! @derivedFrom(field: "safe")
-  numberOfSuccessfulExecutions: Int! @index
-  numberOfFailedExecutions: Int! @index
-  totalGasSpent: BigInt! 
 }
-
-type SafeTransaction {
-  id: ID! # txHash
-  safe: Safe!
-  to: String!
-  value: BigInt! @index
-  data: String!
-  operation: BigInt!
-  safeTxGas: BigInt!
-  baseGas: BigInt!
-  gasPrice: BigInt!
-  gasToken: String!
-  refundReceiver: String!
-  signatures: String!
-  additionalInfo: String!
-  executionDate: BigInt! @index
-}
-
-
