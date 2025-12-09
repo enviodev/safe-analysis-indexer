@@ -49,7 +49,7 @@ export const addOwner = async (event: any, context: any) => {
   const safe = await context.Safe.get(safeId);
 
   if (!safe) {
-    context.log.warn(`Safe not found for ${safeId}`);
+    // not a safe 
     return;
   } else {
     context.Safe.set({
@@ -70,7 +70,7 @@ export const removeOwner = async (event: any, context: any) => {
   const safe = await context.Safe.get(safeId);
 
   if (!safe) {
-    context.log.warn(`Safe not found for ${safeId}`);
+    // not a safe 
     return;
   } else {
     context.Safe.set({
