@@ -22,7 +22,9 @@
     "typescript": "5.2.2"
   },
   "dependencies": {
-    "envio": "2.32.3"
+    "@envio-dev/hypersync-client": "^0.7.2",
+    "envio": "2.32.3",
+    "ethers": "6.8.0"
   },
   "optionalDependencies": {
     "generated": "./generated"
