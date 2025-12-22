@@ -1,44 +1,66 @@
 import {
   Safe,
-  GnosisSafeL2,
+  GnosisSafeProxy,
+  Safe1_0_0,
 } from "generated";
 import { addOwner, removeOwner, addSafeToOwner } from "./helpers";
 
+GnosisSafeProxy.ProxyCreation.contractRegister(async ({ event, context }) => {
+  const { proxy } = event.params;
+  context.addSafe1_0_0(proxy);
+})
 
-GnosisSafeL2.SafeSetup.handler(async ({ event, context }) => {
-  const { owners } = event.params;
-  const { srcAddress, chainId } = event;
+GnosisSafeProxy.ProxyCreation.handler(async ({ event, context }) => {
+  const { proxy } = event.params;
+  const { hash } = event.transaction;
+  const { chainId } = event;
 
-  const safeId = `${chainId}-${srcAddress}`;
+  const safeId = `${chainId}-${proxy}`;
 
   const safe: Safe = {
     id: safeId,
-    owners,
+    creationTxHash: hash,
+    owners: [],
     chainId,
-    address: srcAddress,
+    address: proxy,
   };
 
   context.Safe.set(safe);
 
-  // Add safe to each Owner entity
-  for (const owner of owners) {
-    await addSafeToOwner(owner, safeId, context);
-  }
-}, { wildcard: true });
+  // // Add safe to each Owner entity
+  // for (const owner of owners) {
+  //   await addSafeToOwner(owner, safeId, context);
+  // }
+});
 
-GnosisSafeL2.AddedOwner.handler(async ({ event, context }) => {
+Safe1_0_0.ExecutionFailed.handler(async ({ event, context }) => {
+  const { txHash } = event.params;
+  const { chainId } = event;
+
+  const safeId = `${chainId}-${txHash}`;
+
+  // context.log.warn(safeId);
+});
+
+Safe1_0_0.AddedOwner.handler(async ({ event, context }) => {
+  const { owner } = event.params;
+  const { srcAddress, chainId } = event;
+
+  const safeId = `${chainId}-${srcAddress}`;
+
+  await addSafeToOwner(owner, safeId, context);
   await addOwner(event, context);
-}, { wildcard: true });
+});
 
-GnosisSafeL2.AddedOwnerV4.handler(async ({ event, context }) => {
-  await addOwner(event, context);
-}, { wildcard: true });
-
-
-GnosisSafeL2.RemovedOwner.handler(async ({ event, context }) => {
+Safe1_0_0.RemovedOwner.handler(async ({ event, context }) => {
+  const { srcAddress, chainId } = event;
   await removeOwner(event, context);
-}, { wildcard: true });
+});
 
-GnosisSafeL2.RemovedOwnerV4.handler(async ({ event, context }) => {
-  await removeOwner(event, context);
-}, { wildcard: true });
+Safe1_0_0.ChangedThreshold.handler(async ({ event, context }) => {
+  const { srcAddress, chainId } = event;
+
+  const safeId = `${chainId}-${srcAddress}`;
+
+  // context.log.warn(safeId);
+});

@@ -1,5 +1,6 @@
 type Safe {
   id: ID! # chainId-address
+  creationTxHash: String! @index
   address: String! @index
   chainId: Int! @index
   owners: [String!]!
