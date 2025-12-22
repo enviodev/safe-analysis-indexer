@@ -16,16 +16,19 @@ contracts:
       - event: RemovedOwner(address owner)
       - event: ChangedThreshold(uint256 threshold)
 networks:
-  - id: 1 # etheruem
+  - id: 1 # ethereum
     start_block: 0
     contracts:
       - name: GnosisSafeProxy
         address: 0x12302fE9c02ff50939BaAaaf415fc226C078613C # 1.0.0
       - name: Safe1_0_0
-
-  # - id: 100 # gnosis
-  #   start_block: 0
-  #   contracts:
-  #     - name: GnosisSafe
+# todo find contract address on gnosis chain for v1.0.0 if it exists
+# - id: 100 # gnosis
+#   start_block: 10045292
+#   contracts:
+#     - name: GnosisSafeProxy
+#       address: 0x76E2cFc1F5Fa8F6a5b3fC4c8F4788F0116861F9B # 1.1.1
+#     - name: Safe1_1_1
 unordered_multichain_mode: true
 preload_handlers: true
+raw_events: true

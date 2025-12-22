@@ -4,6 +4,7 @@ type Safe {
   address: String! @index
   chainId: Int! @index
   owners: [String!]!
+  threshold: Int!
   safeOwners: [SafeOwner!]! @derivedFrom(field: "safe")
 }
 
