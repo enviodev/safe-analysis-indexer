@@ -1,4 +1,4 @@
-import { Safe, GnosisSafeProxyPre1_3_0, SafePre1_3_0, GnosisSafeL2, GnosisSafeProxy1_3_0, GnosisSafeProxy1_4_1 } from "generated";
+import { Safe, GnosisSafeProxyPre1_3_0, SafePre1_3_0, GnosisSafeL2, GnosisSafeProxy1_3_0, GnosisSafeProxy1_4_1, GnosisSafeProxy1_5_0 } from "generated";
 import { addOwner, removeOwner, addSafeToOwner } from "./helpers";
 import { getSetupTrace, decodeSetupInput } from "./hypersync";
 
@@ -89,7 +89,7 @@ GnosisSafeProxy1_3_0.ProxyCreation.handler(async ({ event, context }) => {
     id: safeId,
     owners: [],
     chainId,
-    version: "L2",
+    version: "V1_3_0",
     creationTxHash: hash,
     threshold: 0,
     address: proxy,
@@ -119,7 +119,37 @@ GnosisSafeProxy1_4_1.ProxyCreation.handler(async ({ event, context }) => {
     id: safeId,
     owners: [],
     chainId,
-    version: "L2",
+    version: "V1_4_1",
+    creationTxHash: hash,
+    threshold: 0,
+    address: proxy,
+  };
+
+  context.Safe.set(safe);
+});
+
+// Register GnosisSafeL2 contracts dynamically when proxy is created (v1.5.0)
+GnosisSafeProxy1_5_0.ProxyCreation.contractRegister(async ({ event, context }) => {
+  const { proxy } = event.params;
+  context.addGnosisSafeL2(proxy);
+});
+
+// Handler for ProxyCreation from v1.5.0 factory
+GnosisSafeProxy1_5_0.ProxyCreation.handler(async ({ event, context }) => {
+  const { proxy } = event.params;
+  const { hash } = event.transaction;
+  const { chainId } = event;
+
+  const safeId = `${chainId}-${proxy}`;
+
+  // The SafeSetup event will be handled by the registered GnosisSafeL2 contract
+  // We just need to create a placeholder safe entry here if needed
+  // The actual owners and threshold will be set when SafeSetup is emitted
+  const safe: Safe = {
+    id: safeId,
+    owners: [],
+    chainId,
+    version: "V1_5_0",
     creationTxHash: hash,
     threshold: 0,
     address: proxy,
@@ -135,11 +165,18 @@ GnosisSafeL2.SafeSetup.handler(async ({ event, context }) => {
 
   const safeId = `${chainId}-${srcAddress}`;
 
+  // Get existing safe if it was created via ProxyCreation handler
+  let existingSafe = await context.Safe.get(safeId);
+
+  // Preserve the version if it was already set (from ProxyCreation handlers)
+  // Otherwise default to "L2" for backwards compatibility
+  const version = existingSafe?.version || "L2";
+
   const safe: Safe = {
     id: safeId,
     owners,
     chainId,
-    version: "L2",
+    version,
     creationTxHash: hash,
     threshold: Number(threshold),
     address: srcAddress,
