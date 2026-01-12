@@ -1,4 +1,4 @@
-import { Safe, GnosisSafeProxyPre1_3_0, SafePre1_3_0 } from "generated";
+import { Safe, GnosisSafeProxyPre1_3_0, SafePre1_3_0, GnosisSafeL2 } from "generated";
 import { addOwner, removeOwner, addSafeToOwner } from "./helpers";
 import { getSetupTrace, decodeSetupInput } from "./hypersync";
 
@@ -66,3 +66,46 @@ SafePre1_3_0.ChangedThreshold.handler(async ({ event, context }) => {
     threshold: Number(event.params.threshold),
   });
 });
+
+
+GnosisSafeL2.SafeSetup.handler(async ({ event, context }) => {
+  const { owners } = event.params;
+  const { srcAddress, chainId } = event;
+  const { hash } = event.transaction;
+
+  const safeId = `${chainId}-${srcAddress}`;
+
+  const safe: Safe = {
+    id: safeId,
+    owners,
+    chainId,
+    version: "L2",
+    creationTxHash: hash,
+    threshold: 0,
+    address: srcAddress,
+  };
+
+  context.Safe.set(safe);
+
+  // Add safe to each Owner entity
+  for (const owner of owners) {
+    await addSafeToOwner(owner, safeId, context);
+  }
+}, { wildcard: true });
+
+GnosisSafeL2.AddedOwner.handler(async ({ event, context }) => {
+  await addOwner(event, context);
+}, { wildcard: true });
+
+GnosisSafeL2.AddedOwnerV4.handler(async ({ event, context }) => {
+  await addOwner(event, context);
+}, { wildcard: true });
+
+
+GnosisSafeL2.RemovedOwner.handler(async ({ event, context }) => {
+  await removeOwner(event, context);
+}, { wildcard: true });
+
+GnosisSafeL2.RemovedOwnerV4.handler(async ({ event, context }) => {
+  await removeOwner(event, context);
+}, { wildcard: true });

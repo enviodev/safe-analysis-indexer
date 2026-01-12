@@ -1,6 +1,7 @@
 enum SafeVersion {
   V1_0_0
   V1_1_1ORV1_2_0
+  L2
 }
 
 type Safe {
