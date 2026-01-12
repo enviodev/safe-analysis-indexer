@@ -8,6 +8,13 @@ contracts:
         field_selection:
           transaction_fields:
             - hash
+  - name: GnosisSafeProxy1_1_1
+    handler: src/EventHandlers.ts
+    events:
+      - event: ProxyCreation(address proxy)
+        field_selection:
+          transaction_fields:
+            - hash
   - name: Safe1_0_0
     handler: src/EventHandlers.ts
     events:
@@ -21,12 +28,16 @@ networks:
     contracts:
       - name: GnosisSafeProxy1_0_0
         address: 0x12302fE9c02ff50939BaAaaf415fc226C078613C # 1.0.0
+      - name: GnosisSafeProxy1_1_1
+        address: 0x76E2cFc1F5Fa8F6a5b3fC4c8F4788F0116861F9B # 1.1.1
       - name: Safe1_0_0
   - id: 100 # gnosis
     start_block: 10045292
     contracts:
       - name: GnosisSafeProxy1_0_0
         address: 0x12302fE9c02ff50939BaAaaf415fc226C078613C # 1.0.0
+      - name: GnosisSafeProxy1_1_1
+        address: 0x76E2cFc1F5Fa8F6a5b3fC4c8F4788F0116861F9B # 1.1.1
       - name: Safe1_0_0
 unordered_multichain_mode: true
 preload_handlers: true
