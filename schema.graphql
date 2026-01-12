@@ -1,3 +1,8 @@
+enum SafeVersion {
+  V1_0_0
+  V1_1_1
+}
+
 type Safe {
   id: ID! # chainId-address
   creationTxHash: String! @index
@@ -5,6 +10,7 @@ type Safe {
   chainId: Int! @index
   owners: [String!]!
   threshold: Int!
+  version: SafeVersion! @index
   safeOwners: [SafeOwner!]! @derivedFrom(field: "safe")
 }
 

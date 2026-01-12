@@ -1,13 +1,13 @@
-import { Safe, GnosisSafeProxy, Safe1_0_0 } from "generated";
+import { Safe, GnosisSafeProxy1_0_0, Safe1_0_0 } from "generated";
 import { addOwner, removeOwner, addSafeToOwner, removeSafeFromOwner } from "./helpers";
 import { getSetupTrace, decodeSetupInput } from "./hypersync";
 
-GnosisSafeProxy.ProxyCreation.contractRegister(async ({ event, context }) => {
+GnosisSafeProxy1_0_0.ProxyCreation.contractRegister(async ({ event, context }) => {
   const { proxy } = event.params;
   context.addSafe1_0_0(proxy);
 });
 
-GnosisSafeProxy.ProxyCreation.handler(async ({ event, context }) => {
+GnosisSafeProxy1_0_0.ProxyCreation.handler(async ({ event, context }) => {
   const { proxy } = event.params;
   const { hash } = event.transaction;
   const { chainId, block } = event;
@@ -23,6 +23,7 @@ GnosisSafeProxy.ProxyCreation.handler(async ({ event, context }) => {
 
   const safe: Safe = {
     id: safeId,
+    version: "V1_0_0",
     creationTxHash: hash,
     owners,
     threshold,

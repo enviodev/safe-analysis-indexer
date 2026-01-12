@@ -60,6 +60,7 @@ export const getSetupTrace = createEffect(
         }),
         output: S.nullable(S.string),
         rateLimit: false,
+        cache: true,
     },
     async ({ input }) => {
         const client = getClient(input.chainId);
