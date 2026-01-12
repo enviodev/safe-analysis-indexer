@@ -1,24 +1,20 @@
 # yaml-language-server: $schema=./node_modules/envio/evm.schema.json
 name: envio-indexer
 contracts:
-  - name: GnosisSafeProxy1_0_0
+  - name: GnosisSafeProxyPre1_3_0
     handler: src/EventHandlers.ts
     events:
       - event: ProxyCreation(address proxy)
         field_selection:
           transaction_fields:
-            - hash
-  - name: GnosisSafeProxy1_1_1
+            - hash  
+  # Safe event signatures are the same in v1.0.0, v1.1.1, and v1.2.0 so can use the same interface
+  # https://github.com/safe-fndn/safe-smart-account/blob/v1.0.0/contracts/base/OwnerManager.sol
+  # https://github.com/safe-fndn/safe-smart-account/blob/v1.2.0/contracts/base/OwnerManager.sol
+  # https://github.com/safe-fndn/safe-smart-account/blob/v1.1.1/contracts/base/OwnerManager.sol
+  - name: SafePre1_3_0
     handler: src/EventHandlers.ts
     events:
-      - event: ProxyCreation(address proxy)
-        field_selection:
-          transaction_fields:
-            - hash
-  - name: Safe1_0_0
-    handler: src/EventHandlers.ts
-    events:
-      - event: ExecutionFailed(bytes32 txHash)
       - event: AddedOwner(address owner)
       - event: RemovedOwner(address owner)
       - event: ChangedThreshold(uint256 threshold)
@@ -26,19 +22,17 @@ networks:
   - id: 1 # ethereum
     start_block: 0
     contracts:
-      - name: GnosisSafeProxy1_0_0
+      - name: GnosisSafeProxyPre1_3_0
         address: 0x12302fE9c02ff50939BaAaaf415fc226C078613C # 1.0.0
-      - name: GnosisSafeProxy1_1_1
-        address: 0x76E2cFc1F5Fa8F6a5b3fC4c8F4788F0116861F9B # 1.1.1
-      - name: Safe1_0_0
+        address: 0x76E2cFc1F5Fa8F6a5b3fC4c8F4788F0116861F9B # 1.1.1 and 1.2.0      
+      - name: SafePre1_3_0
   - id: 100 # gnosis
-    start_block: 10045292
+    start_block: 0
     contracts:
-      - name: GnosisSafeProxy1_0_0
+      - name: GnosisSafeProxyPre1_3_0
         address: 0x12302fE9c02ff50939BaAaaf415fc226C078613C # 1.0.0
-      - name: GnosisSafeProxy1_1_1
-        address: 0x76E2cFc1F5Fa8F6a5b3fC4c8F4788F0116861F9B # 1.1.1
-      - name: Safe1_0_0
+        address: 0x76E2cFc1F5Fa8F6a5b3fC4c8F4788F0116861F9B # 1.1.1 and 1.2.0      
+      - name: SafePre1_3_0
 unordered_multichain_mode: true
 preload_handlers: true
 # raw_events: true

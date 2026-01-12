@@ -1,13 +1,13 @@
-import { Safe, GnosisSafeProxy1_0_0, GnosisSafeProxy1_1_1, Safe1_0_0 } from "generated";
-import { addOwner, removeOwner, addSafeToOwner, removeSafeFromOwner } from "./helpers";
+import { Safe, GnosisSafeProxyPre1_3_0, GnosisSafeProxy1_1_1, SafePre1_3_0 } from "generated";
+import { addOwner, removeOwner, addSafeToOwner } from "./helpers";
 import { getSetupTrace, decodeSetupInput } from "./hypersync";
 
-GnosisSafeProxy1_0_0.ProxyCreation.contractRegister(async ({ event, context }) => {
+GnosisSafeProxyPre1_3_0.ProxyCreation.contractRegister(async ({ event, context }) => {
   const { proxy } = event.params;
-  context.addSafe1_0_0(proxy);
+  context.addSafePre1_3_0(proxy);
 });
 
-GnosisSafeProxy1_0_0.ProxyCreation.handler(async ({ event, context }) => {
+GnosisSafeProxyPre1_3_0.ProxyCreation.handler(async ({ event, context }) => {
   const { proxy } = event.params;
   const { hash } = event.transaction;
   const { chainId, block } = event;
@@ -42,14 +42,14 @@ GnosisSafeProxy1_0_0.ProxyCreation.handler(async ({ event, context }) => {
 
 GnosisSafeProxy1_1_1.ProxyCreation.contractRegister(async ({ event, context }) => {
   const { proxy } = event.params;
-  context.addSafe1_0_0(proxy);
+  context.addSafePre1_3_0(proxy);
 });
 
 GnosisSafeProxy1_1_1.ProxyCreation.handler(async ({ event, context }) => {
   const { proxy } = event.params;
   const { hash } = event.transaction;
   const { chainId, block } = event;
-  const version = "V1_1_1" as const;
+  const version = "V1_1_1ORV1_2_0" as const;
 
   // Fetch trace and decode setup data
   const inputData = await context.effect(getSetupTrace, { chainId, blockNumber: block.number, proxyAddress: proxy, version });
@@ -79,15 +79,15 @@ GnosisSafeProxy1_1_1.ProxyCreation.handler(async ({ event, context }) => {
 });
 
 
-Safe1_0_0.AddedOwner.handler(async ({ event, context }) => {
+SafePre1_3_0.AddedOwner.handler(async ({ event, context }) => {
   await addOwner(event, context);
 });
 
-Safe1_0_0.RemovedOwner.handler(async ({ event, context }) => {
+SafePre1_3_0.RemovedOwner.handler(async ({ event, context }) => {
   await removeOwner(event, context);
 });
 
-Safe1_0_0.ChangedThreshold.handler(async ({ event, context }) => {
+SafePre1_3_0.ChangedThreshold.handler(async ({ event, context }) => {
   const { srcAddress, chainId } = event;
 
   const safeId = `${chainId}-${srcAddress}`;

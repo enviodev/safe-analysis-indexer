@@ -3,7 +3,7 @@ import { HypersyncClient } from "@envio-dev/hypersync-client";
 import { ethers } from "ethers";
 
 // Safe version type
-export type SafeVersion = "V1_0_0" | "V1_1_1";
+export type SafeVersion = "V1_0_0" | "V1_1_1ORV1_2_0";
 
 // Cache for HyperSync clients per chain
 const clients: Record<number, HypersyncClient> = {};
@@ -36,7 +36,7 @@ const versionConfig = {
         interface: safeInterface1_0_0,
         selector: safeInterface1_0_0.getFunction("setup")!.selector,
     },
-    V1_1_1: {
+    V1_1_1ORV1_2_0: {
         interface: safeInterface1_1_1,
         selector: safeInterface1_1_1.getFunction("setup")!.selector,
     },
@@ -107,4 +107,3 @@ export const getSetupTrace = createEffect(
         return undefined;
     }
 );
-
