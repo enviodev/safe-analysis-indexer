@@ -148,7 +148,6 @@ GnosisSafeProxy1_5_0.ProxyCreation.handler(async ({ event, context }) => {
 GnosisSafeL2.SafeSetup.handler(async ({ event, context }) => {
   const { owners, threshold } = event.params;
   const { srcAddress, chainId } = event;
-  const { hash } = event.transaction;
 
   const safeId = `${chainId}-${srcAddress}`;
 
@@ -156,18 +155,9 @@ GnosisSafeL2.SafeSetup.handler(async ({ event, context }) => {
   let existingSafe = await context.Safe.get(safeId);
 
   if (existingSafe) {
-    // Preserve the version if it was already set (from ProxyCreation handlers)
-    // Otherwise default to "L2" for backwards compatibility
-    const version = existingSafe.version;
-
     const safe: Safe = {
-      id: safeId,
-      owners,
-      chainId,
-      version,
-      creationTxHash: hash,
+      ...existingSafe,
       threshold: Number(threshold),
-      address: srcAddress,
     };
 
     context.Safe.set(safe);

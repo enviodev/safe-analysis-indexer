@@ -22,9 +22,6 @@ contracts:
     handler: src/EventHandlers.ts
     events:
       - event: SafeSetup(address indexed initiator, address[] owners, uint256 threshold, address initializer, address fallbackHandler)
-        field_selection:
-          transaction_fields:
-            - hash
       - event: AddedOwner(address owner)
       - event: AddedOwnerV4(address indexed owner)
         name: AddedOwnerV4
