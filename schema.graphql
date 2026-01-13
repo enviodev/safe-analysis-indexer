@@ -6,13 +6,6 @@ enum SafeVersion {
   V1_5_0
 }
 
-## possible optimization is to truncate the addresses to a statistically significant length for faster lookups
-type ProxySafeLookup {
-  id: ID! # chainId-proxyAddress
-  safe: Safe! @index
-  proxyAddress: String! @index
-}
-
 type Safe {
   id: ID! # chainId-address
   creationTxHash: String! @index
