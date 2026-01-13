@@ -1,6 +1,7 @@
 import { Safe, GnosisSafeProxyPre1_3_0, SafePre1_3_0, GnosisSafeL2, GnosisSafeProxy1_3_0, GnosisSafeProxy1_4_1, GnosisSafeProxy1_5_0 } from "generated";
 import { addOwner, removeOwner, addSafeToOwner } from "./helpers";
 import { getSetupTrace, decodeSetupInput } from "./hypersync";
+import { PROXY_ADDRESSES_BY_CHAIN_ID } from "./consts";
 
 GnosisSafeProxyPre1_3_0.ProxyCreation.contractRegister(async ({ event, context }) => {
   const { proxy } = event.params;
@@ -68,95 +69,87 @@ SafePre1_3_0.ChangedThreshold.handler(async ({ event, context }) => {
 });
 
 
-// Register GnosisSafeL2 contracts dynamically when proxy is created (v1.3.0)
-GnosisSafeProxy1_3_0.ProxyCreation.contractRegister(async ({ event, context }) => {
-  const { proxy } = event.params;
-  context.addGnosisSafeL2(proxy);
-});
-
 // Handler for ProxyCreation from v1.3.0 factory
 GnosisSafeProxy1_3_0.ProxyCreation.handler(async ({ event, context }) => {
-  const { proxy } = event.params;
-  const { hash } = event.transaction;
-  const { chainId } = event;
+  if (event.srcAddress == PROXY_ADDRESSES_BY_CHAIN_ID[event.chainId].gnosisSafeProxy1_3_0.toLowerCase()) {
+    const { proxy } = event.params;
+    const { hash } = event.transaction;
+    const { chainId } = event;
 
-  const safeId = `${chainId}-${proxy}`;
+    const safeId = `${chainId}-${proxy}`;
 
-  // The SafeSetup event will be handled by the registered GnosisSafeL2 contract
-  // We just need to create a placeholder safe entry here if needed
-  // The actual owners and threshold will be set when SafeSetup is emitted
-  const safe: Safe = {
-    id: safeId,
-    owners: [],
-    chainId,
-    version: "V1_3_0",
-    creationTxHash: hash,
-    threshold: 0,
-    address: proxy,
-  };
+    // The SafeSetup event will be handled by the registered GnosisSafeL2 contract
+    // We just need to create a placeholder safe entry here if needed
+    // The actual owners and threshold will be set when SafeSetup is emitted
+    const safe: Safe = {
+      id: safeId,
+      owners: [],
+      chainId,
+      version: "V1_3_0",
+      creationTxHash: hash,
+      threshold: 0,
+      address: proxy,
+    };
 
-  context.Safe.set(safe);
-});
-
-// Register GnosisSafeL2 contracts dynamically when proxy is created (v1.4.1)
-GnosisSafeProxy1_4_1.ProxyCreation.contractRegister(async ({ event, context }) => {
-  const { proxy } = event.params;
-  context.addGnosisSafeL2(proxy);
-});
+    context.Safe.set(safe);
+  }
+}, { wildcard: true });
 
 // Handler for ProxyCreation from v1.4.1 factory
 GnosisSafeProxy1_4_1.ProxyCreation.handler(async ({ event, context }) => {
-  const { proxy } = event.params;
-  const { hash } = event.transaction;
-  const { chainId } = event;
+  if (event.srcAddress == PROXY_ADDRESSES_BY_CHAIN_ID[event.chainId].gnosisSafeProxy1_4_1.toLowerCase()) {
+    const { proxy } = event.params;
+    const { hash } = event.transaction;
+    const { chainId } = event;
 
-  const safeId = `${chainId}-${proxy}`;
+    const safeId = `${chainId}-${proxy}`;
 
-  // The SafeSetup event will be handled by the registered GnosisSafeL2 contract
-  // We just need to create a placeholder safe entry here if needed
-  // The actual owners and threshold will be set when SafeSetup is emitted
-  const safe: Safe = {
-    id: safeId,
-    owners: [],
-    chainId,
-    version: "V1_4_1",
-    creationTxHash: hash,
-    threshold: 0,
-    address: proxy,
-  };
+    // The SafeSetup event will be handled by the registered GnosisSafeL2 contract
+    // We just need to create a placeholder safe entry here if needed
+    // The actual owners and threshold will be set when SafeSetup is emitted
+    const safe: Safe = {
+      id: safeId,
+      owners: [],
+      chainId,
+      version: "V1_4_1",
+      creationTxHash: hash,
+      threshold: 0,
+      address: proxy,
+    };
 
-  context.Safe.set(safe);
-});
+    context.Safe.set(safe);
+  }
+}, { wildcard: true });
 
-// Register GnosisSafeL2 contracts dynamically when proxy is created (v1.5.0)
-GnosisSafeProxy1_5_0.ProxyCreation.contractRegister(async ({ event, context }) => {
-  const { proxy } = event.params;
-  context.addGnosisSafeL2(proxy);
-});
+// // Register GnosisSafeL2 contracts dynamically when proxy is created (v1.5.0)
+// GnosisSafeProxy1_5_0.ProxyCreation.contractRegister(async ({ event, context }) => {
+//   const { proxy } = event.params;
+//   context.addGnosisSafeL2(proxy);
+// });
 
-// Handler for ProxyCreation from v1.5.0 factory
-GnosisSafeProxy1_5_0.ProxyCreation.handler(async ({ event, context }) => {
-  const { proxy } = event.params;
-  const { hash } = event.transaction;
-  const { chainId } = event;
+// // Handler for ProxyCreation from v1.5.0 factory
+// GnosisSafeProxy1_5_0.ProxyCreation.handler(async ({ event, context }) => {
+//   const { proxy } = event.params;
+//   const { hash } = event.transaction;
+//   const { chainId } = event;
 
-  const safeId = `${chainId}-${proxy}`;
+//   const safeId = `${chainId}-${proxy}`;
 
-  // The SafeSetup event will be handled by the registered GnosisSafeL2 contract
-  // We just need to create a placeholder safe entry here if needed
-  // The actual owners and threshold will be set when SafeSetup is emitted
-  const safe: Safe = {
-    id: safeId,
-    owners: [],
-    chainId,
-    version: "V1_5_0",
-    creationTxHash: hash,
-    threshold: 0,
-    address: proxy,
-  };
+//   // The SafeSetup event will be handled by the registered GnosisSafeL2 contract
+//   // We just need to create a placeholder safe entry here if needed
+//   // The actual owners and threshold will be set when SafeSetup is emitted
+//   const safe: Safe = {
+//     id: safeId,
+//     owners: [],
+//     chainId,
+//     version: "V1_5_0",
+//     creationTxHash: hash,
+//     threshold: 0,
+//     address: proxy,
+//   };
 
-  context.Safe.set(safe);
-});
+//   context.Safe.set(safe);
+// });
 
 GnosisSafeL2.SafeSetup.handler(async ({ event, context }) => {
   const { owners, threshold } = event.params;
@@ -165,44 +158,46 @@ GnosisSafeL2.SafeSetup.handler(async ({ event, context }) => {
 
   const safeId = `${chainId}-${srcAddress}`;
 
-  // Get existing safe if it was created via ProxyCreation handler
+  // Get existing safe if it was created via ProxyCreation handler - prevents false positives due to wildcard indexing
   let existingSafe = await context.Safe.get(safeId);
 
-  // Preserve the version if it was already set (from ProxyCreation handlers)
-  // Otherwise default to "L2" for backwards compatibility
-  const version = existingSafe?.version || "L2";
+  if (existingSafe) {
+    // Preserve the version if it was already set (from ProxyCreation handlers)
+    // Otherwise default to "L2" for backwards compatibility
+    const version = existingSafe.version;
 
-  const safe: Safe = {
-    id: safeId,
-    owners,
-    chainId,
-    version,
-    creationTxHash: hash,
-    threshold: Number(threshold),
-    address: srcAddress,
-  };
+    const safe: Safe = {
+      id: safeId,
+      owners,
+      chainId,
+      version,
+      creationTxHash: hash,
+      threshold: Number(threshold),
+      address: srcAddress,
+    };
 
-  context.Safe.set(safe);
+    context.Safe.set(safe);
 
-  // Add safe to each Owner entity
-  for (const owner of owners) {
-    await addSafeToOwner(owner, safeId, context);
+    // Add safe to each Owner entity
+    for (const owner of owners) {
+      await addSafeToOwner(owner, safeId, context);
+    }
   }
-});
+}, { wildcard: true });
 
 GnosisSafeL2.AddedOwner.handler(async ({ event, context }) => {
   await addOwner(event, context);
-});
+}, { wildcard: true });
 
 GnosisSafeL2.AddedOwnerV4.handler(async ({ event, context }) => {
   await addOwner(event, context);
-});
+}, { wildcard: true });
 
 
 GnosisSafeL2.RemovedOwner.handler(async ({ event, context }) => {
   await removeOwner(event, context);
-});
+}, { wildcard: true });
 
 GnosisSafeL2.RemovedOwnerV4.handler(async ({ event, context }) => {
   await removeOwner(event, context);
-});
+}, { wildcard: true });
