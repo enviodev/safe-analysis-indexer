@@ -30,6 +30,11 @@ GnosisSafeProxyPre1_3_0.ProxyCreation.handler(async ({ event, context }) => {
     threshold,
     chainId,
     address: proxy,
+    initializer: "",
+    initiator: "",
+    numberOfSuccessfulExecutions: 0,
+    numberOfFailedExecutions: 0,
+    totalGasSpent: 0n,
   };
 
   context.Safe.set(safe);
@@ -57,7 +62,7 @@ SafePre1_3_0.ChangedThreshold.handler(async ({ event, context }) => {
   let safe = await context.Safe.get(safeId);
 
   if (!safe) {
-    context.log.warn(`safe not found ${safeId}`);
+    //not a safe
     return;
   }
 
@@ -88,6 +93,11 @@ GnosisSafeProxy1_3_0.ProxyCreation.handler(async ({ event, context }) => {
     creationTxHash: hash,
     threshold: 0,
     address: proxy,
+    initializer: "",
+    initiator: "",
+    numberOfSuccessfulExecutions: 0,
+    numberOfFailedExecutions: 0,
+    totalGasSpent: 0n,
   };
 
   context.Safe.set(safe);
@@ -114,6 +124,11 @@ GnosisSafeProxy1_4_1.ProxyCreation.handler(async ({ event, context }) => {
     creationTxHash: hash,
     threshold: 0,
     address: proxy,
+    initializer: "",
+    initiator: "",
+    numberOfSuccessfulExecutions: 0,
+    numberOfFailedExecutions: 0,
+    totalGasSpent: 0n,
   };
 
   context.Safe.set(safe);
@@ -140,13 +155,18 @@ GnosisSafeProxy1_5_0.ProxyCreation.handler(async ({ event, context }) => {
     creationTxHash: hash,
     threshold: 0,
     address: proxy,
+    initializer: "",
+    initiator: "",
+    numberOfSuccessfulExecutions: 0,
+    numberOfFailedExecutions: 0,
+    totalGasSpent: 0n,
   };
 
   context.Safe.set(safe);
 });
 
 GnosisSafeL2.SafeSetup.handler(async ({ event, context }) => {
-  const { owners, threshold } = event.params;
+  const { owners, threshold, initializer, initiator } = event.params;
   const { srcAddress, chainId } = event;
 
   const safeId = `${chainId}-${srcAddress}`;
@@ -158,6 +178,8 @@ GnosisSafeL2.SafeSetup.handler(async ({ event, context }) => {
     const safe: Safe = {
       ...existingSafe,
       threshold: Number(threshold),
+      initializer,
+      initiator,
     };
 
     context.Safe.set(safe);
@@ -178,12 +200,12 @@ GnosisSafeL2.SafeMultiSigTransaction.handler(async ({ event, context }) => {
 
   const safe = await context.Safe.get(safeId);
   if (!safe) {
-    context.log.warn(`safe not found ${safeId}`);
+    //not a safe
     return
   }
 
   context.SafeTransaction.set({        
-      id: hash,
+      id: `${hash}-${event.logIndex}`,
       safe_id: safeId,
       to,
       value,
@@ -197,6 +219,7 @@ GnosisSafeL2.SafeMultiSigTransaction.handler(async ({ event, context }) => {
       signatures,
       additionalInfo,
       executionDate: BigInt(timestamp),
+      txHash: hash,
     });
   },{ wildcard: true }
 );
@@ -210,18 +233,19 @@ GnosisSafeL2.SafeModuleTransaction.handler(async ({ event, context }) => {
 
   const safe = await context.Safe.get(safeId);
   if (!safe) {
-    context.log.warn(`safe not found ${safeId}`);
+    //not a safe
     return;
   }
 
   context.SafeModuleTransaction.set({
     id: `${hash}-${event.logIndex}`,
     safe_id: safeId,
-    module,
+    safeModule: module,
     to,
     value,
     data,
     operation: BigInt(operation),
+    txHash: hash,
   });
 }, { wildcard: true });
 

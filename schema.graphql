@@ -38,17 +38,18 @@ type SafeOwner {
 
 type SafeModuleTransaction {
   id: ID!
-  safe: Safe!
+  safe: Safe! @index
   safeModule: String!
   to: String!
   value: BigInt!
   data: String!
   operation: BigInt!
+  txHash: String!
 }
 
 type SafeTransaction {
   id: ID! # txHash
-  safe: Safe!
+  safe: Safe! @index
   to: String!
   value: BigInt!
   data: String!
@@ -60,5 +61,6 @@ type SafeTransaction {
   refundReceiver: String!
   signatures: String!
   additionalInfo: String!
-  executionDate: BigInt!  
+  executionDate: BigInt!
+  txHash: String!
 }

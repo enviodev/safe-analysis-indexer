@@ -91,7 +91,7 @@ export const executionSuccess = async (event: any, context: any) => {
   const safe = await context.Safe.get(safeId);
 
   if (!safe) {
-    context.log.warn(`Safe not found for ${safeId}`);
+    //not a safe
     return;
   } else {
     context.Safe.set({
@@ -110,7 +110,7 @@ export const executionFailure = async (event: any, context: any) => {
   const safe = await context.Safe.get(safeId);
 
   if (!safe) {
-    context.log.warn(`Safe not found for ${safeId}`);
+    //not a safe
     return;
   } else {
     context.Safe.set({
