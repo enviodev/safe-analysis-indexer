@@ -83,3 +83,40 @@ export const removeOwner = async (event: any, context: any) => {
   }
 };
 
+export const executionSuccess = async (event: any, context: any) => {
+  const { payment } = event.params;
+  const { srcAddress, chainId } = event;
+  const safeId = chainId+"-"+srcAddress;
+
+  const safe = await context.Safe.get(safeId);
+
+  if (!safe) {
+    //not a safe
+    return;
+  } else {
+    context.Safe.set({
+      ...safe,
+      numberOfSuccessfulExecutions: safe.numberOfSuccessfulExecutions + 1,
+      totalGasSpent: safe.totalGasSpent + payment,
+    })
+  }
+}
+
+export const executionFailure = async (event: any, context: any) => {
+  const { payment } = event.params;
+  const { srcAddress, chainId } = event;
+  const safeId = chainId+"-"+srcAddress;
+
+  const safe = await context.Safe.get(safeId);
+
+  if (!safe) {
+    //not a safe
+    return;
+  } else {
+    context.Safe.set({
+      ...safe,
+      numberOfFailedExecutions: safe.numberOfFailedExecutions + 1,
+      totalGasSpent: safe.totalGasSpent + payment,
+    })
+  }
+}

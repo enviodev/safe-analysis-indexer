@@ -15,6 +15,13 @@ type Safe {
   threshold: Int!
   version: SafeVersion! @index
   safeOwners: [SafeOwner!]! @derivedFrom(field: "safe")
+  initializer: String!
+  safeTransactions: [SafeTransaction!]! @derivedFrom(field: "safe")
+  safeModuleTransactions: [SafeModuleTransaction!]! @derivedFrom(field: "safe")
+  numberOfSuccessfulExecutions: Int!
+  numberOfFailedExecutions: Int!
+  totalGasSpent: BigInt!
+  initiator: String!
 }
 
 type Owner {
@@ -27,4 +34,33 @@ type SafeOwner {
   id: ID! # ownerAddress-safeId
   owner: Owner! @index
   safe: Safe! @index
+}
+
+type SafeModuleTransaction {
+  id: ID!
+  safe: Safe! @index
+  safeModule: String!
+  to: String!
+  value: BigInt!
+  data: String!
+  operation: BigInt!
+  txHash: String!
+}
+
+type SafeTransaction {
+  id: ID! # txHash
+  safe: Safe! @index
+  to: String!
+  value: BigInt!
+  data: String!
+  operation: BigInt!
+  safeTxGas: BigInt!
+  baseGas: BigInt!
+  gasPrice: BigInt!
+  gasToken: String!
+  refundReceiver: String!
+  signatures: String!
+  additionalInfo: String!
+  executionDate: BigInt!
+  txHash: String!
 }
