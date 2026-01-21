@@ -44,11 +44,11 @@ type SafeModuleTransaction {
   value: BigInt!
   data: String!
   operation: BigInt!
-  txHash: String!
+  txHash: String! @index
 }
 
 type SafeTransaction {
-  id: ID! # txHash
+  id: ID! # txHash-logIndex
   safe: Safe! @index
   to: String!
   value: BigInt!
@@ -60,7 +60,9 @@ type SafeTransaction {
   gasToken: String!
   refundReceiver: String!
   signatures: String!
-  additionalInfo: String!
+  nonce: BigInt!
+  msgSender: String!
+  threshold: Int!
   executionDate: BigInt!
-  txHash: String!
+  txHash: String! @index
 }
