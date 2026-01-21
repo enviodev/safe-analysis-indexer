@@ -176,6 +176,12 @@ GnosisSafeL2.SafeMultiSigTransaction.handler(async ({ event, context }) => {
   const { timestamp } = event.block;
   const safeId = chainId+"-"+srcAddress;
 
+  const safe = await context.Safe.get(safeId);
+  if (!safe) {
+    context.log.warn(`safe not found ${safeId}`);
+    return
+  }
+
   context.SafeTransaction.set({        
       id: hash,
       safe_id: safeId,
