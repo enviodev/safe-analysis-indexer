@@ -1,5 +1,5 @@
 import { Safe, GnosisSafeProxyPre1_3_0, SafePre1_3_0, GnosisSafeL2, GnosisSafeProxy1_3_0, GnosisSafeProxy1_4_1, GnosisSafeProxy1_5_0 } from "generated";
-import { addOwner, removeOwner, addSafeToOwner } from "./helpers";
+import { addOwner, removeOwner, addSafeToOwner, executionSuccess, executionFailure } from "./helpers";
 import { getSetupTrace, decodeSetupInput } from "./hypersync";
 
 GnosisSafeProxyPre1_3_0.ProxyCreation.contractRegister(async ({ event, context }) => {
@@ -169,6 +169,32 @@ GnosisSafeL2.SafeSetup.handler(async ({ event, context }) => {
   }
 }, { wildcard: true });
 
+GnosisSafeL2.SafeMultiSigTransaction.handler(async ({ event, context }) => {
+  const { to, value, data, operation, safeTxGas, baseGas, gasPrice, gasToken, refundReceiver, signatures, additionalInfo } = event.params;
+  const { srcAddress, chainId } = event;
+  const { hash } = event.transaction;
+  const { timestamp } = event.block;
+  const safeId = chainId+"-"+srcAddress;
+
+  context.SafeTransaction.set({        
+      id: hash,
+      safe_id: safeId,
+      to,
+      value,
+      data,
+      operation,
+      safeTxGas,
+      baseGas,
+      gasPrice,
+      gasToken,
+      refundReceiver,
+      signatures,
+      additionalInfo,
+      executionDate: BigInt(timestamp),
+    });
+  },{ wildcard: true }
+);
+
 GnosisSafeL2.AddedOwner.handler(async ({ event, context }) => {
   await addOwner(event, context);
 }, { wildcard: true });
@@ -185,3 +211,19 @@ GnosisSafeL2.RemovedOwner.handler(async ({ event, context }) => {
 GnosisSafeL2.RemovedOwnerV4.handler(async ({ event, context }) => {
   await removeOwner(event, context);
 }, { wildcard: true });
+
+GnosisSafeL2.ExecutionSuccess.handler(async ({ event, context }) => {
+  await executionSuccess(event, context);
+},{ wildcard: true });
+
+GnosisSafeL2.ExecutionSuccessV4.handler(async ({ event, context }) => {
+  await executionSuccess(event, context);
+},{ wildcard: true });
+
+GnosisSafeL2.ExecutionFailure.handler(async ({ event, context }) => {
+  await executionFailure(event, context);
+},{ wildcard: true });
+
+GnosisSafeL2.ExecutionFailureV4.handler(async ({ event, context }) => {
+  await executionFailure(event, context);
+},{ wildcard: true });
