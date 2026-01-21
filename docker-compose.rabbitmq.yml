@@ -1,0 +1,37 @@
+# RabbitMQ for Safe Events Queue
+# 
+# Usage:
+#   Start:   docker-compose -f docker-compose.rabbitmq.yml up -d
+#   Stop:    docker-compose -f docker-compose.rabbitmq.yml down
+#   Logs:    docker-compose -f docker-compose.rabbitmq.yml logs -f
+#   Reset:   docker-compose -f docker-compose.rabbitmq.yml down -v
+#
+# Management UI: http://localhost:15672
+#   Username: guest
+#   Password: guest
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: safe-events-rabbitmq
+    ports:
+      # AMQP protocol port (for the indexer to connect)
+      - "5672:5672"
+      # Management UI port (web dashboard)
+      - "15672:15672"
+    environment:
+      # Default credentials (change in production!)
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    volumes:
+      # Persist data across restarts
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  rabbitmq_data:
+

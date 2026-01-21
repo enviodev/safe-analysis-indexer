@@ -1,6 +1,7 @@
 import { Safe, GnosisSafeProxyPre1_3_0, SafePre1_3_0, GnosisSafeL2, GnosisSafeProxy1_3_0, GnosisSafeProxy1_4_1, GnosisSafeProxy1_5_0 } from "generated";
 import { addOwner, removeOwner, addSafeToOwner, executionSuccess, executionFailure } from "./helpers";
 import { getSetupTrace, decodeSetupInput } from "./hypersync";
+import { publishEventToQueue, createEventInput } from "./effects/publishEvent";
 
 GnosisSafeProxyPre1_3_0.ProxyCreation.contractRegister(async ({ event, context }) => {
   const { proxy } = event.params;
@@ -251,10 +252,32 @@ GnosisSafeL2.SafeModuleTransaction.handler(async ({ event, context }) => {
 
 GnosisSafeL2.AddedOwner.handler(async ({ event, context }) => {
   await addOwner(event, context);
+
+  const safeId = `${event.chainId}-${event.srcAddress}`;
+  const safe = await context.Safe.get(safeId);
+  
+  if (safe) {
+    await context.effect(publishEventToQueue, createEventInput(
+      event,
+      "owner.added",
+      event.params.owner
+    ));
+  }
 }, { wildcard: true });
 
 GnosisSafeL2.AddedOwnerV4.handler(async ({ event, context }) => {
   await addOwner(event, context);
+
+  const safeId = `${event.chainId}-${event.srcAddress}`;
+  const safe = await context.Safe.get(safeId);
+  
+  if (safe) {
+    await context.effect(publishEventToQueue, createEventInput(
+      event,
+      "owner.added",
+      event.params.owner
+    ));
+  }
 }, { wildcard: true });
 
 

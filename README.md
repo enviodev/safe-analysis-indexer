@@ -1,3 +1,15 @@
-## Envio Blank Template
+# Safe Analysis Indexer
 
-*Please refer to the [documentation website](https://docs.envio.dev) for a thorough guide on all [Envio](https://envio.dev) indexer features*
+## RabbitMQ Setup
+
+```bash
+docker-compose -f docker-compose.rabbitmq.yml up -d
+```
+
+**UI:** http://localhost:15672 (user: `guest`, pass: `guest`)
+
+## Viewing Messages
+
+1. **Queues** → Add queue → Name: `test-queue` → Add
+2. Click `test-queue` → Bindings → From: `safe_events`, Routing: `safe.#` → Bind
+3. **Get messages** → Click "Get Message(s)" to see event payloads
