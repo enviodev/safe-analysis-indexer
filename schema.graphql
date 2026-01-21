@@ -44,7 +44,7 @@ type SafeModuleTransaction {
   value: BigInt!
   data: String!
   operation: BigInt!
-  txHash: String!
+  txHash: String! @index
 }
 
 type SafeTransaction {
@@ -64,5 +64,5 @@ type SafeTransaction {
   msgSender: String!
   threshold: Int!
   executionDate: BigInt!
-  txHash: String!
+  txHash: String! @index
 }
