@@ -32,6 +32,10 @@ contracts:
         field_selection: 
           transaction_fields:
             - hash
+      - event: SafeModuleTransaction(address module, address to, uint256 value, bytes data, uint8 operation)
+        field_selection:
+          transaction_fields:
+            - hash
       - event: AddedOwner(address owner)
       - event: AddedOwnerV4(address indexed owner)
         name: AddedOwnerV4

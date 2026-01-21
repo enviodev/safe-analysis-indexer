@@ -201,6 +201,30 @@ GnosisSafeL2.SafeMultiSigTransaction.handler(async ({ event, context }) => {
   },{ wildcard: true }
 );
 
+GnosisSafeL2.SafeModuleTransaction.handler(async ({ event, context }) => {
+  const { module, to, value, data, operation } = event.params;
+  const { srcAddress, chainId } = event;
+  const { hash } = event.transaction;
+
+  const safeId = `${chainId}-${srcAddress}`;
+
+  const safe = await context.Safe.get(safeId);
+  if (!safe) {
+    context.log.warn(`safe not found ${safeId}`);
+    return;
+  }
+
+  context.SafeModuleTransaction.set({
+    id: `${hash}-${event.logIndex}`,
+    safe_id: safeId,
+    module,
+    to,
+    value,
+    data,
+    operation: BigInt(operation),
+  });
+}, { wildcard: true });
+
 GnosisSafeL2.AddedOwner.handler(async ({ event, context }) => {
   await addOwner(event, context);
 }, { wildcard: true });
