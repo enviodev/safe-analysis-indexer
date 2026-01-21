@@ -1,6 +1,7 @@
 import { Safe, GnosisSafeProxyPre1_3_0, SafePre1_3_0, GnosisSafeL2, GnosisSafeProxy1_3_0, GnosisSafeProxy1_4_1, GnosisSafeProxy1_5_0 } from "generated";
 import { addOwner, removeOwner, addSafeToOwner, executionSuccess, executionFailure } from "./helpers";
 import { getSetupTrace, decodeSetupInput } from "./hypersync";
+import { decodeAbiParameters } from "viem";
 
 GnosisSafeProxyPre1_3_0.ProxyCreation.contractRegister(async ({ event, context }) => {
   const { proxy } = event.params;
@@ -204,6 +205,16 @@ GnosisSafeL2.SafeMultiSigTransaction.handler(async ({ event, context }) => {
     return
   }
 
+  // Decode additionalInfo: abi.encode(nonce, msg.sender, threshold)
+  const [nonce, msgSender, decodedThreshold] = decodeAbiParameters(
+    [
+      { name: "nonce", type: "uint256" },
+      { name: "msgSender", type: "address" },
+      { name: "threshold", type: "uint256" },
+    ],
+    additionalInfo as `0x${string}`
+  );
+
   context.SafeTransaction.set({        
       id: `${hash}-${event.logIndex}`,
       safe_id: safeId,
@@ -217,7 +228,9 @@ GnosisSafeL2.SafeMultiSigTransaction.handler(async ({ event, context }) => {
       gasToken,
       refundReceiver,
       signatures,
-      additionalInfo,
+      nonce,
+      msgSender,
+      threshold: Number(decodedThreshold),
       executionDate: BigInt(timestamp),
       txHash: hash,
     });
