@@ -3,7 +3,7 @@
 ## RabbitMQ Setup
 
 ```bash
-docker-compose -f docker-compose.rabbitmq.yml up -d
+docker compose -f docker-compose.rabbitmq.yml up -d
 ```
 
 **UI:** http://localhost:15672 (user: `guest`, pass: `guest`)
