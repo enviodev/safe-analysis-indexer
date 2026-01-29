@@ -1,5 +1,5 @@
 import { Safe, GnosisSafeProxyPre1_3_0, SafePre1_3_0, GnosisSafeL2, GnosisSafeProxy1_3_0, GnosisSafeProxy1_4_1, GnosisSafeProxy1_5_0 } from "generated";
-import { addOwner, removeOwner, addSafeToOwner, executionSuccess, executionFailure } from "./helpers";
+import { addOwner, removeOwner, addSafeToOwner, executionSuccess, executionFailure, incrementSafeCount, incrementTransactionCount, incrementModuleTransactionCount } from "./helpers";
 import { getSetupTrace, decodeSetupInput } from "./hypersync";
 import { decodeAbiParameters } from "viem";
 
@@ -39,6 +39,9 @@ GnosisSafeProxyPre1_3_0.ProxyCreation.handler(async ({ event, context }) => {
   };
 
   context.Safe.set(safe);
+
+  // Increment global and network safe counts
+  await incrementSafeCount(chainId, context);
 
   // Add safe to each Owner entity
   for (const owner of owners) {
@@ -103,6 +106,8 @@ GnosisSafeProxy1_3_0.ProxyCreation.handler(async ({ event, context }) => {
 
   context.Safe.set(safe);
 
+  // Increment global and network safe counts
+  await incrementSafeCount(chainId, context);
 });
 
 // Handler for ProxyCreation from v1.4.1 factory
@@ -134,6 +139,8 @@ GnosisSafeProxy1_4_1.ProxyCreation.handler(async ({ event, context }) => {
 
   context.Safe.set(safe);
 
+  // Increment global and network safe counts
+  await incrementSafeCount(chainId, context);
 });
 
 
@@ -164,6 +171,9 @@ GnosisSafeProxy1_5_0.ProxyCreation.handler(async ({ event, context }) => {
   };
 
   context.Safe.set(safe);
+
+  // Increment global and network safe counts
+  await incrementSafeCount(chainId, context);
 });
 
 GnosisSafeL2.SafeSetup.handler(async ({ event, context }) => {
@@ -215,9 +225,13 @@ GnosisSafeL2.SafeMultiSigTransaction.handler(async ({ event, context }) => {
     additionalInfo as `0x${string}`
   );
 
+  const networkId = chainId.toString();
+
   context.SafeTransaction.set({        
       id: `${hash}-${event.logIndex}`,
       safe_id: safeId,
+      network_id: networkId,
+      chainId,
       to,
       value,
       data,
@@ -234,6 +248,9 @@ GnosisSafeL2.SafeMultiSigTransaction.handler(async ({ event, context }) => {
       executionDate: BigInt(timestamp),
       txHash: hash,
     });
+
+  // Increment global and network transaction counts
+  await incrementTransactionCount(chainId, context);
   },{ wildcard: true }
 );
 
@@ -241,6 +258,7 @@ GnosisSafeL2.SafeModuleTransaction.handler(async ({ event, context }) => {
   const { module, to, value, data, operation } = event.params;
   const { srcAddress, chainId } = event;
   const { hash } = event.transaction;
+  const { timestamp } = event.block;
 
   const safeId = `${chainId}-${srcAddress}`;
 
@@ -250,16 +268,24 @@ GnosisSafeL2.SafeModuleTransaction.handler(async ({ event, context }) => {
     return;
   }
 
+  const networkId = chainId.toString();
+
   context.SafeModuleTransaction.set({
     id: `${hash}-${event.logIndex}`,
     safe_id: safeId,
+    network_id: networkId,
+    chainId,
     safeModule: module,
     to,
     value,
     data,
     operation: BigInt(operation),
     txHash: hash,
+    timestamp: BigInt(timestamp),
   });
+
+  // Increment global and network module transaction counts
+  await incrementModuleTransactionCount(chainId, context);
 }, { wildcard: true });
 
 GnosisSafeL2.AddedOwner.handler(async ({ event, context }) => {

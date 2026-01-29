@@ -1,3 +1,79 @@
+const GLOBAL_STATS_ID = "global";
+
+// Get or create GlobalStats entity
+export const getOrCreateGlobalStats = async (context: any) => {
+  let stats = await context.GlobalStats.get(GLOBAL_STATS_ID);
+  if (!stats) {
+    stats = {
+      id: GLOBAL_STATS_ID,
+      totalSafes: 0,
+      totalTransactions: 0,
+      totalModuleTransactions: 0,
+    };
+  }
+  return stats;
+};
+
+// Get or create Network entity
+export const getOrCreateNetwork = async (chainId: number, context: any) => {
+  const networkId = chainId.toString();
+  let network = await context.Network.get(networkId);
+  if (!network) {
+    network = {
+      id: networkId,
+      numberOfSafes: 0,
+      numberOfTransactions: 0,
+      numberOfModuleTransactions: 0,
+    };
+  }
+  return network;
+};
+
+// Increment safe count for GlobalStats and Network
+export const incrementSafeCount = async (chainId: number, context: any) => {
+  const stats = await getOrCreateGlobalStats(context);
+  context.GlobalStats.set({
+    ...stats,
+    totalSafes: stats.totalSafes + 1,
+  });
+
+  const network = await getOrCreateNetwork(chainId, context);
+  context.Network.set({
+    ...network,
+    numberOfSafes: network.numberOfSafes + 1,
+  });
+};
+
+// Increment transaction count for GlobalStats and Network
+export const incrementTransactionCount = async (chainId: number, context: any) => {
+  const stats = await getOrCreateGlobalStats(context);
+  context.GlobalStats.set({
+    ...stats,
+    totalTransactions: stats.totalTransactions + 1,
+  });
+
+  const network = await getOrCreateNetwork(chainId, context);
+  context.Network.set({
+    ...network,
+    numberOfTransactions: network.numberOfTransactions + 1,
+  });
+};
+
+// Increment module transaction count for GlobalStats and Network
+export const incrementModuleTransactionCount = async (chainId: number, context: any) => {
+  const stats = await getOrCreateGlobalStats(context);
+  context.GlobalStats.set({
+    ...stats,
+    totalModuleTransactions: stats.totalModuleTransactions + 1,
+  });
+
+  const network = await getOrCreateNetwork(chainId, context);
+  context.Network.set({
+    ...network,
+    numberOfModuleTransactions: network.numberOfModuleTransactions + 1,
+  });
+};
+
 export const addSafeToOwner = async (ownerAddress: string, safeId: string, context: any) => {
   const existingOwner = await context.Owner.get(ownerAddress);
 
@@ -86,7 +162,7 @@ export const removeOwner = async (event: any, context: any) => {
 export const executionSuccess = async (event: any, context: any) => {
   const { payment } = event.params;
   const { srcAddress, chainId } = event;
-  const safeId = chainId+"-"+srcAddress;
+  const safeId = chainId + "-" + srcAddress;
 
   const safe = await context.Safe.get(safeId);
 
@@ -105,7 +181,7 @@ export const executionSuccess = async (event: any, context: any) => {
 export const executionFailure = async (event: any, context: any) => {
   const { payment } = event.params;
   const { srcAddress, chainId } = event;
-  const safeId = chainId+"-"+srcAddress;
+  const safeId = chainId + "-" + srcAddress;
 
   const safe = await context.Safe.get(safeId);
 

@@ -6,6 +6,25 @@ enum SafeVersion {
   V1_5_0
 }
 
+# Global statistics - single entity with id "global"
+type GlobalStats {
+  id: ID! # "global"
+  totalSafes: Int!
+  totalTransactions: Int!
+  totalModuleTransactions: Int!
+}
+
+# Per-network statistics
+type Network {
+  id: ID! # chainId as string
+  numberOfSafes: Int!
+  numberOfTransactions: Int!
+  numberOfModuleTransactions: Int!
+  safeTransactions: [SafeTransaction!]! @derivedFrom(field: "network")
+  safeModuleTransactions: [SafeModuleTransaction!]!
+    @derivedFrom(field: "network")
+}
+
 type Safe {
   id: ID! # chainId-address
   creationTxHash: String! @index
@@ -39,17 +58,22 @@ type SafeOwner {
 type SafeModuleTransaction {
   id: ID!
   safe: Safe! @index
+  network: Network! @index
+  chainId: Int! @index
   safeModule: String!
   to: String!
   value: BigInt!
   data: String!
   operation: BigInt!
   txHash: String! @index
+  timestamp: BigInt! @index
 }
 
 type SafeTransaction {
   id: ID! # txHash-logIndex
   safe: Safe! @index
+  network: Network! @index
+  chainId: Int! @index
   to: String!
   value: BigInt!
   data: String!
@@ -63,6 +87,6 @@ type SafeTransaction {
   nonce: BigInt!
   msgSender: String!
   threshold: Int!
-  executionDate: BigInt!
+  executionDate: BigInt! @index
   txHash: String! @index
 }
