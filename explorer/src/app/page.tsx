@@ -4,6 +4,7 @@ import { NetworksStatCard } from "@/components/NetworksStatCard";
 import { LiveFeed } from "@/components/LiveFeed";
 import { LiveStats } from "@/components/LiveStats";
 import { SafeRow } from "@/components/SafeRow";
+import { WaveBackground } from "@/components/WaveBackground";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { getRecentSafes, getRecentTransactions, getGlobalStats, getIndexedChains } from "@/lib/graphql/queries";
 
@@ -21,31 +22,37 @@ export default async function HomePage() {
   ]);
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* Hero Section */}
-      <section className="text-center mb-12">
-        <h1 className="text-4xl font-bold mb-4">
-          <span className="text-primary">Safe</span>scan
-        </h1>
-        <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-          Explore Safe multi-signature wallets across multiple chains. 
-          Search by Safe address, Owner address, or Transaction hash.
-        </p>
-        
-        {/* Search Bar */}
-        <div className="max-w-2xl mx-auto">
-          <SearchInput size="lg" autoFocus />
+    <div>
+      {/* Hero Section with Stats - Full width background */}
+      <section className="relative pb-8">
+        <WaveBackground />
+        <div className="relative z-10">
+          {/* Hero Content */}
+          <div className="text-center py-12 container mx-auto px-4">
+            <h1 className="text-4xl font-bold mb-4">
+              <span className="text-primary">Safe</span>scan
+            </h1>
+            <p className="text-md text-muted-foreground mb-8 max-w-5xl mx-auto">
+              Explore Safe multi-signature wallets across multiple chains.
+              Search by Safe address, Owner address, or Transaction hash.
+            </p>
+
+            {/* Search Bar */}
+            <div className="max-w-2xl mx-auto">
+              <SearchInput size="lg" autoFocus />
+            </div>
+          </div>
+
+          {/* Stats Section - LiveStats updates every second */}
+          <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <LiveStats initialStats={initialStats} />
+            <NetworksStatCard chainIds={indexedChains} />
+          </div>
         </div>
       </section>
 
-      {/* Stats Section - LiveStats updates every second */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <LiveStats initialStats={initialStats} />
-        <NetworksStatCard chainIds={indexedChains} />
-      </section>
-
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="container mx-auto px-4 grid grid-cols-1 lg:grid-cols-3 gap-4 py-8">
         {/* Live Transactions Feed */}
         <div className="lg:col-span-2">
           <LiveFeed initialTransactions={recentTransactions} />
