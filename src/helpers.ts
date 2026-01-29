@@ -29,8 +29,22 @@ export const getOrCreateNetwork = async (chainId: number, context: any) => {
   return network;
 };
 
-// Increment safe count for GlobalStats and Network
-export const incrementSafeCount = async (chainId: number, context: any) => {
+// Get or create Version entity
+export const getOrCreateVersion = async (version: string, context: any) => {
+  let versionEntity = await context.Version.get(version);
+  if (!versionEntity) {
+    versionEntity = {
+      id: version,
+      numberOfSafes: 0,
+      numberOfTransactions: 0,
+      numberOfModuleTransactions: 0,
+    };
+  }
+  return versionEntity;
+};
+
+// Increment safe count for GlobalStats, Network, and Version
+export const incrementSafeCount = async (chainId: number, version: string, context: any) => {
   const stats = await getOrCreateGlobalStats(context);
   context.GlobalStats.set({
     ...stats,
@@ -42,10 +56,16 @@ export const incrementSafeCount = async (chainId: number, context: any) => {
     ...network,
     numberOfSafes: network.numberOfSafes + 1,
   });
+
+  const versionEntity = await getOrCreateVersion(version, context);
+  context.Version.set({
+    ...versionEntity,
+    numberOfSafes: versionEntity.numberOfSafes + 1,
+  });
 };
 
-// Increment transaction count for GlobalStats and Network
-export const incrementTransactionCount = async (chainId: number, context: any) => {
+// Increment transaction count for GlobalStats, Network, and Version
+export const incrementTransactionCount = async (chainId: number, version: string, context: any) => {
   const stats = await getOrCreateGlobalStats(context);
   context.GlobalStats.set({
     ...stats,
@@ -57,10 +77,16 @@ export const incrementTransactionCount = async (chainId: number, context: any) =
     ...network,
     numberOfTransactions: network.numberOfTransactions + 1,
   });
+
+  const versionEntity = await getOrCreateVersion(version, context);
+  context.Version.set({
+    ...versionEntity,
+    numberOfTransactions: versionEntity.numberOfTransactions + 1,
+  });
 };
 
-// Increment module transaction count for GlobalStats and Network
-export const incrementModuleTransactionCount = async (chainId: number, context: any) => {
+// Increment module transaction count for GlobalStats, Network, and Version
+export const incrementModuleTransactionCount = async (chainId: number, version: string, context: any) => {
   const stats = await getOrCreateGlobalStats(context);
   context.GlobalStats.set({
     ...stats,
@@ -71,6 +97,12 @@ export const incrementModuleTransactionCount = async (chainId: number, context: 
   context.Network.set({
     ...network,
     numberOfModuleTransactions: network.numberOfModuleTransactions + 1,
+  });
+
+  const versionEntity = await getOrCreateVersion(version, context);
+  context.Version.set({
+    ...versionEntity,
+    numberOfModuleTransactions: versionEntity.numberOfModuleTransactions + 1,
   });
 };
 

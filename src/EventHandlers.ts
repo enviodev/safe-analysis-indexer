@@ -27,6 +27,7 @@ GnosisSafeProxyPre1_3_0.ProxyCreation.handler(async ({ event, context }) => {
     id: safeId,
     version,
     creationTxHash: hash,
+    creationTimestamp: BigInt(block.timestamp),
     owners,
     threshold,
     chainId,
@@ -40,8 +41,8 @@ GnosisSafeProxyPre1_3_0.ProxyCreation.handler(async ({ event, context }) => {
 
   context.Safe.set(safe);
 
-  // Increment global and network safe counts
-  await incrementSafeCount(chainId, context);
+  // Increment global, network, and version safe counts
+  await incrementSafeCount(chainId, version, context);
 
   // Add safe to each Owner entity
   for (const owner of owners) {
@@ -79,10 +80,10 @@ SafePre1_3_0.ChangedThreshold.handler(async ({ event, context }) => {
 
 // Handler for ProxyCreation from v1.3.0 factory
 GnosisSafeProxy1_3_0.ProxyCreation.handler(async ({ event, context }) => {
-
   const { proxy } = event.params;
   const { hash } = event.transaction;
-  const { chainId } = event;
+  const { chainId, block } = event;
+  const version = "V1_3_0" as const;
 
   const safeId = `${chainId}-${proxy}`;
 
@@ -93,8 +94,9 @@ GnosisSafeProxy1_3_0.ProxyCreation.handler(async ({ event, context }) => {
     id: safeId,
     owners: [],
     chainId,
-    version: "V1_3_0",
+    version,
     creationTxHash: hash,
+    creationTimestamp: BigInt(block.timestamp),
     threshold: 0,
     address: proxy,
     initializer: "",
@@ -106,16 +108,16 @@ GnosisSafeProxy1_3_0.ProxyCreation.handler(async ({ event, context }) => {
 
   context.Safe.set(safe);
 
-  // Increment global and network safe counts
-  await incrementSafeCount(chainId, context);
+  // Increment global, network, and version safe counts
+  await incrementSafeCount(chainId, version, context);
 });
 
 // Handler for ProxyCreation from v1.4.1 factory
 GnosisSafeProxy1_4_1.ProxyCreation.handler(async ({ event, context }) => {
-
   const { proxy } = event.params;
   const { hash } = event.transaction;
-  const { chainId } = event;
+  const { chainId, block } = event;
+  const version = "V1_4_1" as const;
 
   const safeId = `${chainId}-${proxy}`;
 
@@ -126,8 +128,9 @@ GnosisSafeProxy1_4_1.ProxyCreation.handler(async ({ event, context }) => {
     id: safeId,
     owners: [],
     chainId,
-    version: "V1_4_1",
+    version,
     creationTxHash: hash,
+    creationTimestamp: BigInt(block.timestamp),
     threshold: 0,
     address: proxy,
     initializer: "",
@@ -139,8 +142,8 @@ GnosisSafeProxy1_4_1.ProxyCreation.handler(async ({ event, context }) => {
 
   context.Safe.set(safe);
 
-  // Increment global and network safe counts
-  await incrementSafeCount(chainId, context);
+  // Increment global, network, and version safe counts
+  await incrementSafeCount(chainId, version, context);
 });
 
 
@@ -148,7 +151,8 @@ GnosisSafeProxy1_4_1.ProxyCreation.handler(async ({ event, context }) => {
 GnosisSafeProxy1_5_0.ProxyCreation.handler(async ({ event, context }) => {
   const { proxy } = event.params;
   const { hash } = event.transaction;
-  const { chainId } = event;
+  const { chainId, block } = event;
+  const version = "V1_5_0" as const;
 
   const safeId = `${chainId}-${proxy}`;
 
@@ -159,8 +163,9 @@ GnosisSafeProxy1_5_0.ProxyCreation.handler(async ({ event, context }) => {
     id: safeId,
     owners: [],
     chainId,
-    version: "V1_5_0",
+    version,
     creationTxHash: hash,
+    creationTimestamp: BigInt(block.timestamp),
     threshold: 0,
     address: proxy,
     initializer: "",
@@ -172,8 +177,8 @@ GnosisSafeProxy1_5_0.ProxyCreation.handler(async ({ event, context }) => {
 
   context.Safe.set(safe);
 
-  // Increment global and network safe counts
-  await incrementSafeCount(chainId, context);
+  // Increment global, network, and version safe counts
+  await incrementSafeCount(chainId, version, context);
 });
 
 GnosisSafeL2.SafeSetup.handler(async ({ event, context }) => {
@@ -188,6 +193,7 @@ GnosisSafeL2.SafeSetup.handler(async ({ event, context }) => {
   if (existingSafe) {
     const safe: Safe = {
       ...existingSafe,
+      owners, // Update owners array from SafeSetup event
       threshold: Number(threshold),
       initializer,
       initiator,
@@ -249,8 +255,8 @@ GnosisSafeL2.SafeMultiSigTransaction.handler(async ({ event, context }) => {
       txHash: hash,
     });
 
-  // Increment global and network transaction counts
-  await incrementTransactionCount(chainId, context);
+  // Increment global, network, and version transaction counts
+  await incrementTransactionCount(chainId, safe.version, context);
   },{ wildcard: true }
 );
 
@@ -284,8 +290,8 @@ GnosisSafeL2.SafeModuleTransaction.handler(async ({ event, context }) => {
     timestamp: BigInt(timestamp),
   });
 
-  // Increment global and network module transaction counts
-  await incrementModuleTransactionCount(chainId, context);
+  // Increment global, network, and version module transaction counts
+  await incrementModuleTransactionCount(chainId, safe.version, context);
 }, { wildcard: true });
 
 GnosisSafeL2.AddedOwner.handler(async ({ event, context }) => {

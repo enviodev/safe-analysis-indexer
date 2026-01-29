@@ -25,9 +25,18 @@ type Network {
     @derivedFrom(field: "network")
 }
 
+# Per-version statistics
+type Version {
+  id: ID! # version string (e.g., "V1_3_0")
+  numberOfSafes: Int!
+  numberOfTransactions: Int!
+  numberOfModuleTransactions: Int!
+}
+
 type Safe {
   id: ID! # chainId-address
   creationTxHash: String! @index
+  creationTimestamp: BigInt! @index
   address: String! @index
   chainId: Int! @index
   owners: [String!]!
