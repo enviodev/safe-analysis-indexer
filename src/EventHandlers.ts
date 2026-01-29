@@ -217,6 +217,7 @@ GnosisSafeProxy1_5_0.ProxyCreation.handler(async ({ event, context }) => {
 GnosisSafeL2.SafeSetup.handler(async ({ event, context }) => {
   const { owners, threshold, initializer, initiator } = event.params;
   const { srcAddress, chainId } = event;
+  const { hash } = event.transaction;
 
   const safeId = `${chainId}-${srcAddress}`;
 
@@ -247,7 +248,7 @@ GnosisSafeL2.SafeSetup.handler(async ({ event, context }) => {
       chainId,
       address: srcAddress,
       version: "V1_3_0", // Default, will be updated by ProxyCreation
-      creationTxHash: event.transaction.hash,
+      creationTxHash: hash,
       creationTimestamp: BigInt(event.block.timestamp),
       initializer,
       initiator,
@@ -270,7 +271,7 @@ GnosisSafeL2.SafeMultiSigTransaction.handler(async ({ event, context }) => {
   const { srcAddress, chainId } = event;
   const { hash } = event.transaction;
   const { timestamp } = event.block;
-  const safeId = chainId+"-"+srcAddress;
+  const safeId = chainId + "-" + srcAddress;
 
   const safe = await context.Safe.get(safeId);
   if (!safe) {
@@ -290,31 +291,31 @@ GnosisSafeL2.SafeMultiSigTransaction.handler(async ({ event, context }) => {
 
   const networkId = chainId.toString();
 
-  context.SafeTransaction.set({        
-      id: `${hash}-${event.logIndex}`,
-      safe_id: safeId,
-      network_id: networkId,
-      chainId,
-      to,
-      value,
-      data,
-      operation,
-      safeTxGas,
-      baseGas,
-      gasPrice,
-      gasToken,
-      refundReceiver,
-      signatures,
-      nonce,
-      msgSender,
-      threshold: Number(decodedThreshold),
-      executionDate: BigInt(timestamp),
-      txHash: hash,
-    });
+  context.SafeTransaction.set({
+    id: `${hash}-${event.logIndex}`,
+    safe_id: safeId,
+    network_id: networkId,
+    chainId,
+    to,
+    value,
+    data,
+    operation,
+    safeTxGas,
+    baseGas,
+    gasPrice,
+    gasToken,
+    refundReceiver,
+    signatures,
+    nonce,
+    msgSender,
+    threshold: Number(decodedThreshold),
+    executionDate: BigInt(timestamp),
+    txHash: hash,
+  });
 
   // Increment global, network, and version transaction counts
   await incrementTransactionCount(chainId, safe.version, context);
-  },{ wildcard: true }
+}, { wildcard: true }
 );
 
 GnosisSafeL2.SafeModuleTransaction.handler(async ({ event, context }) => {
@@ -370,16 +371,16 @@ GnosisSafeL2.RemovedOwnerV4.handler(async ({ event, context }) => {
 
 GnosisSafeL2.ExecutionSuccess.handler(async ({ event, context }) => {
   await executionSuccess(event, context);
-},{ wildcard: true });
+}, { wildcard: true });
 
 GnosisSafeL2.ExecutionSuccessV4.handler(async ({ event, context }) => {
   await executionSuccess(event, context);
-},{ wildcard: true });
+}, { wildcard: true });
 
 GnosisSafeL2.ExecutionFailure.handler(async ({ event, context }) => {
   await executionFailure(event, context);
-},{ wildcard: true });
+}, { wildcard: true });
 
 GnosisSafeL2.ExecutionFailureV4.handler(async ({ event, context }) => {
   await executionFailure(event, context);
-},{ wildcard: true });
+}, { wildcard: true });
