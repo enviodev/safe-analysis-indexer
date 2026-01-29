@@ -87,26 +87,37 @@ GnosisSafeProxy1_3_0.ProxyCreation.handler(async ({ event, context }) => {
 
   const safeId = `${chainId}-${proxy}`;
 
-  // The SafeSetup event will be handled by the registered GnosisSafeL2 contract
-  // We just need to create a placeholder safe entry here if needed
-  // The actual owners and threshold will be set when SafeSetup is emitted
-  const safe: Safe = {
-    id: safeId,
-    owners: [],
-    chainId,
-    version,
-    creationTxHash: hash,
-    creationTimestamp: BigInt(block.timestamp),
-    threshold: 0,
-    address: proxy,
-    initializer: "",
-    initiator: "",
-    numberOfSuccessfulExecutions: 0,
-    numberOfFailedExecutions: 0,
-    totalGasSpent: 0n,
-  };
+  // Check if SafeSetup already created this Safe (fires before ProxyCreation in same tx)
+  const existingSafe = await context.Safe.get(safeId);
 
-  context.Safe.set(safe);
+  if (existingSafe) {
+    // SafeSetup already created the Safe - just update version and creation info
+    context.Safe.set({
+      ...existingSafe,
+      version,
+      creationTxHash: hash,
+      creationTimestamp: BigInt(block.timestamp),
+    });
+  } else {
+    // Create placeholder - SafeSetup will update owners/threshold
+    const safe: Safe = {
+      id: safeId,
+      owners: [],
+      chainId,
+      version,
+      creationTxHash: hash,
+      creationTimestamp: BigInt(block.timestamp),
+      threshold: 0,
+      address: proxy,
+      initializer: "",
+      initiator: "",
+      numberOfSuccessfulExecutions: 0,
+      numberOfFailedExecutions: 0,
+      totalGasSpent: 0n,
+    };
+
+    context.Safe.set(safe);
+  }
 
   // Increment global, network, and version safe counts
   await incrementSafeCount(chainId, version, context);
@@ -121,26 +132,37 @@ GnosisSafeProxy1_4_1.ProxyCreation.handler(async ({ event, context }) => {
 
   const safeId = `${chainId}-${proxy}`;
 
-  // The SafeSetup event will be handled by the registered GnosisSafeL2 contract
-  // We just need to create a placeholder safe entry here if needed
-  // The actual owners and threshold will be set when SafeSetup is emitted
-  const safe: Safe = {
-    id: safeId,
-    owners: [],
-    chainId,
-    version,
-    creationTxHash: hash,
-    creationTimestamp: BigInt(block.timestamp),
-    threshold: 0,
-    address: proxy,
-    initializer: "",
-    initiator: "",
-    numberOfSuccessfulExecutions: 0,
-    numberOfFailedExecutions: 0,
-    totalGasSpent: 0n,
-  };
+  // Check if SafeSetup already created this Safe (fires before ProxyCreation in same tx)
+  const existingSafe = await context.Safe.get(safeId);
 
-  context.Safe.set(safe);
+  if (existingSafe) {
+    // SafeSetup already created the Safe - just update version and creation info
+    context.Safe.set({
+      ...existingSafe,
+      version,
+      creationTxHash: hash,
+      creationTimestamp: BigInt(block.timestamp),
+    });
+  } else {
+    // Create placeholder - SafeSetup will update owners/threshold
+    const safe: Safe = {
+      id: safeId,
+      owners: [],
+      chainId,
+      version,
+      creationTxHash: hash,
+      creationTimestamp: BigInt(block.timestamp),
+      threshold: 0,
+      address: proxy,
+      initializer: "",
+      initiator: "",
+      numberOfSuccessfulExecutions: 0,
+      numberOfFailedExecutions: 0,
+      totalGasSpent: 0n,
+    };
+
+    context.Safe.set(safe);
+  }
 
   // Increment global, network, and version safe counts
   await incrementSafeCount(chainId, version, context);
@@ -156,26 +178,37 @@ GnosisSafeProxy1_5_0.ProxyCreation.handler(async ({ event, context }) => {
 
   const safeId = `${chainId}-${proxy}`;
 
-  // The SafeSetup event will be handled by the registered GnosisSafeL2 contract
-  // We just need to create a placeholder safe entry here if needed
-  // The actual owners and threshold will be set when SafeSetup is emitted
-  const safe: Safe = {
-    id: safeId,
-    owners: [],
-    chainId,
-    version,
-    creationTxHash: hash,
-    creationTimestamp: BigInt(block.timestamp),
-    threshold: 0,
-    address: proxy,
-    initializer: "",
-    initiator: "",
-    numberOfSuccessfulExecutions: 0,
-    numberOfFailedExecutions: 0,
-    totalGasSpent: 0n,
-  };
+  // Check if SafeSetup already created this Safe (fires before ProxyCreation in same tx)
+  const existingSafe = await context.Safe.get(safeId);
 
-  context.Safe.set(safe);
+  if (existingSafe) {
+    // SafeSetup already created the Safe - just update version and creation info
+    context.Safe.set({
+      ...existingSafe,
+      version,
+      creationTxHash: hash,
+      creationTimestamp: BigInt(block.timestamp),
+    });
+  } else {
+    // Create placeholder - SafeSetup will update owners/threshold
+    const safe: Safe = {
+      id: safeId,
+      owners: [],
+      chainId,
+      version,
+      creationTxHash: hash,
+      creationTimestamp: BigInt(block.timestamp),
+      threshold: 0,
+      address: proxy,
+      initializer: "",
+      initiator: "",
+      numberOfSuccessfulExecutions: 0,
+      numberOfFailedExecutions: 0,
+      totalGasSpent: 0n,
+    };
+
+    context.Safe.set(safe);
+  }
 
   // Increment global, network, and version safe counts
   await incrementSafeCount(chainId, version, context);
@@ -187,24 +220,48 @@ GnosisSafeL2.SafeSetup.handler(async ({ event, context }) => {
 
   const safeId = `${chainId}-${srcAddress}`;
 
-  // Get existing safe if it was created via ProxyCreation handler - prevents false positives due to wildcard indexing
+  // Convert owners to a regular array (event params can be readonly)
+  const ownersArray = Array.isArray(owners) ? [...owners] : [];
+
+  // Get existing safe - might exist if ProxyCreation fired first, or might not exist yet
   let existingSafe = await context.Safe.get(safeId);
 
   if (existingSafe) {
+    // Update existing safe with owners and threshold from SafeSetup
     const safe: Safe = {
       ...existingSafe,
-      owners, // Update owners array from SafeSetup event
+      owners: ownersArray,
       threshold: Number(threshold),
       initializer,
       initiator,
     };
 
     context.Safe.set(safe);
+  } else {
+    // SafeSetup fired before ProxyCreation - create the Safe now
+    // ProxyCreation will update version and creationTxHash when it fires
+    const safe: Safe = {
+      id: safeId,
+      owners: ownersArray,
+      threshold: Number(threshold),
+      chainId,
+      address: srcAddress,
+      version: "V1_3_0", // Default, will be updated by ProxyCreation
+      creationTxHash: event.transaction.hash,
+      creationTimestamp: BigInt(event.block.timestamp),
+      initializer,
+      initiator,
+      numberOfSuccessfulExecutions: 0,
+      numberOfFailedExecutions: 0,
+      totalGasSpent: 0n,
+    };
 
-    // Add safe to each Owner entity
-    for (const owner of owners) {
-      await addSafeToOwner(owner, safeId, context);
-    }
+    context.Safe.set(safe);
+  }
+
+  // Add safe to each Owner entity
+  for (const owner of ownersArray) {
+    await addSafeToOwner(owner, safeId, context);
   }
 }, { wildcard: true });
 
