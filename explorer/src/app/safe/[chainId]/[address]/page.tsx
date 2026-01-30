@@ -16,7 +16,7 @@ import { AddressDisplay } from "@/components/AddressDisplay";
 import { NetworkBadge } from "@/components/NetworkBadge";
 import { OwnersList } from "@/components/OwnersList";
 import { MultichainInfoBox } from "@/components/MultichainInfoBox";
-import { TransactionRow } from "@/components/TransactionRow";
+import { SafeTransactionsList } from "./SafeTransactionsList";
 import { StatCard } from "@/components/StatCard";
 import { 
   getSafe, 
@@ -32,11 +32,14 @@ interface SafePageProps {
     chainId: string;
     address: string;
   }>;
+  searchParams: Promise<{ page?: string }>;
 }
 
-export default async function SafePage({ params }: SafePageProps) {
+export default async function SafePage({ params, searchParams }: SafePageProps) {
   const { chainId: chainIdStr, address } = await params;
+  const { page: pageStr } = await searchParams;
   const chainId = parseInt(chainIdStr);
+  const page = parseInt(pageStr || "1", 10);
 
   if (isNaN(chainId)) {
     notFound();
@@ -49,10 +52,16 @@ export default async function SafePage({ params }: SafePageProps) {
     notFound();
   }
 
+  // Calculate pagination
+  const limit = 20;
+  const offset = (page - 1) * limit;
+  const totalTransactions = safe.numberOfSuccessfulExecutions + safe.numberOfFailedExecutions;
+  const totalPages = Math.ceil(totalTransactions / limit);
+
   // Fetch related data in parallel
   const [allChainSafes, transactions, moduleTransactions] = await Promise.all([
     getSafesByAddress(address),
-    getSafeTransactions(safe.id, 20),
+    getSafeTransactions(safe.id, limit, offset),
     getSafeModuleTransactions(safe.id, 10),
   ]);
 
@@ -145,28 +154,14 @@ export default async function SafePage({ params }: SafePageProps) {
         {/* Transactions */}
         <div className="lg:col-span-2 space-y-6">
           {/* Safe Transactions */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Transactions</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              {transactions.length === 0 ? (
-                <div className="p-8 text-center text-muted-foreground">
-                  No transactions found
-                </div>
-              ) : (
-                <div className="divide-y divide-border">
-                  {transactions.map((tx) => (
-                    <TransactionRow 
-                      key={tx.id} 
-                      transaction={tx} 
-                      showSafe={false}
-                    />
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <SafeTransactionsList
+            transactions={transactions}
+            currentPage={page}
+            totalPages={totalPages}
+            totalTransactions={totalTransactions}
+            chainId={chainId}
+            address={address}
+          />
 
           {/* Module Transactions */}
           {moduleTransactions.length > 0 && (
