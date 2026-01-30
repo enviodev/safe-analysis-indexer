@@ -19,9 +19,9 @@ export function NetworkBadge({
   const iconPath = getChainIcon(chainId);
 
   const sizeClasses = {
-    sm: "w-4 h-4",
-    md: "w-5 h-5",
-    lg: "w-6 h-6",
+    sm: "w-5 h-5",
+    md: "w-6 h-6",
+    lg: "w-8 h-8",
   };
 
   return (
@@ -40,9 +40,9 @@ export function NetworkBadge({
         <span
           className={cn(
             "inline-flex items-center justify-center rounded-full text-white font-bold flex-shrink-0",
-            size === "sm" && "w-4 h-4 text-[10px]",
-            size === "md" && "w-5 h-5 text-xs",
-            size === "lg" && "w-6 h-6 text-sm"
+            size === "sm" && "w-5 h-5 text-xs",
+            size === "md" && "w-6 h-6 text-xs",
+            size === "lg" && "w-8 h-8 text-sm"
           )}
           style={{ backgroundColor: chain.color }}
         >

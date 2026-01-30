@@ -419,3 +419,208 @@ export async function getIndexedChains(): Promise<number[]> {
     return [];
   }
 }
+
+// Network entity interface
+export interface Network {
+  id: string; // chainId as string
+  numberOfSafes: number;
+  numberOfTransactions: number;
+  numberOfModuleTransactions: number;
+}
+
+// Get all networks with their stats
+export async function getNetworks(): Promise<Network[]> {
+  const query = gql`
+    query GetNetworks {
+      Network(order_by: { numberOfSafes: desc }) {
+        id
+        numberOfSafes
+        numberOfTransactions
+        numberOfModuleTransactions
+      }
+    }
+  `;
+  
+  try {
+    const data = await graphqlClient.request<{ Network: Network[] }>(query);
+    return data.Network || [];
+  } catch {
+    return [];
+  }
+}
+
+// Version entity interface
+export interface Version {
+  id: string;
+  numberOfSafes: number;
+  numberOfTransactions: number;
+  numberOfModuleTransactions: number;
+}
+
+// Get all versions with their stats
+export async function getVersions(): Promise<Version[]> {
+  const query = gql`
+    query GetVersions {
+      Version(order_by: { numberOfSafes: desc }) {
+        id
+        numberOfSafes
+        numberOfTransactions
+        numberOfModuleTransactions
+      }
+    }
+  `;
+  
+  try {
+    const data = await graphqlClient.request<{ Version: Version[] }>(query);
+    return data.Version || [];
+  } catch {
+    return [];
+  }
+}
+
+// Get paginated transactions with optional network filter (supports multiple chains)
+export async function getPaginatedTransactions(
+  limit: number = 20,
+  offset: number = 0,
+  chainIds?: number[]
+): Promise<{ transactions: SafeTransaction[]; total: number }> {
+  // Query with optional chainId filter (supports multiple chains with _in)
+  let whereClause = "";
+  if (chainIds && chainIds.length > 0) {
+    if (chainIds.length === 1) {
+      whereClause = `where: { chainId: { _eq: ${chainIds[0]} } }`;
+    } else {
+      whereClause = `where: { chainId: { _in: [${chainIds.join(", ")}] } }`;
+    }
+  }
+  
+  const query = gql`
+    ${SAFE_TRANSACTION_FRAGMENT}
+    query GetPaginatedTransactions($limit: Int!, $offset: Int!) {
+      SafeTransaction(
+        ${whereClause}
+        limit: $limit
+        offset: $offset
+        order_by: { executionDate: desc }
+      ) {
+        ...SafeTransactionFields
+      }
+    }
+  `;
+  
+  try {
+    const data = await graphqlClient.request<{ SafeTransaction: SafeTransaction[] }>(query, { 
+      limit, 
+      offset 
+    });
+    
+    // Get total count from Network entities if filtering by chains, otherwise GlobalStats
+    let total = 0;
+    if (chainIds && chainIds.length > 0) {
+      const networks = await getNetworks();
+      total = chainIds.reduce((sum, chainId) => {
+        const network = networks.find(n => n.id === chainId.toString());
+        return sum + (network?.numberOfTransactions || 0);
+      }, 0);
+    } else {
+      const stats = await getGlobalStats();
+      total = stats.totalTransactions;
+    }
+    
+    return {
+      transactions: data.SafeTransaction || [],
+      total,
+    };
+  } catch (error) {
+    console.error("Failed to fetch paginated transactions:", error);
+    return { transactions: [], total: 0 };
+  }
+}
+
+// Get paginated safes with optional network and version filters
+export async function getPaginatedSafes(
+  limit: number = 20,
+  offset: number = 0,
+  chainIds?: number[],
+  versions?: string[]
+): Promise<{ safes: Safe[]; total: number }> {
+  // Build where conditions
+  const conditions: string[] = [];
+  
+  if (chainIds && chainIds.length > 0) {
+    if (chainIds.length === 1) {
+      conditions.push(`chainId: { _eq: ${chainIds[0]} }`);
+    } else {
+      conditions.push(`chainId: { _in: [${chainIds.join(", ")}] }`);
+    }
+  }
+  
+  if (versions && versions.length > 0) {
+    if (versions.length === 1) {
+      conditions.push(`version: { _eq: "${versions[0]}" }`);
+    } else {
+      conditions.push(`version: { _in: [${versions.map(v => `"${v}"`).join(", ")}] }`);
+    }
+  }
+  
+  const whereClause = conditions.length > 0 ? `where: { ${conditions.join(", ")} }` : "";
+  
+  const query = gql`
+    ${SAFE_FRAGMENT}
+    query GetPaginatedSafes($limit: Int!, $offset: Int!) {
+      Safe(
+        ${whereClause}
+        limit: $limit
+        offset: $offset
+        order_by: { creationTimestamp: desc }
+      ) {
+        ...SafeFields
+      }
+    }
+  `;
+  
+  try {
+    const data = await graphqlClient.request<{ Safe: Safe[] }>(query, { 
+      limit, 
+      offset 
+    });
+    
+    // Get total count - this is approximate when filtering by both chain and version
+    let total = 0;
+    const hasChainFilter = chainIds && chainIds.length > 0;
+    const hasVersionFilter = versions && versions.length > 0;
+    
+    if (hasChainFilter && !hasVersionFilter) {
+      const networks = await getNetworks();
+      total = chainIds!.reduce((sum, chainId) => {
+        const network = networks.find(n => n.id === chainId.toString());
+        return sum + (network?.numberOfSafes || 0);
+      }, 0);
+    } else if (hasVersionFilter && !hasChainFilter) {
+      const allVersions = await getVersions();
+      total = versions!.reduce((sum, version) => {
+        const v = allVersions.find(ver => ver.id === version);
+        return sum + (v?.numberOfSafes || 0);
+      }, 0);
+    } else if (hasChainFilter && hasVersionFilter) {
+      // When both filters are applied, we can't get exact count from entities
+      // Use a larger fetch to estimate (this is a limitation)
+      total = data.Safe?.length || 0;
+      if (total === limit) {
+        // If we got exactly the limit, there's probably more
+        total = limit * 10; // Rough estimate for pagination
+      }
+    } else {
+      const stats = await getGlobalStats();
+      total = stats.totalSafes;
+    }
+    
+    return {
+      safes: data.Safe || [],
+      total,
+    };
+  } catch (error) {
+    console.error("Failed to fetch paginated safes:", error);
+    return { safes: [], total: 0 };
+  }
+}

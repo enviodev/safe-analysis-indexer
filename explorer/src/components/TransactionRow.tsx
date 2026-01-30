@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowRight, ExternalLink } from "lucide-react";
 import { AddressDisplay } from "./AddressDisplay";
@@ -9,14 +11,19 @@ import type { SafeTransaction } from "@/lib/graphql/queries";
 export interface TransactionRowProps {
   transaction: SafeTransaction;
   showSafe?: boolean;
+  isNew?: boolean;
 }
 
-export function TransactionRow({ transaction, showSafe = true }: TransactionRowProps) {
+export function TransactionRow({ transaction, showSafe = true, isNew = false }: TransactionRowProps) {
   const { safe } = transaction;
   const explorerUrl = getExplorerTxUrl(safe.chainId, transaction.txHash);
 
   return (
-    <div className="flex items-center justify-between py-3 px-4 hover:bg-muted/50 transition-colors border-b border-border last:border-b-0">
+    <div 
+      className={`flex items-center justify-between py-3 px-4 hover:bg-muted/50 transition-colors border-b border-border last:border-b-0 ${
+        isNew ? "animate-highlight-fade" : ""
+      }`}
+    >
       {/* Left side */}
       <div className="flex items-center gap-4 min-w-0 flex-1">
         <NetworkBadge chainId={safe.chainId} showName={false} size="sm" />

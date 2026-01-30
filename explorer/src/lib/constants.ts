@@ -75,7 +75,7 @@ export const CHAINS: Record<number, ChainConfig> = {
     name: "Monad",
     shortName: "MON",
     nativeToken: "MON",
-    explorerUrl: "https://explorer.monad.xyz",
+    explorerUrl: "https://monadscan.com",
     color: "#836EF9",
   },
   204: {
@@ -107,7 +107,7 @@ export const CHAINS: Record<number, ChainConfig> = {
     name: "HyperEVM",
     shortName: "HYPE",
     nativeToken: "HYPE",
-    explorerUrl: "https://hyperscan.xyz",
+    explorerUrl: "https://hypurrscan.io",
     color: "#00FF00",
   },
   1101: {
@@ -115,7 +115,7 @@ export const CHAINS: Record<number, ChainConfig> = {
     name: "Polygon zkEVM",
     shortName: "zkEVM",
     nativeToken: "ETH",
-    explorerUrl: "https://zkevm.polygonscan.com",
+    explorerUrl: "https://www.oklink.com/polygon-zkevm",
     color: "#8247E5",
   },
   5000: {
@@ -155,7 +155,7 @@ export const CHAINS: Record<number, ChainConfig> = {
     name: "Avalanche",
     shortName: "AVAX",
     nativeToken: "AVAX",
-    explorerUrl: "https://snowtrace.io",
+    explorerUrl: "https://snowscan.xyz",
     color: "#E84142",
   },
   59144: {

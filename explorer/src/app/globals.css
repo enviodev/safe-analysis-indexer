@@ -138,3 +138,17 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--muted-foreground);
 }
+
+/* Highlight fade animation for new transactions */
+@keyframes highlight-fade {
+  0% {
+    background-color: color-mix(in srgb, var(--primary) 30%, transparent);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.animate-highlight-fade {
+  animation: highlight-fade 1.2s ease-out forwards;
+}

@@ -1,4 +1,5 @@
-import { Wallet } from "lucide-react";
+import Link from "next/link";
+import { Wallet, ArrowRight } from "lucide-react";
 import { SearchInput } from "@/components/SearchInput";
 import { NetworksStatCard } from "@/components/NetworksStatCard";
 import { LiveFeed } from "@/components/LiveFeed";
@@ -52,7 +53,7 @@ export default async function HomePage() {
       </section>
 
       {/* Main Content Grid */}
-      <div className="container mx-auto px-4 grid grid-cols-1 lg:grid-cols-3 gap-4 py-8">
+      <div className="container mx-auto px-4 grid grid-cols-1 lg:grid-cols-3 gap-4 pb-8 pt-0">
         {/* Live Transactions Feed */}
         <div className="lg:col-span-2">
           <LiveFeed initialTransactions={recentTransactions} />
@@ -79,6 +80,14 @@ export default async function HomePage() {
                   ))}
                 </div>
               )}
+              {/* View All Link */}
+              <Link 
+                href="/safes"
+                className="flex items-center justify-center gap-2 py-3 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors border-t border-border"
+              >
+                View All Safes
+                <ArrowRight className="h-4 w-4" />
+              </Link>
             </CardContent>
           </Card>
         </div>
