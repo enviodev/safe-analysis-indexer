@@ -1,4 +1,4 @@
-export const GRAPHQL_ENDPOINT = process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT;
+export const GRAPHQL_ENDPOINT = process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || "";
 
 export const GITHUB_URL = "https://github.com/enviodev/safe-analysis-indexer-2";
 
@@ -13,7 +13,7 @@ export interface ChainConfig {
 
 // Chain IDs that have icons in /public/network-icons/{chainId}.png
 export const CHAINS_WITH_ICONS = new Set([
-  1, 10, 56, 100, 137, 143, 204, 324, 480, 999, 1101, 5000, 8453, 
+  1, 10, 56, 100, 137, 143, 204, 324, 480, 999, 1101, 5000, 8453,
   42161, 42220, 43114, 59144, 81457, 534352, 1313161554
 ]);
 

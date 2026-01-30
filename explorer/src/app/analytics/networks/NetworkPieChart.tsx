@@ -102,17 +102,11 @@ export function NetworkPieChart({ data }: NetworkPieChartProps) {
           outerRadius={140}
           paddingAngle={2}
           dataKey="value"
-<<<<<<< HEAD
-          label={({ name, percent }) => 
-            percent > 0.03 ? `${name} ${((percent || 0) * 100).toFixed(0)}%` : ""
-          }
-=======
           label={(props) => {
             const name = props.name as string | undefined;
             const percent = props.percent as number | undefined;
             return (percent ?? 0) > 0.03 ? `${name ?? ""} ${((percent ?? 0) * 100).toFixed(0)}%` : "";
           }}
->>>>>>> 2be53bd (fix: build errors)
           labelLine={false}
         >
           {majorItems.map((entry, index) => (
