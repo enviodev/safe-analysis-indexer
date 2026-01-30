@@ -1,0 +1,154 @@
+@import "tailwindcss";
+
+:root {
+  /* Background & Foreground */
+  --background: #ffffff;
+  --foreground: #1c1c1c;
+  
+  /* Card & Muted */
+  --card: #ffffff;
+  --card-foreground: #1c1c1c;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  
+  /* Primary - Green accent (darker for light mode) */
+  --primary: #0A9200;
+  --primary-foreground: #ffffff;
+  
+  /* Secondary */
+  --secondary: #f1f5f9;
+  --secondary-foreground: #1c1c1c;
+  
+  /* Accent */
+  --accent: #f1f5f9;
+  --accent-foreground: #1c1c1c;
+  
+  /* Success - Green for successful txs */
+  --success: #0A9200;
+  --success-foreground: #ffffff;
+  
+  /* Destructive - Red for failed txs */
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  
+  /* Warning */
+  --warning: #f59e0b;
+  --warning-foreground: #1c1c1c;
+  
+  /* Border & Input */
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #0A9200;
+  
+  /* Radius - slightly more square */
+  --radius: 0.375rem;
+}
+
+.dark {
+  /* Background & Foreground */
+  --background: #1c1c1c;
+  --foreground: #f8fafc;
+  
+  /* Card & Muted */
+  --card: #262626;
+  --card-foreground: #f8fafc;
+  --muted: #262626;
+  --muted-foreground: #94a3b8;
+  
+  /* Primary - Green accent */
+  --primary: #1AFF80;
+  --primary-foreground: #1c1c1c;
+  
+  /* Secondary */
+  --secondary: #262626;
+  --secondary-foreground: #f8fafc;
+  
+  /* Accent */
+  --accent: #262626;
+  --accent-foreground: #f8fafc;
+  
+  /* Success */
+  --success: #1AFF80;
+  --success-foreground: #1c1c1c;
+  
+  /* Destructive */
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  
+  /* Warning */
+  --warning: #f59e0b;
+  --warning-foreground: #1c1c1c;
+  
+  /* Border & Input */
+  --border: #333333;
+  --input: #333333;
+  --ring: #1AFF80;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius));
+  --radius-lg: calc(var(--radius) + 4px);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--muted);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
+/* Highlight fade animation for new transactions */
+@keyframes highlight-fade {
+  0% {
+    background-color: color-mix(in srgb, var(--primary) 30%, transparent);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.animate-highlight-fade {
+  animation: highlight-fade 1.2s ease-out forwards;
+}
