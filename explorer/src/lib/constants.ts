@@ -1,4 +1,4 @@
-export const GRAPHQL_ENDPOINT = process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || "https://enviodev-428dba8.dedicated.hyperindex.xyz/v1/graphql";
+export const GRAPHQL_ENDPOINT = process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT;
 
 export const GITHUB_URL = "https://github.com/enviodev/safe-analysis-indexer-2";
 
