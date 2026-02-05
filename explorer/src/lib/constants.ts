@@ -1,6 +1,6 @@
 export const GRAPHQL_ENDPOINT = process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT || "";
 
-export const GITHUB_URL = "https://github.com/enviodev/safe-analysis-indexer-2";
+export const GITHUB_URL = "https://github.com/enviodev/safe-analysis-indexer";
 
 export interface ChainConfig {
   id: number;
