@@ -1,9 +1,12 @@
 enum SafeVersion {
+  V0_1_0
   V1_0_0
-  V1_1_1ORV1_2_0
+  V1_1_1
+  V1_2_0
   V1_3_0
   V1_4_1
   V1_5_0
+  UNKNOWN
 }
 
 # Global statistics - single entity with id "global"
@@ -42,6 +45,7 @@ type Safe {
   owners: [String!]!
   threshold: Int!
   version: SafeVersion! @index
+  masterCopy: String # nullable - the singleton/master copy address if known
   safeOwners: [SafeOwner!]! @derivedFrom(field: "safe")
   initializer: String!
   safeTransactions: [SafeTransaction!]! @derivedFrom(field: "safe")
