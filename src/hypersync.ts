@@ -1,9 +1,17 @@
 import { createEffect, S } from "envio";
 import { HypersyncClient } from "@envio-dev/hypersync-client";
 import { ethers } from "ethers";
+import {
+    SafeVersion,
+    SETUP_ABI_V1_0_0,
+    SETUP_ABI_V1_1_1,
+    FACTORY_ABI
+} from "./consts";
 
-// Safe version type
-export type SafeVersion = "V1_0_0" | "V1_1_1ORV1_2_0";
+// Re-export SafeVersion for convenience
+export type { SafeVersion } from "./consts";
+// Re-export resolveVersionFromMasterCopy
+export { resolveVersionFromMasterCopy } from "./consts";
 
 // Cache for HyperSync clients per chain
 const clients: Record<number, HypersyncClient> = {};
@@ -18,25 +26,43 @@ function getClient(chainId: number): HypersyncClient {
     return clients[chainId];
 }
 
-// Safe 1.0.0 setup function ABI
-const SETUP_ABI_1_0_0 = [
-    "function setup(address[] calldata _owners, uint256 _threshold, address to, bytes calldata data, address paymentToken, uint256 payment, address payable paymentReceiver)"
-];
-const safeInterface1_0_0 = new ethers.Interface(SETUP_ABI_1_0_0);
+// Create ethers interfaces from ABIs
+const safeInterface1_0_0 = new ethers.Interface(SETUP_ABI_V1_0_0);
+const safeInterface1_1_1 = new ethers.Interface(SETUP_ABI_V1_1_1);
+const factoryInterface = new ethers.Interface(FACTORY_ABI);
 
-// Safe 1.1.1 setup function ABI (adds fallbackHandler parameter)
-const SETUP_ABI_1_1_1 = [
-    "function setup(address[] calldata _owners, uint256 _threshold, address to, bytes calldata data, address fallbackHandler, address paymentToken, uint256 payment, address payable paymentReceiver)"
-];
-const safeInterface1_1_1 = new ethers.Interface(SETUP_ABI_1_1_1);
-
-// Version-specific interfaces and selectors
+// Version-specific interfaces and selectors for Safe.setup
 const versionConfig = {
+    V0_1_0: {
+        interface: safeInterface1_0_0,
+        selector: safeInterface1_0_0.getFunction("setup")!.selector,
+    },
     V1_0_0: {
         interface: safeInterface1_0_0,
         selector: safeInterface1_0_0.getFunction("setup")!.selector,
     },
-    V1_1_1ORV1_2_0: {
+    V1_1_1: {
+        interface: safeInterface1_1_1,
+        selector: safeInterface1_1_1.getFunction("setup")!.selector,
+    },
+    V1_2_0: {
+        interface: safeInterface1_1_1,
+        selector: safeInterface1_1_1.getFunction("setup")!.selector,
+    },
+    V1_3_0: {
+        interface: safeInterface1_1_1,
+        selector: safeInterface1_1_1.getFunction("setup")!.selector,
+    },
+    V1_4_1: {
+        interface: safeInterface1_1_1,
+        selector: safeInterface1_1_1.getFunction("setup")!.selector,
+    },
+    V1_5_0: {
+        interface: safeInterface1_1_1,
+        selector: safeInterface1_1_1.getFunction("setup")!.selector,
+    },
+    // Unknown versions - try 1.1.1 ABI as fallback
+    UNKNOWN: {
         interface: safeInterface1_1_1,
         selector: safeInterface1_1_1.getFunction("setup")!.selector,
     },
@@ -107,3 +133,74 @@ export const getSetupTrace = createEffect(
         return undefined;
     }
 );
+
+// ------------------------------------------------------------------------------------
+// Master copy detection for distinguishing Safe versions
+// ------------------------------------------------------------------------------------
+
+// Effect to fetch the masterCopy used in a ProxyFactory / GnosisSafeProxyFactory call
+export const getMasterCopyFromTrace = createEffect(
+    {
+        name: "getMasterCopyFromTrace",
+        input: S.schema({
+            chainId: S.number,
+            blockNumber: S.number,
+            txHash: S.string,
+            factoryAddress: S.string,
+        }),
+        output: S.nullable(S.string),
+        rateLimit: false,
+        cache: true,
+    },
+    async ({ input }) => {
+        const client = getClient(input.chainId);
+
+        const data = await client.get({
+            fromBlock: input.blockNumber,
+            toBlock: input.blockNumber + 1,
+            traces: [
+                {
+                    to: [input.factoryAddress],
+                    callType: ["call", "delegatecall"],
+                },
+            ],
+            fieldSelection: { trace: ["Input", "TransactionHash", "To", "From", "CallType"] },
+        });
+
+        const totalTraces = data.data.traces.length;
+        let matchingTxTraces = 0;
+        let parsedTraces = 0;
+
+        for (const trace of data.data.traces) {
+            // Restrict to this specific transaction
+            if (!trace.transactionHash || trace.transactionHash.toLowerCase() !== input.txHash.toLowerCase()) {
+                continue;
+            }
+            matchingTxTraces++;
+
+            if (!trace.input || trace.input.length < 10) continue;
+
+            try {
+                const parsed = factoryInterface.parseTransaction({ data: trace.input });
+                if (!parsed) continue;
+                parsedTraces++;
+
+                if (parsed.name === "createProxy" || parsed.name === "createProxyWithNonce") {
+                    const masterCopy = (parsed.args[0] as string) || "";
+                    if (masterCopy && masterCopy !== "0x0000000000000000000000000000000000000000") {
+                        return masterCopy;
+                    }
+                }
+            } catch {
+                // Ignore traces that don't match the factory ABI
+                continue;
+            }
+        }
+
+        // Debug logging when no masterCopy found
+        console.log(`[TRACE DEBUG] chainId=${input.chainId} block=${input.blockNumber} txHash=${input.txHash.slice(0, 10)}... factory=${input.factoryAddress.slice(0, 10)}... | totalTraces=${totalTraces} matchingTx=${matchingTxTraces} parsed=${parsedTraces}`);
+
+        return undefined;
+    }
+);
+
