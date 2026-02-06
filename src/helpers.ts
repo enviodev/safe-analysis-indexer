@@ -205,6 +205,7 @@ export const executionSuccess = async (event: any, context: any) => {
     context.Safe.set({
       ...safe,
       numberOfSuccessfulExecutions: safe.numberOfSuccessfulExecutions + 1,
+      nonce: safe.nonce + 1,
       totalGasSpent: safe.totalGasSpent + payment,
     })
   }
@@ -224,6 +225,7 @@ export const executionFailure = async (event: any, context: any) => {
     context.Safe.set({
       ...safe,
       numberOfFailedExecutions: safe.numberOfFailedExecutions + 1,
+      nonce: safe.nonce + 1,
       totalGasSpent: safe.totalGasSpent + payment,
     })
   }

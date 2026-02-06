@@ -79,6 +79,7 @@ GnosisSafeProxyPre1_3_0.ProxyCreation.handler(async ({ event, context }) => {
     initiator: "",
     numberOfSuccessfulExecutions: 0,
     numberOfFailedExecutions: 0,
+    nonce: 0,
     totalGasSpent: 0n,
   };
 
@@ -159,6 +160,7 @@ GnosisSafeProxy1_3_0.ProxyCreation.handler(async ({ event, context }) => {
       initiator: "",
       numberOfSuccessfulExecutions: 0,
       numberOfFailedExecutions: 0,
+      nonce: 0,
       totalGasSpent: 0n,
     };
 
@@ -207,6 +209,7 @@ GnosisSafeProxy1_4_1.ProxyCreation.handler(async ({ event, context }) => {
       initiator: "",
       numberOfSuccessfulExecutions: 0,
       numberOfFailedExecutions: 0,
+      nonce: 0,
       totalGasSpent: 0n,
     };
 
@@ -256,6 +259,7 @@ GnosisSafeProxy1_5_0.ProxyCreation.handler(async ({ event, context }) => {
       initiator: "",
       numberOfSuccessfulExecutions: 0,
       numberOfFailedExecutions: 0,
+      nonce: 0,
       totalGasSpent: 0n,
     };
 
@@ -307,6 +311,7 @@ GnosisSafeL2.SafeSetup.handler(async ({ event, context }) => {
       initiator,
       numberOfSuccessfulExecutions: 0,
       numberOfFailedExecutions: 0,
+      nonce: 0,
       totalGasSpent: 0n,
     };
 

@@ -52,6 +52,7 @@ type Safe {
   safeModuleTransactions: [SafeModuleTransaction!]! @derivedFrom(field: "safe")
   numberOfSuccessfulExecutions: Int!
   numberOfFailedExecutions: Int!
+  nonce: Int!
   totalGasSpent: BigInt!
   initiator: String!
 }
