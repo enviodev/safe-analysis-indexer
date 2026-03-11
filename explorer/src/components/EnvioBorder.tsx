@@ -34,6 +34,9 @@ export function EnvioBorder() {
   };
 
   const thickness = "16px";
+  const fade = "40px";
+  const hMask = `linear-gradient(to right, black, black calc(100% - ${fade}), transparent)`;
+  const vMask = `linear-gradient(to bottom, black, black calc(100% - ${fade}), transparent)`;
 
   return (
     <div className="hidden sm:block">
@@ -43,7 +46,7 @@ export function EnvioBorder() {
         target="_blank"
         rel="noopener noreferrer"
         {...handlers}
-        style={{ ...shared, top: 0, left: 0, right: 0, height: thickness }}
+        style={{ ...shared, top: 0, left: 0, right: 0, height: thickness, maskImage: hMask, WebkitMaskImage: hMask }}
       >
         {ENVIO_TEXT}
       </a>
@@ -61,6 +64,8 @@ export function EnvioBorder() {
           right: 0,
           height: thickness,
           transform: "rotate(180deg)",
+          maskImage: hMask,
+          WebkitMaskImage: hMask,
         }}
       >
         {ENVIO_TEXT}
@@ -80,6 +85,8 @@ export function EnvioBorder() {
           width: thickness,
           writingMode: "vertical-lr",
           transform: "rotate(180deg)",
+          maskImage: vMask,
+          WebkitMaskImage: vMask,
         }}
       >
         {ENVIO_TEXT}
@@ -98,6 +105,8 @@ export function EnvioBorder() {
           right: 0,
           width: thickness,
           writingMode: "vertical-lr",
+          maskImage: vMask,
+          WebkitMaskImage: vMask,
         }}
       >
         {ENVIO_TEXT}
