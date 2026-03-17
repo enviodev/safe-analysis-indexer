@@ -160,17 +160,20 @@ export const addOwner = async (event: any, context: any) => {
   const safe = await context.Safe.get(safeId);
 
   if (!safe) {
-    // not a safe 
+    // not a safe
     return;
-  } else {
-    context.Safe.set({
-      ...safe,
-      owners: [...safe.owners, owner],
-    });
-
-    // Add safe to Owner entity
-    await addSafeToOwner(owner, safeId, context);
   }
+
+  // Deduplicate: both AddedOwner and AddedOwnerV4 can fire for the same event
+  if (safe.owners.includes(owner)) return;
+
+  context.Safe.set({
+    ...safe,
+    owners: [...safe.owners, owner],
+  });
+
+  // Add safe to Owner entity
+  await addSafeToOwner(owner, safeId, context);
 };
 
 export const removeOwner = async (event: any, context: any) => {
@@ -181,20 +184,41 @@ export const removeOwner = async (event: any, context: any) => {
   const safe = await context.Safe.get(safeId);
 
   if (!safe) {
-    // not a safe 
+    // not a safe
     return;
-  } else {
-    context.Safe.set({
-      ...safe,
-      owners: safe.owners.filter((o: string) => o !== owner),
-    });
-
-    // Remove safe from Owner entity
-    await removeSafeFromOwner(owner, safeId, context);
   }
+
+  // Deduplicate: both RemovedOwner and RemovedOwnerV4 can fire for the same event
+  if (!safe.owners.includes(owner)) return;
+
+  context.Safe.set({
+    ...safe,
+    owners: safe.owners.filter((o: string) => o !== owner),
+  });
+
+  // Remove safe from Owner entity
+  await removeSafeFromOwner(owner, safeId, context);
 };
 
+// Dedup guard for execution events: both ExecutionSuccess and ExecutionSuccessV4
+// (and Failure variants) fire for the same on-chain event because indexed/non-indexed
+// versions share the same topic0 hash. Track recently processed events to skip duplicates.
+const processedExecutions = new Set<string>();
+
+function executionDedup(event: any): boolean {
+  const key = `${event.chainId}-${event.block.number}-${event.logIndex}`;
+  if (processedExecutions.has(key)) return true;
+  processedExecutions.add(key);
+  // Keep set bounded — clear old entries periodically
+  if (processedExecutions.size > 10_000) {
+    processedExecutions.clear();
+  }
+  return false;
+}
+
 export const executionSuccess = async (event: any, context: any, enableTraces: boolean = false) => {
+  if (executionDedup(event)) return;
+
   const { payment } = event.params;
   const { srcAddress, chainId } = event;
   const safeId = chainId + "-" + srcAddress;
@@ -223,6 +247,8 @@ export const executionSuccess = async (event: any, context: any, enableTraces: b
 };
 
 export const executionFailure = async (event: any, context: any, enableTraces: boolean = false) => {
+  if (executionDedup(event)) return;
+
   const { payment } = event.params;
   const { srcAddress, chainId } = event;
   const safeId = chainId + "-" + srcAddress;

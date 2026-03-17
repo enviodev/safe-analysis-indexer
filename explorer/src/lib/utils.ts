@@ -112,12 +112,16 @@ export function parseChainIdFromSafeId(safeId: string): { chainId: number; addre
 
 // Version formatting map
 const VERSION_MAP: Record<string, string> = {
+  "V0_0_2": "v0.0.2",
+  "V0_1_0": "v0.1.0",
   "V1_0_0": "v1.0.0",
-  "V1_1_1ORV1_2_0": "v1.1.1/v1.2.0",
+  "V1_1_0": "v1.1.0",
+  "V1_1_1": "v1.1.1",
+  "V1_2_0": "v1.2.0",
   "V1_3_0": "v1.3.0",
-  "V1_4_0": "v1.4.0",
   "V1_4_1": "v1.4.1",
   "V1_5_0": "v1.5.0",
+  "UNKNOWN": "Unknown",
 };
 
 export function formatSafeVersion(version: string): string {

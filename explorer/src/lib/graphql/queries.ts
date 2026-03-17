@@ -2,7 +2,7 @@ import { gql } from "graphql-request";
 import { graphqlClient } from "./client";
 
 // Types based on schema.graphql
-export type SafeVersion = "V1_0_0" | "V1_1_1ORV1_2_0" | "V1_3_0" | "V1_4_1" | "V1_5_0";
+export type SafeVersion = "V0_0_2" | "V0_1_0" | "V1_0_0" | "V1_1_0" | "V1_1_1" | "V1_2_0" | "V1_3_0" | "V1_4_1" | "V1_5_0" | "UNKNOWN";
 
 export interface Safe {
   id: string;
