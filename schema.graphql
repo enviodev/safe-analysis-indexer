@@ -86,7 +86,7 @@ type SafeModuleTransaction {
 }
 
 type SafeTransaction {
-  id: ID! # txHash-logIndex
+  id: ID! # safeId-nonce (e.g. "1-0xabc...-42")
   safe: Safe! @index
   network: Network! @index
   chainId: Int! @index
@@ -105,4 +105,5 @@ type SafeTransaction {
   threshold: Int!
   executionDate: BigInt! @index
   txHash: String! @index
+  success: Boolean # null until ExecutionSuccess/Failure fires
 }

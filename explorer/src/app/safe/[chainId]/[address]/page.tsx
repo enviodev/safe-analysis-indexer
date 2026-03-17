@@ -16,6 +16,7 @@ import { AddressDisplay } from "@/components/AddressDisplay";
 import { NetworkBadge } from "@/components/NetworkBadge";
 import { OwnersList } from "@/components/OwnersList";
 import { MultichainInfoBox } from "@/components/MultichainInfoBox";
+import { ModuleTransactionRow } from "@/components/ModuleTransactionRow";
 import { SafeTransactionsList } from "./SafeTransactionsList";
 import { StatCard } from "@/components/StatCard";
 import { 
@@ -169,32 +170,10 @@ export default async function SafePage({ params, searchParams }: SafePageProps) 
               <CardHeader>
                 <CardTitle>Module Transactions</CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
+              <CardContent className="p-0">
+                <div className="divide-y divide-border">
                   {moduleTransactions.map((tx) => (
-                    <div 
-                      key={tx.id}
-                      className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
-                    >
-                      <div>
-                        <div className="text-sm font-medium">
-                          Module: <AddressDisplay address={tx.safeModule} showCopy />
-                        </div>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          To: <AddressDisplay address={tx.to} showCopy />
-                        </div>
-                      </div>
-                      {tx.txHash && (
-                        <a
-                          href={getExplorerTxUrl(chainId, tx.txHash)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary hover:underline text-sm"
-                        >
-                          View tx
-                        </a>
-                      )}
-                    </div>
+                    <ModuleTransactionRow key={tx.id} transaction={tx} />
                   ))}
                 </div>
               </CardContent>

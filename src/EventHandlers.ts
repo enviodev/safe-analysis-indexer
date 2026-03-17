@@ -271,7 +271,7 @@ GnosisSafeL2.SafeMultiSigTransaction.handler(async ({ event, context }) => {
   const networkId = chainId.toString();
 
   context.SafeTransaction.set({
-    id: `${hash}-${event.logIndex}`,
+    id: `${safeId}-${Number(nonce)}`,
     safe_id: safeId,
     network_id: networkId,
     chainId,
@@ -290,6 +290,7 @@ GnosisSafeL2.SafeMultiSigTransaction.handler(async ({ event, context }) => {
     threshold: Number(decodedThreshold),
     executionDate: BigInt(timestamp),
     txHash: hash,
+    success: undefined,
   });
 
   // Increment global, network, and version transaction counts

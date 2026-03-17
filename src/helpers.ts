@@ -230,7 +230,7 @@ export const executionSuccess = async (event: any, context: any, enableTraces: b
     return;
   }
 
-  // Capture nonce before incrementing (used for L1 SafeTransaction)
+  // Capture nonce before incrementing
   const currentNonce = safe.nonce;
 
   context.Safe.set({
@@ -240,8 +240,13 @@ export const executionSuccess = async (event: any, context: any, enableTraces: b
     totalGasSpent: safe.totalGasSpent + payment,
   });
 
-  // For L1 Safes, fetch execTransaction trace to create SafeTransaction entity
-  if (enableTraces && isL1Safe(safe)) {
+  // Link success to SafeTransaction (L2: created by SafeMultiSigTransaction handler)
+  const txId = `${safeId}-${currentNonce}`;
+  const existingTx = await context.SafeTransaction.get(txId);
+  if (existingTx) {
+    context.SafeTransaction.set({ ...existingTx, success: true });
+  } else if (enableTraces && isL1Safe(safe)) {
+    // L1 Safes: no SafeMultiSigTransaction event, create from traces
     await createL1SafeTransaction(event, context, safe, currentNonce, true);
   }
 };
@@ -270,8 +275,13 @@ export const executionFailure = async (event: any, context: any, enableTraces: b
     totalGasSpent: safe.totalGasSpent + payment,
   });
 
-  // For L1 Safes, fetch execTransaction trace to create SafeTransaction entity
-  if (enableTraces && isL1Safe(safe)) {
+  // Link failure to SafeTransaction (L2: created by SafeMultiSigTransaction handler)
+  const txId = `${safeId}-${currentNonce}`;
+  const existingTx = await context.SafeTransaction.get(txId);
+  if (existingTx) {
+    context.SafeTransaction.set({ ...existingTx, success: false });
+  } else if (enableTraces && isL1Safe(safe)) {
+    // L1 Safes: no SafeMultiSigTransaction event, create from traces
     await createL1SafeTransaction(event, context, safe, currentNonce, false);
   }
 };
@@ -298,7 +308,7 @@ async function createL1SafeTransaction(event: any, context: any, safe: any, nonc
     const networkId = chainId.toString();
 
     context.SafeTransaction.set({
-      id: `${hash}-${logIndex}`,
+      id: `${safeId}-${nonce}`,
       safe_id: safeId,
       network_id: networkId,
       chainId,
@@ -317,6 +327,7 @@ async function createL1SafeTransaction(event: any, context: any, safe: any, nonc
       threshold: safe.threshold,
       executionDate: BigInt(block.timestamp),
       txHash: hash,
+      success: isSuccess,
     });
 
     // Increment global, network, and version transaction counts

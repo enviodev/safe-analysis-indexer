@@ -49,6 +49,7 @@ export interface SafeTransaction {
   threshold: number;
   executionDate: string;
   txHash: string;
+  success: boolean | null;
 }
 
 export interface SafeModuleTransaction {
@@ -60,6 +61,7 @@ export interface SafeModuleTransaction {
   data: string;
   operation: string;
   txHash: string;
+  timestamp: string;
 }
 
 // Queries
@@ -99,6 +101,7 @@ const SAFE_TRANSACTION_FRAGMENT = gql`
     threshold
     executionDate
     txHash
+    success
     safe {
       id
       address
@@ -259,6 +262,7 @@ export async function getSafeModuleTransactions(
         where: { safe_id: { _eq: $safeId } }
         limit: $limit
         offset: $offset
+        order_by: { timestamp: desc }
       ) {
         id
         safeModule
@@ -267,6 +271,7 @@ export async function getSafeModuleTransactions(
         data
         operation
         txHash
+        timestamp
         safe {
           id
           address
@@ -282,6 +287,32 @@ export async function getSafeModuleTransactions(
     offset 
   });
   return data.SafeModuleTransaction || [];
+}
+
+// Get a single module transaction by ID
+export async function getModuleTransaction(id: string): Promise<SafeModuleTransaction | null> {
+  const query = gql`
+    query GetModuleTransaction($id: String!) {
+      SafeModuleTransaction(where: { id: { _eq: $id } }, limit: 1) {
+        id
+        safeModule
+        to
+        value
+        data
+        operation
+        txHash
+        timestamp
+        safe {
+          id
+          address
+          chainId
+        }
+      }
+    }
+  `;
+
+  const data = await graphqlClient.request<{ SafeModuleTransaction: SafeModuleTransaction[] }>(query, { id });
+  return data.SafeModuleTransaction?.[0] || null;
 }
 
 // Search by address (could be Safe or Owner)
