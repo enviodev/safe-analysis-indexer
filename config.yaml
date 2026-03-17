@@ -26,11 +26,24 @@ contracts:
           transaction_fields:
             - hash
       - event: ExecutionSuccess(bytes32 txHash, uint256 payment)
+        field_selection:
+          transaction_fields:
+            - hash
       - event: ExecutionSuccess(bytes32 indexed txHash, uint256 payment)
         name: ExecutionSuccessV4
+        field_selection:
+          transaction_fields:
+            - hash
       - event: ExecutionFailure(bytes32 txHash, uint256 payment)
+        field_selection:
+          transaction_fields:
+            - hash
       - event: ExecutionFailure(bytes32 indexed txHash, uint256 payment)
         name: ExecutionFailureV4
+        field_selection:
+          transaction_fields:
+            - hash
+      - event: ChangedMasterCopy(address singleton)
       - event: SafeMultiSigTransaction(address to, uint256 value, bytes data, uint8 operation, uint256 safeTxGas, uint256 baseGas, uint256 gasPrice, address gasToken, address refundReceiver, bytes signatures, bytes additionalInfo)
         field_selection:
           transaction_fields:
@@ -69,6 +82,9 @@ contracts:
 networks:
   - id: 1 # ethereum
     start_block: 0
+    # hypersync_config:
+    #   # Use traces endpoint so the indexer head stays in sync with trace data availability
+    #   url: https://1-traces.hypersync.xyz
     contracts:
       - name: GnosisSafeProxyPre1_3_0
         address:
@@ -84,6 +100,9 @@ networks:
         address: 0x14F2982D601c9458F93bd70B218933A6f8165e7b
   - id: 100 # gnosis
     start_block: 0
+    # hypersync_config:
+    #   # Use traces endpoint so the indexer head stays in sync with trace data availability
+    #   url: https://100-traces.hypersync.xyz
     contracts:
       - name: GnosisSafeProxyPre1_3_0
         address:

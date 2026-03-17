@@ -1,3 +1,6 @@
+import { isL1Safe } from "./consts";
+import { getExecTransactionTrace, decodeExecTransaction } from "./hypersync";
+
 const GLOBAL_STATS_ID = "global";
 
 // Get or create GlobalStats entity
@@ -191,7 +194,7 @@ export const removeOwner = async (event: any, context: any) => {
   }
 };
 
-export const executionSuccess = async (event: any, context: any) => {
+export const executionSuccess = async (event: any, context: any, enableTraces: boolean = false) => {
   const { payment } = event.params;
   const { srcAddress, chainId } = event;
   const safeId = chainId + "-" + srcAddress;
@@ -201,17 +204,25 @@ export const executionSuccess = async (event: any, context: any) => {
   if (!safe) {
     //not a safe
     return;
-  } else {
-    context.Safe.set({
-      ...safe,
-      numberOfSuccessfulExecutions: safe.numberOfSuccessfulExecutions + 1,
-      nonce: safe.nonce + 1,
-      totalGasSpent: safe.totalGasSpent + payment,
-    })
   }
-}
 
-export const executionFailure = async (event: any, context: any) => {
+  // Capture nonce before incrementing (used for L1 SafeTransaction)
+  const currentNonce = safe.nonce;
+
+  context.Safe.set({
+    ...safe,
+    numberOfSuccessfulExecutions: safe.numberOfSuccessfulExecutions + 1,
+    nonce: safe.nonce + 1,
+    totalGasSpent: safe.totalGasSpent + payment,
+  });
+
+  // For L1 Safes, fetch execTransaction trace to create SafeTransaction entity
+  if (enableTraces && isL1Safe(safe)) {
+    await createL1SafeTransaction(event, context, safe, currentNonce, true);
+  }
+};
+
+export const executionFailure = async (event: any, context: any, enableTraces: boolean = false) => {
   const { payment } = event.params;
   const { srcAddress, chainId } = event;
   const safeId = chainId + "-" + srcAddress;
@@ -221,12 +232,70 @@ export const executionFailure = async (event: any, context: any) => {
   if (!safe) {
     //not a safe
     return;
-  } else {
-    context.Safe.set({
-      ...safe,
-      numberOfFailedExecutions: safe.numberOfFailedExecutions + 1,
-      nonce: safe.nonce + 1,
-      totalGasSpent: safe.totalGasSpent + payment,
-    })
+  }
+
+  // Capture nonce before incrementing
+  const currentNonce = safe.nonce;
+
+  context.Safe.set({
+    ...safe,
+    numberOfFailedExecutions: safe.numberOfFailedExecutions + 1,
+    nonce: safe.nonce + 1,
+    totalGasSpent: safe.totalGasSpent + payment,
+  });
+
+  // For L1 Safes, fetch execTransaction trace to create SafeTransaction entity
+  if (enableTraces && isL1Safe(safe)) {
+    await createL1SafeTransaction(event, context, safe, currentNonce, false);
+  }
+};
+
+// Create a SafeTransaction entity for L1 Safes by decoding execTransaction trace data
+async function createL1SafeTransaction(event: any, context: any, safe: any, nonce: number, isSuccess: boolean) {
+  const { srcAddress, chainId, block, logIndex } = event;
+  const { hash } = event.transaction;
+  const safeId = `${chainId}-${srcAddress}`;
+
+  try {
+    const traceResult = await context.effect(getExecTransactionTrace, {
+      chainId,
+      blockNumber: block.number,
+      txHash: hash,
+      safeAddress: srcAddress,
+    });
+
+    if (!traceResult) return;
+
+    const decoded = decodeExecTransaction(traceResult.input, traceResult.from);
+    if (!decoded) return;
+
+    const networkId = chainId.toString();
+
+    context.SafeTransaction.set({
+      id: `${hash}-${logIndex}`,
+      safe_id: safeId,
+      network_id: networkId,
+      chainId,
+      to: decoded.to,
+      value: decoded.value,
+      data: decoded.data,
+      operation: BigInt(decoded.operation),
+      safeTxGas: decoded.safeTxGas,
+      baseGas: decoded.baseGas,
+      gasPrice: decoded.gasPrice,
+      gasToken: decoded.gasToken,
+      refundReceiver: decoded.refundReceiver,
+      signatures: decoded.signatures,
+      nonce: BigInt(nonce),
+      msgSender: decoded.msgSender,
+      threshold: safe.threshold,
+      executionDate: BigInt(block.timestamp),
+      txHash: hash,
+    });
+
+    // Increment global, network, and version transaction counts
+    await incrementTransactionCount(chainId, safe.version, context);
+  } catch (e) {
+    console.log(`[L1 TRACE] Failed to create SafeTransaction for ${safeId} tx=${hash}:`, e);
   }
 }

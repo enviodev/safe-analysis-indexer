@@ -1,7 +1,7 @@
 import { Safe, GnosisSafeProxyPre1_3_0, SafePre1_3_0, GnosisSafeL2, GnosisSafeProxy1_3_0, GnosisSafeProxy1_4_1, GnosisSafeProxy1_5_0 } from "generated";
-import { addOwner, removeOwner, addSafeToOwner, executionSuccess, executionFailure, incrementSafeCount, incrementTransactionCount, incrementModuleTransactionCount } from "./helpers";
+import { addOwner, removeOwner, addSafeToOwner, executionSuccess, executionFailure, incrementSafeCount, incrementTransactionCount, incrementModuleTransactionCount, getOrCreateVersion } from "./helpers";
 import { getSetupTrace, decodeSetupInput, getMasterCopyFromTrace, resolveVersionFromMasterCopy } from "./hypersync";
-import { LEGACY_V1_0_0_PROXY } from "./consts";
+import { LEGACY_V1_0_0_PROXY, SafeVersion } from "./consts";
 import { decodeAbiParameters } from "viem";
 
 GnosisSafeProxyPre1_3_0.ProxyCreation.contractRegister(async ({ event, context }) => {
@@ -122,152 +122,73 @@ SafePre1_3_0.ChangedThreshold.handler(async ({ event, context }) => {
 });
 
 
-// Handler for ProxyCreation from v1.3.0 factory
+// Shared handler for v1.3.0+ ProxyCreation events.
+// Resolves version from singleton address, falling back to factory-implied version.
+async function handleModernProxyCreation(
+  event: { params: { proxy: string; singleton?: string }; transaction: { hash: string }; chainId: number; block: { timestamp: number } },
+  context: any,
+  factoryImpliedVersion: SafeVersion
+) {
+  const { proxy, singleton } = event.params;
+  const { hash } = event.transaction;
+  const { chainId, block } = event;
+  const masterCopy = singleton?.toLowerCase();
+
+  // Resolve version from singleton address; fall back to factory-implied version
+  const resolvedVersion = masterCopy ? resolveVersionFromMasterCopy(masterCopy) : undefined;
+  const version = resolvedVersion ?? factoryImpliedVersion;
+
+  const safeId = `${chainId}-${proxy}`;
+
+  // Check if SafeSetup already created this Safe (fires before ProxyCreation in same tx)
+  const existingSafe = await context.Safe.get(safeId);
+
+  if (existingSafe) {
+    // SafeSetup already created the Safe - just update version, creation info, and masterCopy
+    context.Safe.set({
+      ...existingSafe,
+      version,
+      masterCopy,
+      creationTxHash: hash,
+      creationTimestamp: BigInt(block.timestamp),
+    });
+  } else {
+    // Create placeholder - SafeSetup will update owners/threshold
+    const safe: Safe = {
+      id: safeId,
+      owners: [],
+      chainId,
+      version,
+      masterCopy,
+      creationTxHash: hash,
+      creationTimestamp: BigInt(block.timestamp),
+      threshold: 0,
+      address: proxy,
+      initializer: "",
+      initiator: "",
+      numberOfSuccessfulExecutions: 0,
+      numberOfFailedExecutions: 0,
+      nonce: 0,
+      totalGasSpent: 0n,
+    };
+
+    context.Safe.set(safe);
+  }
+
+  // Increment global, network, and version safe counts
+  await incrementSafeCount(chainId, version, context);
+}
+
 GnosisSafeProxy1_3_0.ProxyCreation.handler(async ({ event, context }) => {
-  const { proxy, singleton } = event.params;
-  const { hash } = event.transaction;
-  const { chainId, block } = event;
-  const version = "V1_3_0" as const;
-  const masterCopy = singleton?.toLowerCase();
-
-  const safeId = `${chainId}-${proxy}`;
-
-  // Check if SafeSetup already created this Safe (fires before ProxyCreation in same tx)
-  const existingSafe = await context.Safe.get(safeId);
-
-  if (existingSafe) {
-    // SafeSetup already created the Safe - just update version, creation info, and masterCopy
-    context.Safe.set({
-      ...existingSafe,
-      version,
-      masterCopy,
-      creationTxHash: hash,
-      creationTimestamp: BigInt(block.timestamp),
-    });
-  } else {
-    // Create placeholder - SafeSetup will update owners/threshold
-    const safe: Safe = {
-      id: safeId,
-      owners: [],
-      chainId,
-      version,
-      masterCopy,
-      creationTxHash: hash,
-      creationTimestamp: BigInt(block.timestamp),
-      threshold: 0,
-      address: proxy,
-      initializer: "",
-      initiator: "",
-      numberOfSuccessfulExecutions: 0,
-      numberOfFailedExecutions: 0,
-      nonce: 0,
-      totalGasSpent: 0n,
-    };
-
-    context.Safe.set(safe);
-  }
-
-  // Increment global, network, and version safe counts
-  await incrementSafeCount(chainId, version, context);
+  await handleModernProxyCreation(event, context, "V1_3_0");
 });
 
-// Handler for ProxyCreation from v1.4.1 factory
 GnosisSafeProxy1_4_1.ProxyCreation.handler(async ({ event, context }) => {
-  const { proxy, singleton } = event.params;
-  const { hash } = event.transaction;
-  const { chainId, block } = event;
-  const version = "V1_4_1" as const;
-  const masterCopy = singleton?.toLowerCase();
-
-  const safeId = `${chainId}-${proxy}`;
-
-  // Check if SafeSetup already created this Safe (fires before ProxyCreation in same tx)
-  const existingSafe = await context.Safe.get(safeId);
-
-  if (existingSafe) {
-    // SafeSetup already created the Safe - just update version, creation info, and masterCopy
-    context.Safe.set({
-      ...existingSafe,
-      version,
-      masterCopy,
-      creationTxHash: hash,
-      creationTimestamp: BigInt(block.timestamp),
-    });
-  } else {
-    // Create placeholder - SafeSetup will update owners/threshold
-    const safe: Safe = {
-      id: safeId,
-      owners: [],
-      chainId,
-      version,
-      masterCopy,
-      creationTxHash: hash,
-      creationTimestamp: BigInt(block.timestamp),
-      threshold: 0,
-      address: proxy,
-      initializer: "",
-      initiator: "",
-      numberOfSuccessfulExecutions: 0,
-      numberOfFailedExecutions: 0,
-      nonce: 0,
-      totalGasSpent: 0n,
-    };
-
-    context.Safe.set(safe);
-  }
-
-  // Increment global, network, and version safe counts
-  await incrementSafeCount(chainId, version, context);
+  await handleModernProxyCreation(event, context, "V1_4_1");
 });
 
-
-// Handler for ProxyCreation from v1.5.0 factory
 GnosisSafeProxy1_5_0.ProxyCreation.handler(async ({ event, context }) => {
-  const { proxy, singleton } = event.params;
-  const { hash } = event.transaction;
-  const { chainId, block } = event;
-  const version = "V1_5_0" as const;
-  const masterCopy = singleton?.toLowerCase();
-
-  const safeId = `${chainId}-${proxy}`;
-
-  // Check if SafeSetup already created this Safe (fires before ProxyCreation in same tx)
-  const existingSafe = await context.Safe.get(safeId);
-
-  if (existingSafe) {
-    // SafeSetup already created the Safe - just update version, creation info, and masterCopy
-    context.Safe.set({
-      ...existingSafe,
-      version,
-      masterCopy,
-      creationTxHash: hash,
-      creationTimestamp: BigInt(block.timestamp),
-    });
-  } else {
-    // Create placeholder - SafeSetup will update owners/threshold
-    const safe: Safe = {
-      id: safeId,
-      owners: [],
-      chainId,
-      version,
-      masterCopy,
-      creationTxHash: hash,
-      creationTimestamp: BigInt(block.timestamp),
-      threshold: 0,
-      address: proxy,
-      initializer: "",
-      initiator: "",
-      numberOfSuccessfulExecutions: 0,
-      numberOfFailedExecutions: 0,
-      nonce: 0,
-      totalGasSpent: 0n,
-    };
-
-    context.Safe.set(safe);
-  }
-
-  // Increment global, network, and version safe counts
-  await incrementSafeCount(chainId, version, context);
+  await handleModernProxyCreation(event, context, "V1_5_0");
 });
 
 GnosisSafeL2.SafeSetup.handler(async ({ event, context }) => {
@@ -428,17 +349,58 @@ GnosisSafeL2.RemovedOwnerV4.handler(async ({ event, context }) => {
 }, { wildcard: true });
 
 GnosisSafeL2.ExecutionSuccess.handler(async ({ event, context }) => {
-  await executionSuccess(event, context);
+  await executionSuccess(event, context, true);
 }, { wildcard: true });
 
 GnosisSafeL2.ExecutionSuccessV4.handler(async ({ event, context }) => {
-  await executionSuccess(event, context);
+  await executionSuccess(event, context, true);
 }, { wildcard: true });
 
 GnosisSafeL2.ExecutionFailure.handler(async ({ event, context }) => {
-  await executionFailure(event, context);
+  await executionFailure(event, context, true);
 }, { wildcard: true });
 
 GnosisSafeL2.ExecutionFailureV4.handler(async ({ event, context }) => {
-  await executionFailure(event, context);
+  await executionFailure(event, context, true);
+}, { wildcard: true });
+
+GnosisSafeL2.ChangedMasterCopy.handler(async ({ event, context }) => {
+  const { singleton } = event.params;
+  const { srcAddress, chainId } = event;
+  const safeId = `${chainId}-${srcAddress}`;
+
+  const safe = await context.Safe.get(safeId);
+  if (!safe) return;
+
+  const newMasterCopy = singleton.toLowerCase();
+  const newVersion = resolveVersionFromMasterCopy(newMasterCopy);
+
+  if (!newVersion) {
+    // Unknown singleton - update masterCopy but keep version
+    context.Safe.set({ ...safe, masterCopy: newMasterCopy });
+    return;
+  }
+
+  const oldVersion = safe.version;
+
+  context.Safe.set({
+    ...safe,
+    masterCopy: newMasterCopy,
+    version: newVersion,
+  });
+
+  // Adjust Version stats: decrement old, increment new
+  if (oldVersion !== newVersion) {
+    const oldVersionEntity = await getOrCreateVersion(oldVersion, context);
+    context.Version.set({
+      ...oldVersionEntity,
+      numberOfSafes: Math.max(0, oldVersionEntity.numberOfSafes - 1),
+    });
+
+    const newVersionEntity = await getOrCreateVersion(newVersion, context);
+    context.Version.set({
+      ...newVersionEntity,
+      numberOfSafes: newVersionEntity.numberOfSafes + 1,
+    });
+  }
 }, { wildcard: true });

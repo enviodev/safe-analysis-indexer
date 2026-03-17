@@ -5,7 +5,8 @@ import {
     SafeVersion,
     SETUP_ABI_V1_0_0,
     SETUP_ABI_V1_1_1,
-    FACTORY_ABI
+    FACTORY_ABI,
+    EXEC_TRANSACTION_ABI,
 } from "./consts";
 
 // Re-export SafeVersion for convenience
@@ -33,6 +34,10 @@ const factoryInterface = new ethers.Interface(FACTORY_ABI);
 
 // Version-specific interfaces and selectors for Safe.setup
 const versionConfig = {
+    V0_0_2: {
+        interface: safeInterface1_0_0,
+        selector: safeInterface1_0_0.getFunction("setup")!.selector,
+    },
     V0_1_0: {
         interface: safeInterface1_0_0,
         selector: safeInterface1_0_0.getFunction("setup")!.selector,
@@ -40,6 +45,10 @@ const versionConfig = {
     V1_0_0: {
         interface: safeInterface1_0_0,
         selector: safeInterface1_0_0.getFunction("setup")!.selector,
+    },
+    V1_1_0: {
+        interface: safeInterface1_1_1,
+        selector: safeInterface1_1_1.getFunction("setup")!.selector,
     },
     V1_1_1: {
         interface: safeInterface1_1_1,
@@ -199,6 +208,108 @@ export const getMasterCopyFromTrace = createEffect(
 
         // Debug logging when no masterCopy found
         console.log(`[TRACE DEBUG] chainId=${input.chainId} block=${input.blockNumber} txHash=${input.txHash.slice(0, 10)}... factory=${input.factoryAddress.slice(0, 10)}... | totalTraces=${totalTraces} matchingTx=${matchingTxTraces} parsed=${parsedTraces}`);
+
+        return undefined;
+    }
+);
+
+// ------------------------------------------------------------------------------------
+// execTransaction trace fetching for L1 Safe transaction decoding
+// ------------------------------------------------------------------------------------
+
+const execTransactionInterface = new ethers.Interface(EXEC_TRANSACTION_ABI);
+const execTransactionSelector = execTransactionInterface.getFunction("execTransaction")!.selector;
+
+export type ExecTransactionData = {
+    to: string;
+    value: bigint;
+    data: string;
+    operation: number;
+    safeTxGas: bigint;
+    baseGas: bigint;
+    gasPrice: bigint;
+    gasToken: string;
+    refundReceiver: string;
+    signatures: string;
+    msgSender: string;
+};
+
+// Decode execTransaction calldata
+export function decodeExecTransaction(inputData: string, from: string): ExecTransactionData | undefined {
+    if (!inputData || inputData.length < 10) return undefined;
+
+    const selector = inputData.slice(0, 10);
+    if (selector.toLowerCase() !== execTransactionSelector.toLowerCase()) return undefined;
+
+    try {
+        const decoded = execTransactionInterface.decodeFunctionData("execTransaction", inputData);
+        return {
+            to: decoded[0] as string,
+            value: BigInt(decoded[1]),
+            data: decoded[2] as string,
+            operation: Number(decoded[3]),
+            safeTxGas: BigInt(decoded[4]),
+            baseGas: BigInt(decoded[5]),
+            gasPrice: BigInt(decoded[6]),
+            gasToken: decoded[7] as string,
+            refundReceiver: decoded[8] as string,
+            signatures: decoded[9] as string,
+            msgSender: from,
+        };
+    } catch (e) {
+        console.log("decodeExecTransaction error:", e);
+        return undefined;
+    }
+}
+
+// Effect to fetch execTransaction trace for an L1 Safe in a given tx
+export const getExecTransactionTrace = createEffect(
+    {
+        name: "getExecTransactionTrace",
+        input: S.schema({
+            chainId: S.number,
+            blockNumber: S.number,
+            txHash: S.string,
+            safeAddress: S.string,
+        }),
+        output: S.nullable(S.schema({
+            input: S.string,
+            from: S.string,
+        })),
+        rateLimit: false,
+        cache: true,
+    },
+    async ({ input }) => {
+        const client = getClient(input.chainId);
+
+        const data = await client.get({
+            fromBlock: input.blockNumber,
+            toBlock: input.blockNumber + 1,
+            traces: [
+                {
+                    to: [input.safeAddress],
+                    callType: ["call"],
+                },
+            ],
+            fieldSelection: { trace: ["Input", "TransactionHash", "From"] },
+        });
+
+        for (const trace of data.data.traces) {
+            // Restrict to this specific transaction
+            if (!trace.transactionHash || trace.transactionHash.toLowerCase() !== input.txHash.toLowerCase()) {
+                continue;
+            }
+
+            if (!trace.input || trace.input.length < 10) continue;
+
+            const selector = trace.input.slice(0, 10);
+            if (selector.toLowerCase() === execTransactionSelector.toLowerCase()) {
+                return {
+                    input: trace.input,
+                    from: trace.from || "",
+                };
+            }
+        }
 
         return undefined;
     }
