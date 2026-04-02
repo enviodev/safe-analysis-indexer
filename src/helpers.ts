@@ -1,5 +1,5 @@
 import { isL1Safe } from "./consts";
-import { getExecTransactionTrace, decodeExecTransaction } from "./hypersync";
+import { decodeExecTransaction, getExecTransactionViaRpcTrace } from "./hypersync";
 
 const GLOBAL_STATS_ID = "global";
 
@@ -286,23 +286,30 @@ export const executionFailure = async (event: any, context: any, enableTraces: b
   }
 };
 
-// Create a SafeTransaction entity for L1 Safes by decoding execTransaction trace data
+// Create a SafeTransaction entity for L1 Safes by decoding execTransaction.
+// Primary: decode directly from event.transaction.input (works for direct calls).
+// Fallback: fetch via RPC trace_transaction (works for relayed calls).
 async function createL1SafeTransaction(event: any, context: any, safe: any, nonce: number, isSuccess: boolean) {
-  const { srcAddress, chainId, block, logIndex } = event;
-  const { hash } = event.transaction;
+  const { srcAddress, chainId, block } = event;
+  const { hash, input, from } = event.transaction;
   const safeId = `${chainId}-${srcAddress}`;
 
   try {
-    const traceResult = await context.effect(getExecTransactionTrace, {
-      chainId,
-      blockNumber: block.number,
-      txHash: hash,
-      safeAddress: srcAddress,
-    });
+    // Try decoding directly from transaction input (direct execTransaction calls)
+    let decoded = input ? decodeExecTransaction(input, from || "") : undefined;
 
-    if (!traceResult) return;
+    // Fallback: RPC trace_transaction for relayed transactions
+    if (!decoded) {
+      const traceResult = await context.effect(getExecTransactionViaRpcTrace, {
+        chainId,
+        txHash: hash,
+        safeAddress: srcAddress,
+      });
+      if (traceResult) {
+        decoded = decodeExecTransaction(traceResult.input, traceResult.from);
+      }
+    }
 
-    const decoded = decodeExecTransaction(traceResult.input, traceResult.from);
     if (!decoded) return;
 
     const networkId = chainId.toString();
@@ -333,6 +340,6 @@ async function createL1SafeTransaction(event: any, context: any, safe: any, nonc
     // Increment global, network, and version transaction counts
     await incrementTransactionCount(chainId, safe.version, context);
   } catch (e) {
-    console.log(`[L1 TRACE] Failed to create SafeTransaction for ${safeId} tx=${hash}:`, e);
+    console.log(`[L1 TX] Failed to create SafeTransaction for ${safeId} tx=${hash}:`, e);
   }
 }

@@ -214,11 +214,100 @@ export const getMasterCopyFromTrace = createEffect(
 );
 
 // ------------------------------------------------------------------------------------
-// execTransaction trace fetching for L1 Safe transaction decoding
+// execTransaction decoding for L1 Safe transaction decoding
 // ------------------------------------------------------------------------------------
 
 const execTransactionInterface = new ethers.Interface(EXEC_TRANSACTION_ABI);
 const execTransactionSelector = execTransactionInterface.getFunction("execTransaction")!.selector;
+
+// ------------------------------------------------------------------------------------
+// RPC trace fallback for chains without HyperSync traces support
+// ------------------------------------------------------------------------------------
+
+// DRPC endpoint per chain. Extend this map as needed.
+const RPC_URLS: Record<number, string> = {
+    480: `https://worldchain.drpc.org`,
+};
+
+function getRpcUrl(chainId: number): string | undefined {
+    const base = RPC_URLS[chainId];
+    if (!base) return undefined;
+    const apiKey = process.env.ENVIO_DRPC_API_KEY;
+    return apiKey ? `https://lb.drpc.org/ogrpc?network=worldchain&dkey=${apiKey}` : base;
+}
+
+// Fetch execTransaction calldata via RPC trace_transaction for relayed txs
+export const getExecTransactionViaRpcTrace = createEffect(
+    {
+        name: "getExecTransactionViaRpcTrace",
+        input: S.schema({
+            chainId: S.number,
+            txHash: S.string,
+            safeAddress: S.string,
+        }),
+        output: S.nullable(S.schema({
+            input: S.string,
+            from: S.string,
+        })),
+        rateLimit: false,
+        cache: true,
+    },
+    async ({ input }) => {
+        const rpcUrl = getRpcUrl(input.chainId);
+        if (!rpcUrl) return undefined;
+
+        const body = JSON.stringify({
+            jsonrpc: "2.0",
+            id: 1,
+            method: "trace_transaction",
+            params: [input.txHash],
+        });
+
+        const res = await fetch(rpcUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body,
+        });
+
+        if (!res.ok) {
+            console.log(`[RPC TRACE] trace_transaction HTTP ${res.status} for tx=${input.txHash}`);
+            return undefined;
+        }
+
+        const json = await res.json() as {
+            result?: Array<{
+                action?: { input?: string; from?: string; to?: string; callType?: string };
+            }>;
+            error?: { message?: string };
+        };
+
+        if (json.error) {
+            console.log(`[RPC TRACE] trace_transaction RPC error for tx=${input.txHash}: ${json.error.message}`);
+            return undefined;
+        }
+
+        if (!json.result) return undefined;
+
+        const safeAddr = input.safeAddress.toLowerCase();
+
+        for (const trace of json.result) {
+            const action = trace.action;
+            if (!action || !action.input || action.input.length < 10) continue;
+            if (action.callType !== "call") continue;
+            if (action.to?.toLowerCase() !== safeAddr) continue;
+
+            const selector = action.input.slice(0, 10);
+            if (selector.toLowerCase() === execTransactionSelector.toLowerCase()) {
+                return {
+                    input: action.input,
+                    from: action.from || "",
+                };
+            }
+        }
+
+        return undefined;
+    }
+);
 
 export type ExecTransactionData = {
     to: string;
@@ -262,56 +351,4 @@ export function decodeExecTransaction(inputData: string, from: string): ExecTran
     }
 }
 
-// Effect to fetch execTransaction trace for an L1 Safe in a given tx
-export const getExecTransactionTrace = createEffect(
-    {
-        name: "getExecTransactionTrace",
-        input: S.schema({
-            chainId: S.number,
-            blockNumber: S.number,
-            txHash: S.string,
-            safeAddress: S.string,
-        }),
-        output: S.nullable(S.schema({
-            input: S.string,
-            from: S.string,
-        })),
-        rateLimit: false,
-        cache: true,
-    },
-    async ({ input }) => {
-        const client = getClient(input.chainId);
-
-        const data = await client.get({
-            fromBlock: input.blockNumber,
-            toBlock: input.blockNumber + 1,
-            traces: [
-                {
-                    to: [input.safeAddress],
-                    callType: ["call"],
-                },
-            ],
-            fieldSelection: { trace: ["Input", "TransactionHash", "From"] },
-        });
-
-        for (const trace of data.data.traces) {
-            // Restrict to this specific transaction
-            if (!trace.transactionHash || trace.transactionHash.toLowerCase() !== input.txHash.toLowerCase()) {
-                continue;
-            }
-
-            if (!trace.input || trace.input.length < 10) continue;
-
-            const selector = trace.input.slice(0, 10);
-            if (selector.toLowerCase() === execTransactionSelector.toLowerCase()) {
-                return {
-                    input: trace.input,
-                    from: trace.from || "",
-                };
-            }
-        }
-
-        return undefined;
-    }
-);
 

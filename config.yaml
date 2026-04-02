@@ -29,20 +29,28 @@ contracts:
         field_selection:
           transaction_fields:
             - hash
+            - input
+            - from
       - event: ExecutionSuccess(bytes32 indexed txHash, uint256 payment)
         name: ExecutionSuccessV4
         field_selection:
           transaction_fields:
             - hash
+            - input
+            - from
       - event: ExecutionFailure(bytes32 txHash, uint256 payment)
         field_selection:
           transaction_fields:
             - hash
+            - input
+            - from
       - event: ExecutionFailure(bytes32 indexed txHash, uint256 payment)
         name: ExecutionFailureV4
         field_selection:
           transaction_fields:
             - hash
+            - input
+            - from
       - event: ChangedMasterCopy(address singleton)
       - event: SafeMultiSigTransaction(address to, uint256 value, bytes data, uint8 operation, uint256 safeTxGas, uint256 baseGas, uint256 gasPrice, address gasToken, address refundReceiver, bytes signatures, bytes additionalInfo)
         field_selection:
