@@ -18,12 +18,14 @@ import { OwnersList } from "@/components/OwnersList";
 import { MultichainInfoBox } from "@/components/MultichainInfoBox";
 import { ModuleTransactionRow } from "@/components/ModuleTransactionRow";
 import { SafeTransactionsList } from "./SafeTransactionsList";
+import { Erc20TransfersList } from "./Erc20TransfersList";
 import { StatCard } from "@/components/StatCard";
-import { 
-  getSafe, 
-  getSafesByAddress, 
+import {
+  getSafe,
+  getSafesByAddress,
   getSafeTransactions,
-  getSafeModuleTransactions 
+  getSafeModuleTransactions,
+  getSafeErc20Transfers,
 } from "@/lib/graphql/queries";
 import { getExplorerAddressUrl, getExplorerTxUrl } from "@/lib/constants";
 import { formatDate, formatSafeVersion } from "@/lib/utils";
@@ -33,14 +35,15 @@ interface SafePageProps {
     chainId: string;
     address: string;
   }>;
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; erc20Page?: string }>;
 }
 
 export default async function SafePage({ params, searchParams }: SafePageProps) {
   const { chainId: chainIdStr, address } = await params;
-  const { page: pageStr } = await searchParams;
+  const { page: pageStr, erc20Page: erc20PageStr } = await searchParams;
   const chainId = parseInt(chainIdStr);
   const page = parseInt(pageStr || "1", 10);
+  const erc20Page = parseInt(erc20PageStr || "1", 10);
 
   if (isNaN(chainId)) {
     notFound();
@@ -59,12 +62,20 @@ export default async function SafePage({ params, searchParams }: SafePageProps) 
   const totalTransactions = safe.numberOfSuccessfulExecutions + safe.numberOfFailedExecutions;
   const totalPages = Math.ceil(totalTransactions / limit);
 
+  // ERC20 transfer pagination — fetch limit+1 so we can detect a next page
+  // without relying on *_aggregate (not exposed on this endpoint).
+  const erc20PageSize = 20;
+  const erc20Offset = (erc20Page - 1) * erc20PageSize;
+
   // Fetch related data in parallel
-  const [allChainSafes, transactions, moduleTransactions] = await Promise.all([
+  const [allChainSafes, transactions, moduleTransactions, erc20Transfers] = await Promise.all([
     getSafesByAddress(address),
     getSafeTransactions(safe.id, limit, offset),
     getSafeModuleTransactions(safe.id, 10),
+    getSafeErc20Transfers(chainId, address, erc20PageSize + 1, erc20Offset),
   ]);
+  const erc20HasNextPage = erc20Transfers.length > erc20PageSize;
+  const erc20TransfersPage = erc20HasNextPage ? erc20Transfers.slice(0, erc20PageSize) : erc20Transfers;
 
   const explorerUrl = getExplorerAddressUrl(chainId, address);
   const creationTxUrl = getExplorerTxUrl(chainId, safe.creationTxHash);
@@ -160,6 +171,16 @@ export default async function SafePage({ params, searchParams }: SafePageProps) 
             currentPage={page}
             totalPages={totalPages}
             totalTransactions={totalTransactions}
+            chainId={chainId}
+            address={address}
+          />
+
+          {/* ERC20 Transfers (in & out of the Safe) */}
+          <Erc20TransfersList
+            transfers={erc20TransfersPage}
+            hasNextPage={erc20HasNextPage}
+            currentPage={erc20Page}
+            pageSize={erc20PageSize}
             chainId={chainId}
             address={address}
           />

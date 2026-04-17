@@ -328,6 +328,72 @@ export async function searchByAddress(address: string): Promise<{
   return { safes, ownedSafes };
 }
 
+// ERC20 Transfers touching a Safe (from wildcard topic-filter indexing)
+export interface ERC20Transfer {
+  id: string;
+  chainId: number;
+  blockNumber: number;
+  blockTimestamp: string; // numeric scalar — unix seconds as string
+  txHash: string;
+  logIndex: number;
+  token: string;
+  from: string;
+  to: string;
+  value: string;
+}
+
+const ERC20_TRANSFER_FRAGMENT = gql`
+  fragment ERC20TransferFields on ERC20Transfer {
+    id
+    chainId
+    blockNumber
+    blockTimestamp
+    txHash
+    logIndex
+    token
+    from
+    to
+    value
+  }
+`;
+
+// ERC20 transfers where the Safe appears as sender or receiver.
+// Fetches limit+1 rows so the caller can detect a next page without _aggregate.
+export async function getSafeErc20Transfers(
+  chainId: number,
+  address: string,
+  limit = 20,
+  offset = 0
+): Promise<ERC20Transfer[]> {
+  const query = gql`
+    ${ERC20_TRANSFER_FRAGMENT}
+    query GetSafeErc20Transfers(
+      $chainId: Int!
+      $addr: String!
+      $limit: Int!
+      $offset: Int!
+    ) {
+      ERC20Transfer(
+        where: {
+          chainId: { _eq: $chainId }
+          _or: [{ from: { _eq: $addr } }, { to: { _eq: $addr } }]
+        }
+        order_by: { blockTimestamp: desc, logIndex: desc }
+        limit: $limit
+        offset: $offset
+      ) {
+        ...ERC20TransferFields
+      }
+    }
+  `;
+
+  const data = await graphqlClient.request<{ ERC20Transfer: ERC20Transfer[] }>(
+    query,
+    { chainId, addr: address.toLowerCase(), limit, offset }
+  );
+  return data.ERC20Transfer || [];
+}
+
 // GlobalStats interface
 export interface GlobalStats {
   id: string;
