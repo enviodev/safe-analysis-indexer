@@ -8,10 +8,7 @@ contracts:
         field_selection:
           transaction_fields:
             - hash
-  # Safe event signatures are the same in v1.0.0, v1.1.1, and v1.2.0 so can use the same interface
-  # https://github.com/safe-fndn/safe-smart-account/blob/v1.0.0/contracts/base/OwnerManager.sol
-  # https://github.com/safe-fndn/safe-smart-account/blob/v1.1.1/contracts/base/OwnerManager.sol
-  # https://github.com/safe-fndn/safe-smart-account/blob/v1.2.0/contracts/base/OwnerManager.sol
+  # Safe event signatures are the same in v1.0.0, v1.1.1, and v1.2.0
   - name: SafePre1_3_0
     handler: src/EventHandlers.ts
     events:
@@ -87,11 +84,51 @@ contracts:
         field_selection:
           transaction_fields:
             - hash
-networks:
+  # Wildcard ERC20 Transfer filtered to transfers touching a known Safe address.
+  # Safe addresses are registered dynamically (see the ProxyCreation handlers),
+  # and HyperIndex auto-partitions the address pool at 5000/partition before
+  # pushing it down to HyperSync as a topic1/topic2 filter.
+  # Pattern: https://docs.envio.dev/docs/HyperIndex/wildcard-indexing#assert-erc20-transfers-in-handler
+  - name: SafeErc20Watcher
+    handler: src/EventHandlers.ts
+    events:
+      - event: Transfer(address indexed from, address indexed to, uint256 value)
+        field_selection:
+          transaction_fields:
+            - hash
+chains:
+  - id: 42161 # arbitrum
+    start_block: 0
+    contracts:
+      - name: GnosisSafeL2
+      - name: GnosisSafeProxy1_3_0
+        address: 0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2
+      - name: GnosisSafeProxy1_4_1
+        address: 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
+      - name: SafeErc20Watcher
+  - id: 143 # monad
+    start_block: 0
+    contracts:
+      - name: GnosisSafeL2
+      - name: GnosisSafeProxy1_3_0
+        address: 0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2
+      - name: GnosisSafeProxy1_4_1
+        address: 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
+      - name: SafeErc20Watcher
+  - id: 534352 # scroll
+    start_block: 0
+    contracts:
+      - name: GnosisSafeL2
+      - name: GnosisSafeProxy1_3_0
+        address: 0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2
+      - name: GnosisSafeProxy1_4_1
+        address: 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
+      - name: SafeErc20Watcher
+  # --- Additional supported chains (uncomment to enable) ---
   # - id: 1 # ethereum
   #   start_block: 0
   #   hypersync_config:
-  #     # Use traces endpoint so the indexer head stays in sync with trace data availability
+  #     # Traces endpoint keeps the head in sync with trace data availability
   #     url: https://1-traces.hypersync.xyz
   #   contracts:
   #     - name: GnosisSafeProxyPre1_3_0
@@ -106,22 +143,23 @@ networks:
   #       address: 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
   #     - name: GnosisSafeProxy1_5_0
   #       address: 0x14F2982D601c9458F93bd70B218933A6f8165e7b
+  #     - name: SafeErc20Watcher
   # - id: 100 # gnosis
   #   start_block: 0
   #   hypersync_config:
-  #     # Use traces endpoint so the indexer head stays in sync with trace data availability
   #     url: https://100-traces.hypersync.xyz
   #   contracts:
   #     - name: GnosisSafeProxyPre1_3_0
   #       address:
-  #         - 0x12302fE9c02ff50939BaAaaf415fc226C078613C # 1.0.0
-  #         - 0x76E2cFc1F5Fa8F6a5b3fC4c8F4788F0116861F9B # 1.1.1 and 1.2.0
+  #         - 0x12302fE9c02ff50939BaAaaf415fc226C078613C
+  #         - 0x76E2cFc1F5Fa8F6a5b3fC4c8F4788F0116861F9B
   #     - name: SafePre1_3_0
   #     - name: GnosisSafeL2
   #     - name: GnosisSafeProxy1_3_0
   #       address: 0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2
   #     - name: GnosisSafeProxy1_4_1
   #       address: 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
+  #     - name: SafeErc20Watcher
   # - id: 10 # optimism
   #   start_block: 0
   #   contracts:
@@ -130,6 +168,7 @@ networks:
   #       address: 0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2
   #     - name: GnosisSafeProxy1_4_1
   #       address: 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
+  #     - name: SafeErc20Watcher
   # - id: 56 # bsc
   #   start_block: 0
   #   contracts:
@@ -138,6 +177,7 @@ networks:
   #       address: 0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2
   #     - name: GnosisSafeProxy1_4_1
   #       address: 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
+  #     - name: SafeErc20Watcher
   # - id: 137 # polygon
   #   start_block: 0
   #   contracts:
@@ -146,94 +186,7 @@ networks:
   #       address: 0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2
   #     - name: GnosisSafeProxy1_4_1
   #       address: 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
-  - id: 480 # worldchain
-    start_block: 0
-    contracts:
-      - name: GnosisSafeL2
-      - name: GnosisSafeProxy1_3_0
-        address: 0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2
-      - name: GnosisSafeProxy1_4_1
-        address: 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
-  # - id: 1101 # polygon zkevm
-  #   start_block: 0
-  #   contracts:
-  #     - name: GnosisSafeL2
-  #     - name: GnosisSafeProxy1_3_0
-  #       address: 0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2
-  #     - name: GnosisSafeProxy1_4_1
-  #       address: 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
-  # - id: 5000 # mantle
-  #   start_block: 0
-  #   contracts:
-  #     - name: GnosisSafeL2
-  #     - name: GnosisSafeProxy1_3_0
-  #       address: 0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2
-  #     - name: GnosisSafeProxy1_4_1
-  #       address: 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
-  # - id: 8453 # base
-  #   start_block: 0
-  #   contracts:
-  #     - name: GnosisSafeL2
-  #     - name: GnosisSafeProxy1_3_0
-  #       address: 0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2
-  #     - name: GnosisSafeProxy1_4_1
-  #       address: 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
-  # - id: 42161 # arbitrum
-  #   start_block: 0
-  #   contracts:
-  #     - name: GnosisSafeL2
-  #     - name: GnosisSafeProxy1_3_0
-  #       address: 0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2
-  #     - name: GnosisSafeProxy1_4_1
-  #       address: 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
-  # - id: 42220 # celo
-  #   start_block: 0
-  #   contracts:
-  #     - name: GnosisSafeL2
-  #     - name: GnosisSafeProxy1_3_0
-  #       address: 0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2
-  #     - name: GnosisSafeProxy1_4_1
-  #       address: 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
-  # - id: 43114 # avalanche
-  #   start_block: 0
-  #   contracts:
-  #     - name: GnosisSafeL2
-  #     - name: GnosisSafeProxy1_3_0
-  #       address: 0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2
-  #     - name: GnosisSafeProxy1_4_1
-  #       address: 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
-  # - id: 59144 # linea
-  #   start_block: 0
-  #   contracts:
-  #     - name: GnosisSafeL2
-  #     - name: GnosisSafeProxy1_3_0
-  #       address: 0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2
-  #     - name: GnosisSafeProxy1_4_1
-  #       address: 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
-  # - id: 81457 # blast
-  #   start_block: 0
-  #   contracts:
-  #     - name: GnosisSafeL2
-  #     - name: GnosisSafeProxy1_3_0
-  #       address: 0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2
-  #     - name: GnosisSafeProxy1_4_1
-  #       address: 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
-  # - id: 534352 # scroll
-  #   start_block: 0
-  #   contracts:
-  #     - name: GnosisSafeL2
-  #     - name: GnosisSafeProxy1_3_0
-  #       address: 0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2
-  #     - name: GnosisSafeProxy1_4_1
-  #       address: 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
-  # - id: 143 # monad
-  #   start_block: 0
-  #   contracts:
-  #     - name: GnosisSafeL2
-  #     - name: GnosisSafeProxy1_3_0
-  #       address: 0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2
-  #     - name: GnosisSafeProxy1_4_1
-  #       address: 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
+  #     - name: SafeErc20Watcher
   # - id: 204 # opbnb
   #   start_block: 0
   #   contracts:
@@ -242,7 +195,8 @@ networks:
   #       address: 0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2
   #     - name: GnosisSafeProxy1_4_1
   #       address: 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
-  # - id: 324 # zksync mainnet
+  #     - name: SafeErc20Watcher
+  # - id: 324 # zksync era
   #   start_block: 0
   #   contracts:
   #     - name: GnosisSafeL2
@@ -250,6 +204,16 @@ networks:
   #       address: 0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2
   #     - name: GnosisSafeProxy1_4_1
   #       address: 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
+  #     - name: SafeErc20Watcher
+  # - id: 480 # worldchain
+  #   start_block: 0
+  #   contracts:
+  #     - name: GnosisSafeL2
+  #     - name: GnosisSafeProxy1_3_0
+  #       address: 0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2
+  #     - name: GnosisSafeProxy1_4_1
+  #       address: 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
+  #     - name: SafeErc20Watcher
   # - id: 999 # hyperevm
   #   start_block: 0
   #   contracts:
@@ -258,6 +222,16 @@ networks:
   #       address: 0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2
   #     - name: GnosisSafeProxy1_4_1
   #       address: 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
+  #     - name: SafeErc20Watcher
+  # - id: 1101 # polygon zkevm
+  #   start_block: 0
+  #   contracts:
+  #     - name: GnosisSafeL2
+  #     - name: GnosisSafeProxy1_3_0
+  #       address: 0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2
+  #     - name: GnosisSafeProxy1_4_1
+  #       address: 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
+  #     - name: SafeErc20Watcher
   # - id: 1313161554 # aurora
   #   start_block: 0
   #   contracts:
@@ -266,7 +240,59 @@ networks:
   #       address: 0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2
   #     - name: GnosisSafeProxy1_4_1
   #       address: 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
-unordered_multichain_mode: true
-preload_handlers: true
+  #     - name: SafeErc20Watcher
+  # - id: 5000 # mantle
+  #   start_block: 0
+  #   contracts:
+  #     - name: GnosisSafeL2
+  #     - name: GnosisSafeProxy1_3_0
+  #       address: 0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2
+  #     - name: GnosisSafeProxy1_4_1
+  #       address: 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
+  #     - name: SafeErc20Watcher
+  # - id: 8453 # base
+  #   start_block: 0
+  #   contracts:
+  #     - name: GnosisSafeL2
+  #     - name: GnosisSafeProxy1_3_0
+  #       address: 0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2
+  #     - name: GnosisSafeProxy1_4_1
+  #       address: 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
+  #     - name: SafeErc20Watcher
+  # - id: 42220 # celo
+  #   start_block: 0
+  #   contracts:
+  #     - name: GnosisSafeL2
+  #     - name: GnosisSafeProxy1_3_0
+  #       address: 0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2
+  #     - name: GnosisSafeProxy1_4_1
+  #       address: 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
+  #     - name: SafeErc20Watcher
+  # - id: 43114 # avalanche
+  #   start_block: 0
+  #   contracts:
+  #     - name: GnosisSafeL2
+  #     - name: GnosisSafeProxy1_3_0
+  #       address: 0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2
+  #     - name: GnosisSafeProxy1_4_1
+  #       address: 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
+  #     - name: SafeErc20Watcher
+  # - id: 59144 # linea
+  #   start_block: 0
+  #   contracts:
+  #     - name: GnosisSafeL2
+  #     - name: GnosisSafeProxy1_3_0
+  #       address: 0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2
+  #     - name: GnosisSafeProxy1_4_1
+  #       address: 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
+  #     - name: SafeErc20Watcher
+  # - id: 81457 # blast
+  #   start_block: 0
+  #   contracts:
+  #     - name: GnosisSafeL2
+  #     - name: GnosisSafeProxy1_3_0
+  #       address: 0xa6B71E26C5e0845f74c812102Ca7114b6a896AB2
+  #     - name: GnosisSafeProxy1_4_1
+  #       address: 0x4e1DCf7AD4e460CfD30791CCC4F9c8a4f820ec67
+  #     - name: SafeErc20Watcher
 address_format: lowercase
-# raw_events: true

@@ -1,12 +1,27 @@
-import { Safe, GnosisSafeProxyPre1_3_0, SafePre1_3_0, GnosisSafeL2, GnosisSafeProxy1_3_0, GnosisSafeProxy1_4_1, GnosisSafeProxy1_5_0 } from "generated";
+import type { Safe } from "generated";
+import { GnosisSafeProxyPre1_3_0, SafePre1_3_0, GnosisSafeL2, GnosisSafeProxy1_3_0, GnosisSafeProxy1_4_1, GnosisSafeProxy1_5_0, SafeErc20Watcher } from "generated";
 import { addOwner, removeOwner, addSafeToOwner, executionSuccess, executionFailure, incrementSafeCount, incrementTransactionCount, incrementModuleTransactionCount, getOrCreateVersion } from "./helpers";
 import { getSetupTrace, decodeSetupInput, getMasterCopyFromTrace, resolveVersionFromMasterCopy } from "./hypersync";
-import { LEGACY_V1_0_0_PROXY, SafeVersion } from "./consts";
+import { LEGACY_V1_0_0_PROXY } from "./consts";
+import type { SafeVersion } from "./consts";
 import { decodeAbiParameters } from "viem";
 
 GnosisSafeProxyPre1_3_0.ProxyCreation.contractRegister(async ({ event, context }) => {
   const { proxy } = event.params;
   context.addSafePre1_3_0(proxy);
+  context.addSafeErc20Watcher(proxy);
+});
+
+GnosisSafeProxy1_3_0.ProxyCreation.contractRegister(async ({ event, context }) => {
+  context.addSafeErc20Watcher(event.params.proxy);
+});
+
+GnosisSafeProxy1_4_1.ProxyCreation.contractRegister(async ({ event, context }) => {
+  context.addSafeErc20Watcher(event.params.proxy);
+});
+
+GnosisSafeProxy1_5_0.ProxyCreation.contractRegister(async ({ event, context }) => {
+  context.addSafeErc20Watcher(event.params.proxy);
 });
 
 GnosisSafeProxyPre1_3_0.ProxyCreation.handler(async ({ event, context }) => {
@@ -405,3 +420,28 @@ GnosisSafeL2.ChangedMasterCopy.handler(async ({ event, context }) => {
     });
   }
 }, { wildcard: true });
+
+// Wildcard ERC20 Transfer filtered to transfers touching a known Safe.
+// HyperIndex partitions the Safe address pool at 5000/partition before pushing
+// it down to HyperSync as topic1/topic2 filters — one request per partition.
+// Pattern: https://docs.envio.dev/docs/HyperIndex/wildcard-indexing#assert-erc20-transfers-in-handler
+SafeErc20Watcher.Transfer.handler(async ({ event, context }) => {
+  context.ERC20Transfer.set({
+    id: `${event.chainId}_${event.block.number}_${event.logIndex}`,
+    chainId: event.chainId,
+    blockNumber: event.block.number,
+    blockTimestamp: BigInt(event.block.timestamp),
+    txHash: event.transaction.hash,
+    logIndex: event.logIndex,
+    token: event.srcAddress.toLowerCase(),
+    from: event.params.from.toLowerCase(),
+    to: event.params.to.toLowerCase(),
+    value: event.params.value,
+  });
+}, {
+  wildcard: true,
+  eventFilters: ({ addresses }) => [
+    { from: addresses },
+    { to: addresses },
+  ],
+});

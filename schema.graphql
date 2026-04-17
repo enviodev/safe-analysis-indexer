@@ -107,3 +107,20 @@ type SafeTransaction {
   txHash: String! @index
   success: Boolean # null until ExecutionSuccess/Failure fires
 }
+
+# ERC20 Transfer events whose `from` or `to` matches a discovered Safe address.
+# Wired as a wildcard event (fires across any token contract) with HyperSync
+# topic1/topic2 filtering against the live Safe address pool — the pool is
+# auto-partitioned at 5000 addresses per HyperSync request by HyperIndex.
+type ERC20Transfer {
+  id: ID! # chainId_blockNumber_logIndex
+  chainId: Int! @index
+  blockNumber: Int! @index
+  blockTimestamp: BigInt! @index
+  txHash: String! @index
+  logIndex: Int!
+  token: String! @index
+  from: String! @index
+  to: String! @index
+  value: BigInt!
+}
