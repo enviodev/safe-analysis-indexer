@@ -1,0 +1,36 @@
+# Optional local ClickHouse sink for the analytics/ directory.
+#
+# NOT started automatically. Bring it up only when you want to mirror entities
+# into ClickHouse alongside the primary Postgres store (populated by `pnpm dev`):
+#
+#     docker compose up -d
+#
+# Then populate the ENVIO_CLICKHOUSE_SINK_* env vars (see .env.example).
+services:
+  clickhouse:
+    image: clickhouse/clickhouse-server:25.3-alpine
+    container_name: safe-analysis-clickhouse
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    environment:
+      CLICKHOUSE_DB: envio
+      CLICKHOUSE_USER: envio
+      CLICKHOUSE_PASSWORD: envio
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - clickhouse_logs:/var/log/clickhouse-server
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8123/ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  clickhouse_data:
+  clickhouse_logs:
