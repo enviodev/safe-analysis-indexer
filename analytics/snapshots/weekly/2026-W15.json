@@ -1,0 +1,42 @@
+{
+  "week": "2026-W15",
+  "period_start": "2026-04-06",
+  "period_end": "2026-04-12",
+  "totals": {
+    "safes": 1,
+    "erc20_transfers": 7996765,
+    "safe_txs": 0,
+    "safe_module_txs": 0,
+    "owners": 8
+  },
+  "this_week": {
+    "safes_created": 0,
+    "erc20_transfers": 0
+  },
+  "safes_per_chain": [
+    {
+      "chainId": 324,
+      "safes": 1
+    }
+  ],
+  "transfers_per_chain": [
+    {
+      "chainId": 324,
+      "transfers": 7996765
+    }
+  ],
+  "version_distribution": [
+    {
+      "version": "V1_3_0",
+      "safes": 1
+    }
+  ],
+  "top_tokens_this_week": [],
+  "coverage": [
+    {
+      "chainId": 324,
+      "max_block": 388311,
+      "max_ts": "2023-03-29 13:25:25"
+    }
+  ]
+}

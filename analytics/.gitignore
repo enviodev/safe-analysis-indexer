@@ -1,0 +1,10 @@
+.env
+__pycache__/
+*.pyc
+.venv/
+venv/
+output/
+*.csv
+*.tmp
+.DS_Store
+uv.lock
