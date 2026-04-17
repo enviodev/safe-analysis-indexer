@@ -2,12 +2,12 @@ import { createEffect, S } from "envio";
 import { HypersyncClient } from "@envio-dev/hypersync-client";
 import { ethers } from "ethers";
 import {
-    SafeVersion,
     SETUP_ABI_V1_0_0,
     SETUP_ABI_V1_1_1,
     FACTORY_ABI,
     EXEC_TRANSACTION_ABI,
 } from "./consts";
+import type { SafeVersion } from "./consts";
 
 // Re-export SafeVersion for convenience
 export type { SafeVersion } from "./consts";
