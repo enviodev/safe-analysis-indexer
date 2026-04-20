@@ -1,0 +1,152 @@
+[
+  {
+    "address": "0x0c0efea731e3e9810c2b4822d5497eac107808ab",
+    "symbol": "ANKRBNB",
+    "name": "Ankr Staked BNB",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/28451/thumb/ankrBNB.png?1696527446",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x2779106e4f4a8a28d77a24c18283651a2ae22d1c",
+    "symbol": "CAKE",
+    "name": "PancakeSwap",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/12632/thumb/pancakeswap-cake-logo_%281%29.png?1696512440",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x317bc431f7ef8b012dfbb563814de202f5469516",
+    "symbol": "WKG",
+    "name": "WalkMining Governance",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/38633/thumb/symbol_wkm_200.png?1718172340",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x3e2e61f1c075881f3fb8dd568043d8c221fd5c61",
+    "symbol": "XVS",
+    "name": "Venus",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/12677/thumb/XVS_Token.jpg?1727454303",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x4200000000000000000000000000000000000006",
+    "symbol": "WBNB",
+    "name": "opBNB Bridged WBNB (opBNB)",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/53120/thumb/wrapped_bnb.png?1735265071",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x99f0d88b81b758ab07e22c7aba00e0121a882dea",
+    "symbol": "LINK",
+    "name": "Chainlink",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/877/thumb/Chainlink_Logo_500.png?1760023405",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x9d94a7ff461e83f161c8c040e78557e31d8cba72",
+    "symbol": "THE",
+    "name": "Thena",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/28864/thumb/Symbol-Color200x200.png?1706810126",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x9e5aac1ba1a2e6aed6b32689dfcf62a509ca96f3",
+    "symbol": "USDT",
+    "name": "opBNB Bridged USDT (opBNB)",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/32613/thumb/usdt_opbnb_bridged.png?1698734789",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xaf9fe3b5ccdae78188b1f8b9a49da7ae9510f151",
+    "symbol": "XCAD",
+    "name": "XCAD Network",
+    "decimals": 17,
+    "logoURI": "https://assets.coingecko.com/coins/images/15857/thumb/xcad_logo.jpg?1707832192",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xb01d49c26416a352fac4fbb3d555d5f2543e3247",
+    "symbol": "CUBI",
+    "name": "CUBISWAP",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/31803/thumb/IMG_20230917_222524_599.PNG?1696530618",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xc53ac24320e3a54c7211e4993c8095078a0cb3cf",
+    "symbol": "WGC",
+    "name": "Wild Goat Coin",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/37966/thumb/wgc-v3-logo.png?1776225874",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xe7798f023fc62146e8aa1b36da45fb70855a77ea",
+    "symbol": "ETH",
+    "name": "Bridged Binance-Peg Ethereum (opBNB)",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/32616/thumb/eth.png?1772614093",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xf0e2f2a84c898989c66fca1d5bce869e9bc85ddf",
+    "symbol": "MPT",
+    "name": "Miracle Play",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/32653/thumb/MPT.png?1698895300",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xf7fb2df9280eb0a76427dc3b34761db8b1441a49",
+    "symbol": "UBTC",
+    "name": "uBTC",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/55079/thumb/uBTC.png?1743613297",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xfb62ae373aca027177d1c18ee0862817f9080d08",
+    "symbol": "DPET",
+    "name": "My DeFi Pet",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/15321/thumb/mydefi.PNG?1696514970",
+    "sources": [
+      "coingecko"
+    ]
+  }
+]

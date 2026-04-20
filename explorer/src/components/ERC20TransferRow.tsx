@@ -1,19 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowDownLeft, ArrowUpRight, ExternalLink } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, ExternalLink, ShieldAlert } from "lucide-react";
 import { AddressDisplay } from "./AddressDisplay";
-import { formatRelativeTime, formatWei, truncateTxHash } from "@/lib/utils";
+import { formatRelativeTime, truncateTxHash } from "@/lib/utils";
 import { getExplorerTxUrl } from "@/lib/constants";
+import { formatTokenAmount, type TokenInfo } from "@/lib/tokenLists";
 import type { ERC20Transfer } from "@/lib/graphql/queries";
 
 export interface ERC20TransferRowProps {
   transfer: ERC20Transfer;
   /** The Safe address in context — determines IN/OUT direction. Lowercase. */
   safeAddress: string;
+  /** Optional token metadata for symbol + decimal-aware amount formatting. */
+  tokenInfo?: TokenInfo | null;
 }
 
-export function ERC20TransferRow({ transfer, safeAddress }: ERC20TransferRowProps) {
+export function ERC20TransferRow({ transfer, safeAddress, tokenInfo }: ERC20TransferRowProps) {
   const isOutbound = transfer.from.toLowerCase() === safeAddress.toLowerCase();
   const counterparty = isOutbound ? transfer.to : transfer.from;
   const explorerUrl = getExplorerTxUrl(transfer.chainId, transfer.txHash);
@@ -23,6 +26,8 @@ export function ERC20TransferRow({ transfer, safeAddress }: ERC20TransferRowProp
   const directionClass = isOutbound
     ? "text-orange-500 bg-orange-500/10"
     : "text-emerald-500 bg-emerald-500/10";
+
+  const amount = formatTokenAmount(transfer.value, tokenInfo ?? null);
 
   return (
     <div className="flex items-center justify-between py-3 px-4 hover:bg-muted/50 transition-colors border-b border-border last:border-b-0">
@@ -55,8 +60,24 @@ export function ERC20TransferRow({ transfer, safeAddress }: ERC20TransferRowProp
               </a>
             )}
           </div>
-          <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
-            <span>Token:</span>
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
+            {tokenInfo ? (
+              <span
+                className="font-medium text-foreground"
+                title={`${tokenInfo.name} · listed in ${tokenInfo.sources.join(", ")}`}
+              >
+                {tokenInfo.symbol}
+              </span>
+            ) : (
+              <span
+                className="inline-flex items-center gap-0.5 text-muted-foreground/80"
+                title="Token not in any verified list"
+              >
+                <ShieldAlert className="h-3 w-3" />
+                Unverified
+              </span>
+            )}
+            <span>·</span>
             <AddressDisplay
               address={transfer.token}
               chainId={transfer.chainId}
@@ -82,13 +103,17 @@ export function ERC20TransferRow({ transfer, safeAddress }: ERC20TransferRowProp
       {/* Right: amount + time */}
       <div className="flex flex-col items-end gap-0.5 ml-4">
         <span
-          className={`text-sm font-medium ${
+          className={`text-sm font-medium tabular-nums ${
             isOutbound ? "text-orange-500" : "text-emerald-500"
           }`}
-          title={transfer.value + " (raw, 18-decimal assumption)"}
+          title={
+            tokenInfo
+              ? `${transfer.value} raw (${tokenInfo.decimals} decimals)`
+              : `${transfer.value} raw — decimals unknown, formatted as 18`
+          }
         >
           {isOutbound ? "−" : "+"}
-          {formatWei(transfer.value)}
+          {amount.formatted} {amount.symbol}
         </span>
         <span className="text-xs text-muted-foreground">
           {formatRelativeTime(transfer.blockTimestamp)}

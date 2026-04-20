@@ -1,0 +1,752 @@
+[
+  {
+    "address": "0x00000000efe302beaa2b3e6e1b18d08d69a9012a",
+    "symbol": "AUSD",
+    "name": "AUSD",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/39284/thumb/AUSD_1024px.png?1764684132",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x075df695b8e7f4361fa7f8c1426c63f11b06e326",
+    "symbol": "USDA",
+    "name": "USDa",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/51599/thumb/SUSDA.png?1731604761",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x09bc4e0d864854c6afb6eb9a9cdf58ac190d0df9",
+    "symbol": "USDC",
+    "name": "Mantle Bridged USDC (Mantle)",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/35296/thumb/USDC_Icon.png?1708082083",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x111111d2bf19e43c34263401e0cad979ed1cdb61",
+    "symbol": "USD1",
+    "name": "USD1",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54977/thumb/USD1_1000x1000_transparent.png?1749297002",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x12992613fdd35abe95dec5a4964331b1ee23b50d",
+    "symbol": "BRK.BX",
+    "name": "Berkshire Hathaway xStock",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/55599/thumb/Ticker_BRK.B__Company_Name_berkshire-hathaway__size_200x200_2x.png?1746857982",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x167a6375da1efc4a5be0f470e73ecefd66245048",
+    "symbol": "UNHX",
+    "name": "UnitedHealth xStock",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/55640/thumb/Ticker_UNH__Company_Name_United_Health__size_200x200_2x.png?1746863336",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x17d8186ed8f68059124190d147174d0f6697dc40",
+    "symbol": "MRKX",
+    "name": "Merck xStock",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/55629/thumb/Ticker_MRK__Company_Name_Merck__size_200x200_2x.png?1746862482",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x19c41ea77b34bbdee61c3a87a75d1abda2ed0be4",
+    "symbol": "LLYX",
+    "name": "Eli Lilly xStock",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/55623/thumb/Ticker_LLY__Company_Name_Lilly__size_200x200_2x.png?1746862036",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x1ac765b5bea23184802c7d2d497f7c33f1444a9e",
+    "symbol": "PFEX",
+    "name": "Pfizer xStock",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/55635/thumb/Ticker_PFE__Company_Name_pfizer__size_200x200_2x.png?1746863254",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x1d40bafc49c37cda49f2a5427e2fb95e1e3fcf20",
+    "symbol": "XSOLVBTC",
+    "name": "Solv Protocol Staked BTC",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/39384/thumb/xSolvBTC.png?1744170824",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x201eba5cc46d216ce6dc03f6a759e8e766e956ae",
+    "symbol": "USDT",
+    "name": "Stargate Bridged USDT",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/70631/thumb/usdt.jpg?1762857609",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x211cc4dd073734da055fbf44a2b4667d5e5fe5d2",
+    "symbol": "SUSDE",
+    "name": "Ethena Staked USDe",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/33669/thumb/sUSDe-Symbol-Color.png?1716307680",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x2363fd1235c1b6d3a5088ddf8df3a0b3a30c5293",
+    "symbol": "VX",
+    "name": "Visa xStock",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/55642/thumb/Ticker_V__Company_Name_Visa__size_200x200_2x.png?1746863879",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x25356aeca4210ef7553140edb9b8026089e49396",
+    "symbol": "LEND",
+    "name": "Lendle",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/31588/thumb/lendle_logo_200_200_cg.png?1696530405",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x26a6b0dcdcfb981362afa56d581e4a7dba3be140",
+    "symbol": "PUFF",
+    "name": "Puff The Dragon",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/35950/thumb/photo_2024-03-11_10.18.27.jpeg?1710240090",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x29cc30f9d113b356ce408667aa6433589cecbdca",
+    "symbol": "ELSA",
+    "name": "Elsa",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/71623/thumb/Red_circle_white_logo_512x512_%281%29.png?1768570174",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x2fde62942759d7c0aaf25952da4098423bc1264c",
+    "symbol": "STONE",
+    "name": "StakeStone ETH",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/33103/thumb/200_200.png?1702602672",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x3557ba345b01efa20a1bddc61f573bfd87195081",
+    "symbol": "AMZNX",
+    "name": "Amazon xStock",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/55590/thumb/Ticker_AMZN__Company_Name_Amazon.com_Inc.__size_200x200_2x.png?1746809003",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x36c424a6ec0e264b1616102ad63ed2ad7857413e",
+    "symbol": "PEPX",
+    "name": "PepsiCo xStock",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/55634/thumb/Ticker_PEP__Company_Name_Pepsico__size_200x200_2x.png?1746862740",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x371c7ec6d8039ff7933a2aa28eb827ffe1f52f07",
+    "symbol": "JOE",
+    "name": "JOE",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/17569/thumb/LFJ_JOE_Logo.png?1727200941",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x38bac69cbbd28156796e4163b2b6dcb81e336565",
+    "symbol": "AVGOX",
+    "name": "Broadcom xStock",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/55592/thumb/Ticker_AVGO__Company_Name_Broadcom_Inc.__size_200x200_2x.png?1746809042",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x3d142cdb27b537af57a55ee8f54ada953b4b9ecd",
+    "symbol": "BOX",
+    "name": "DeBox",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/50224/thumb/v6TSd2dN_400x400.jpg?1726521525",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x4186bfc76e2e237523cbc30fd220fe055156b41f",
+    "symbol": "RSETH",
+    "name": "Kelp DAO Restaked ETH",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/33800/thumb/Icon___Dark.png?1702991855",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x4515a45337f461a11ff0fe8abf3c606ae5dc00c9",
+    "symbol": "MOE",
+    "name": "MOE",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/34422/thumb/MOE.png?1704821927",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x51cfe5b1e764dc253f4c8c1f19a081ff4c3517ed",
+    "symbol": "MINU",
+    "name": "Mantle Inu",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/31014/thumb/mantle-inu.jpeg?1696529851",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x5621737f42dae558b81269fcb9e9e70c19aa6b35",
+    "symbol": "MSFTX",
+    "name": "Microsoft xStock",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/55630/thumb/Ticker_MSFT__Company_Name_Microsoft_Inc.__size_200x200_2x.png?1746862508",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x58538e6a46e07434d7e7375bc268d3cb839c0133",
+    "symbol": "ENA",
+    "name": "Ethena",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/36530/thumb/ethena.png?1711701436",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x5be26527e817998a7206475496fde1e68957c5a6",
+    "symbol": "USDY",
+    "name": "Ondo US Dollar Yield",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/31700/thumb/usdy_%281%29.png?1696530524",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x5d3a1ff2b6bab83b63cd9ad0787074081a52ef34",
+    "symbol": "USDE",
+    "name": "Ethena USDe",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/33613/thumb/usde.png?1733810059",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x5ecdb76feda945dc71f7d9ce62dfe7eafefffab4",
+    "symbol": "MINTY",
+    "name": "Minterest",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/29455/thumb/MINTY.png?1706817774",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x60d01ec2d5e98ac51c8b4cf84dfcce98d527c747",
+    "symbol": "IZI",
+    "name": "iZUMi Finance",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/21791/thumb/izumi-logo-symbol.png?1696521144",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x62a509ba95c75cabc7190469025e5abee4eddb2a",
+    "symbol": "DUSD",
+    "name": "Davos.xyz USD",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/28775/thumb/dusd_logo_200x200.png?1696527754",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x671642ac281c760e34251d51bc9eef27026f3b7a",
+    "symbol": "MI4",
+    "name": "Mantle Index Four Fund",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/66570/thumb/mi4.png?1749795929",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x74ccbe53f77b08632ce0cb91d3a545bf6b8e0979",
+    "symbol": "FBOMB",
+    "name": "Fantom Bomb",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/24109/thumb/fBomb_Brandmark_BlackBlue_%282%29.png?1751872081",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x766b0cd6ed6d90b5d49d2c36a3761e9728501ba9",
+    "symbol": "HDX",
+    "name": "Home Depot xStock",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/55612/thumb/Ticker_HD__Company_Name_Home_Depot__size_200x200_2x.png?1746858853",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x779ded0c9e1022225f8e0630b35a9b54be713736",
+    "symbol": "USDT0",
+    "name": "USDT0",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/53705/thumb/usdt0.jpg?1737086183",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x78c1b0c915c4faa5fffa6cabf0219da63d7f4cb8",
+    "symbol": "WMNT",
+    "name": "Wrapped Mantle",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/30983/thumb/mantle.jpeg?1696529822",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x7f4db37d7beb31f445307782bc3da0f18df13696",
+    "symbol": "YAK",
+    "name": "Yield Yak",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/17654/thumb/yieldyak.png?1696517185",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x872952d3c1caf944852c5adda65633f1ef218a26",
+    "symbol": "LQDX",
+    "name": "Reddex",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/33627/thumb/reddex.jpg?1725950677",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x8731d54e9d02c286767d56ac03e8037c07e01e98",
+    "symbol": "STG",
+    "name": "Stargate Finance",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/24413/thumb/STG_LOGO.png?1696523595",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x8ad3c73f833d3f9a523ab01476625f269aeb7cf0",
+    "symbol": "TSLAX",
+    "name": "Tesla xStock",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/55638/thumb/Ticker_TSLA__Company_Name_Tesla_Inc.__size_200x200_2x.png?1746863299",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x8ddb986b11c039a6cc1dbcabd62bae911b348f33",
+    "symbol": "SCOR",
+    "name": "Scor",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/71138/thumb/Scor_logo.jpg?1765957578",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x8fe7176f0bf63358ad9490fd24ac0bdb4dac33a8",
+    "symbol": "USDLR",
+    "name": "Stable USDLR",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/33115/thumb/0x68592c5c98c4f4a8a4bc6da2121e65da3d1c0917.png?1700731571",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x93919784c523f39cacaa98ee0a9d96c3f32b593e",
+    "symbol": "UNIBTC",
+    "name": "Universal BTC",
+    "decimals": 8,
+    "logoURI": "https://assets.coingecko.com/coins/images/39599/thumb/uniBTC_200px.png?1723064455",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x96702be57cd9777f835117a809c7124fe4ec989a",
+    "symbol": "METAX",
+    "name": "Meta xStock",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/55628/thumb/Ticker_META__Company_Name_Meta_Platforms_Inc.__size_200x200_2x.png?1746862467",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x981bd9f77c8aafc14ebc86769503f86a3cc29af5",
+    "symbol": "TAROT",
+    "name": "Tarot",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/31800/thumb/TAROT.jpg?1696530615",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x9d275685dc284c8eb1c79f6aba7a63dc75ec890a",
+    "symbol": "AAPLX",
+    "name": "Apple xStock",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/55586/thumb/Ticker_AAPL__Company_Name_Apple_Inc.__size_200x200_2x.png?1746807196",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x9f0c013016e8656bc256f948cd4b79ab25c7b94d",
+    "symbol": "COOK",
+    "name": "mETH Protocol",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/50969/thumb/Logomark-Gradient_Official.png?1729620221",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xa68d25fc2af7278db4bcdcaabce31814252642a9",
+    "symbol": "SOLVBTC",
+    "name": "Solv Protocol BTC",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/36800/thumb/solvBTC.png?1719810684",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xa90424d5d3e770e8644103ab503ed775dd1318fd",
+    "symbol": "PGX",
+    "name": "Procter & Gamble xStock",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/55636/thumb/Ticker_PG__Company_Name_Proctor___Gamble__size_200x200_2x.png?1746863267",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xab575258d37eaa5c8956efabe71f4ee8f6397cf3",
+    "symbol": "MUSD",
+    "name": "Mantle USD",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/33405/thumb/mantle-usd.jpg?1772703839",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xabbeed1d173541e0546b38b1c0394975be200000",
+    "symbol": "SVL",
+    "name": "Slash Vision Labs",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/37444/thumb/svl.jpeg?1714443652",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xad5cdc3340904285b8159089974a99a1a09eb4c0",
+    "symbol": "CVXX",
+    "name": "Chevron xStock",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/55606/thumb/Ticker_CVX__Company_Name_chevron__size_200x200_2x.png?1746858451",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xb365cd2588065f522d379ad19e903304f6b622c6",
+    "symbol": "MAX",
+    "name": "Mastercard xStock",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/55624/thumb/Ticker_MA__Company_Name_Mastercard__size_200x200_2x.png?1746862053",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xc53ac24320e3a54c7211e4993c8095078a0cb3cf",
+    "symbol": "WGC",
+    "name": "Wild Goat Coin",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/37966/thumb/wgc-v3-logo.png?1776225874",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xc845b2894dbddd03858fd2d643b4ef725fe0849d",
+    "symbol": "NVDAX",
+    "name": "NVIDIA xStock",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/55633/thumb/Ticker_NVDA__Company_Name_NVIDIA_Corp__size_200x200_2x.png?1746862704",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xc96de26018a54d51c097160568752c4e3bd6c364",
+    "symbol": "FBTC",
+    "name": "Function FBTC",
+    "decimals": 8,
+    "logoURI": "https://assets.coingecko.com/coins/images/39182/thumb/Function_Token_%282%29.png?1760254065",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xcda86a272531e8640cd7f1a92c01839911b90bb0",
+    "symbol": "METH",
+    "name": "Mantle Staked Ether",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/33345/thumb/symbol_transparent_bg.png?1701697066",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xd81a4adea9932a6bdba0bdbc8c5fd4c78e5a09f1",
+    "symbol": "VOOI",
+    "name": "VOOI",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/70365/thumb/VOOI_Token_Logo.png?1764177739",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xd9fc3e075d45254a1d834fea18af8041207dea0a",
+    "symbol": "JPMX",
+    "name": "JPMorgan Chase xStock",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/55621/thumb/Ticker_JPM__Company_Name_JPMorganChase__size_200x200_2x.png?1746861978",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xdb0482cfad4789798623e64b15eeba01b16e917c",
+    "symbol": "JNJX",
+    "name": "Johnson & Johnson xStock",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/55620/thumb/Ticker_JNJ__Company_Name_johnson-johnson__size_200x200_2x.png?1746861691",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xdcc1a2699441079da889b1f49e12b69cc791129b",
+    "symbol": "KOX",
+    "name": "Coca-Cola xStock",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/55622/thumb/Ticker_KO__Company_Name_CokeCola__size_200x200_2x.png?1746861996",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xdeaddeaddeaddeaddeaddeaddeaddeaddead0000",
+    "symbol": "MNT",
+    "name": "Mantle",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/30980/thumb/MNT_Token_Logo.png?1765516974",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xdeaddeaddeaddeaddeaddeaddeaddeaddead1111",
+    "symbol": "WETH",
+    "name": "Mantle Bridged WETH (Mantle)",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/31013/thumb/weth_2.jpg?1758795984",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xdefa1d21c5f1cbeac00eeb54b44c7d86467cc3a3",
+    "symbol": "ALMANAK",
+    "name": "Almanak",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/68466/thumb/almanak.png?1755828664",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xe231db5f348d709239ef1741ea30961b3b635a61",
+    "symbol": "YNETHX",
+    "name": "ynETH MAX",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/51623/thumb/ynETHx.png?1731659494",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xe5c330addf7aa9c7838da836436142c56a15aa95",
+    "symbol": "BSB",
+    "name": "Block Street",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/102172257/thumb/bsb_400x400.jpg?1772553610",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xe6829d9a7ee3040e1276fa75293bde931859e8fa",
+    "symbol": "CMETH",
+    "name": "Mantle Restaked ETH",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/51114/thumb/symbol.png?1730117724",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xe92f673ca36c5e2efd2de7628f815f84807e803f",
+    "symbol": "GOOGLX",
+    "name": "Alphabet xStock",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/55610/thumb/Ticker_GOOG__Company_Name_Alphabet_Inc.__size_200x200_2x.png?1746858803",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xeb466342c4d449bc9f53a865d5cb90586f405215",
+    "symbol": "AXLUSDC",
+    "name": "Axelar Bridged USDC",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/26476/thumb/uausdc_D_3x.png?1696525548",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xeedb0273c5af792745180e9ff568cd01550ffa13",
+    "symbol": "XOMX",
+    "name": "Exxon Mobil xStock",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/55644/thumb/Ticker_XOM__Company_Name_ExxonMobil__size_200x200_2x.png?1746863917",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xf3df0a31ec5ea438150987805e841f960b9471b6",
+    "symbol": "WOO",
+    "name": "WOO",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/12921/thumb/WOO_Logos_2023_Profile_Pic_WOO.png?1696512709",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xf793ac038e7688aa3220005852836108cddb065c",
+    "symbol": "CAI",
+    "name": "Chasm",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/39473/thumb/IMG_2A1EB0FC7749-1.jpeg?1724512678",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xfbf2398df672cee4afcc2a4a733222331c742a6a",
+    "symbol": "ABBVX",
+    "name": "AbbVie xStock",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/55646/thumb/Ticker_ABBV__Company_Name_SP500__size_200x200_2x.png?1746864179",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xfe36cf0b43aae49fbc5cfc5c0af22a623114e043",
+    "symbol": "LINK",
+    "name": "Chainlink",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/877/thumb/Chainlink_Logo_500.png?1760023405",
+    "sources": [
+      "coingecko"
+    ]
+  }
+]

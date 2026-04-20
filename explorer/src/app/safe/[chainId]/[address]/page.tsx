@@ -19,6 +19,7 @@ import { MultichainInfoBox } from "@/components/MultichainInfoBox";
 import { ModuleTransactionRow } from "@/components/ModuleTransactionRow";
 import { SafeTransactionsList } from "./SafeTransactionsList";
 import { Erc20TransfersList } from "./Erc20TransfersList";
+import { TokenBalancesCard } from "@/components/TokenBalancesCard";
 import { StatCard } from "@/components/StatCard";
 import {
   getSafe,
@@ -26,7 +27,9 @@ import {
   getSafeTransactions,
   getSafeModuleTransactions,
   getSafeErc20Transfers,
+  getSafeTokenBalances,
 } from "@/lib/graphql/queries";
+import { getTokenInfoMap } from "@/lib/tokenLists";
 import { getExplorerAddressUrl, getExplorerTxUrl } from "@/lib/constants";
 import { formatDate, formatSafeVersion } from "@/lib/utils";
 
@@ -68,14 +71,29 @@ export default async function SafePage({ params, searchParams }: SafePageProps) 
   const erc20Offset = (erc20Page - 1) * erc20PageSize;
 
   // Fetch related data in parallel
-  const [allChainSafes, transactions, moduleTransactions, erc20Transfers] = await Promise.all([
+  const [allChainSafes, transactions, moduleTransactions, erc20Transfers, tokenBalances] = await Promise.all([
     getSafesByAddress(address),
     getSafeTransactions(safe.id, limit, offset),
     getSafeModuleTransactions(safe.id, 10),
     getSafeErc20Transfers(chainId, address, erc20PageSize + 1, erc20Offset),
+    getSafeTokenBalances(chainId, address),
   ]);
   const erc20HasNextPage = erc20Transfers.length > erc20PageSize;
   const erc20TransfersPage = erc20HasNextPage ? erc20Transfers.slice(0, erc20PageSize) : erc20Transfers;
+
+  // Resolve token metadata once for the whole page (balances + transfer rows).
+  const tokenAddresses = Array.from(
+    new Set([
+      ...tokenBalances.map((b) => b.token),
+      ...erc20TransfersPage.map((t) => t.token),
+    ]),
+  );
+  const tokenInfoMap = await getTokenInfoMap(chainId, tokenAddresses);
+  const tokenInfoEntries = Array.from(tokenInfoMap.entries());
+  const balancesWithMeta = tokenBalances.map((balance) => ({
+    balance,
+    token: tokenInfoMap.get(balance.token.toLowerCase()) ?? null,
+  }));
 
   const explorerUrl = getExplorerAddressUrl(chainId, address);
   const creationTxUrl = getExplorerTxUrl(chainId, safe.creationTxHash);
@@ -175,6 +193,11 @@ export default async function SafePage({ params, searchParams }: SafePageProps) 
             address={address}
           />
 
+          {/* Per-token balances rolled up from ERC20 in/out flow.
+              Renders nothing if the indexer endpoint doesn't yet expose
+              SafeTokenBalance (older deployment). */}
+          <TokenBalancesCard chainId={chainId} balances={balancesWithMeta} />
+
           {/* ERC20 Transfers (in & out of the Safe) */}
           <Erc20TransfersList
             transfers={erc20TransfersPage}
@@ -183,6 +206,7 @@ export default async function SafePage({ params, searchParams }: SafePageProps) 
             pageSize={erc20PageSize}
             chainId={chainId}
             address={address}
+            tokenInfoEntries={tokenInfoEntries}
           />
 
           {/* Module Transactions */}

@@ -1,0 +1,903 @@
+[
+  {
+    "address": "0x0469d9d1de0ee58fa1153ef00836b9bbcb84c0b6",
+    "symbol": "USN",
+    "name": "Noon USN",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/53948/thumb/Copy_of_USN.png?1748952392",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x05b65997ff7cb7976b43000ad376f91108b30d40",
+    "symbol": "WGC",
+    "name": "Wild Goat Coin",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/37966/thumb/wgc-v3-logo.png?1776225874",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x0c6eaaab86e8374a91e3f42c726b6fd1abacb54c",
+    "symbol": "ZPET",
+    "name": "Zino Pet",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/33753/thumb/%E5%B8%81%E6%A0%87.png?1703024400",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x0e97c7a0f8b2c9885c8ac9fc6136e829cbc21d42",
+    "symbol": "MUTE",
+    "name": "Mute",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/14331/thumb/MUTE.png?1696514019",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x16a9494e257703797d747540f01683952547ee5b",
+    "symbol": "IZI",
+    "name": "iZUMi Finance",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/21791/thumb/izumi-logo-symbol.png?1696521144",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x18012cb9e1478ef458c8c996f99b8dceca60795c",
+    "symbol": "PC0000077",
+    "name": "Tradable Singapore Fintech SSL",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/66878/thumb/tradable.jpg?1750921608",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x1d17cbcf0d6d143135ae902365d2e5e2a16538d4",
+    "symbol": "USDC",
+    "name": "USDC",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/6319/thumb/USDC.png?1769615602",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x1f179a51ab46252f469733dfcbd9115090a91f03",
+    "symbol": "PC0000019",
+    "name": "Tradable North America PoS Lender SSTN",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/66800/thumb/tradable.jpg?1750576495",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x2039bb4116b4efc145ec4f0e2ea75012d6c0f181",
+    "symbol": "BUSD",
+    "name": "Celer Bridged BUSD (zkSync)",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/36891/thumb/busd.png?1772613775",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x244c238325fc1bdf6eded726ee1b47d55895d944",
+    "symbol": "ZORRO",
+    "name": "Zorro",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/34381/thumb/ZORRO_TP.png?1704777748",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x27d0a2b5316b98088294378692f4eabfb3222e36",
+    "symbol": "ZERO",
+    "name": "ZeroLend",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/37375/thumb/image.png?1714884543",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x2ab105a3ead22731082b790ca9a00d9a3a7627f9",
+    "symbol": "FIUSD",
+    "name": "Sygnum FIUSD Liquidity Fund",
+    "decimals": 2,
+    "logoURI": "https://assets.coingecko.com/coins/images/50749/thumb/FIUDS_200x200px_%281%29.png?1728956878",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x31c2c031fdc9d33e974f327ab0d9883eae06ca4a",
+    "symbol": "ZF",
+    "name": "zkSwap Finance",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/31633/thumb/200x200_Black.png?1747800050",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x3355df6d4c9c3035724fd0e3914de96a5a83aaf4",
+    "symbol": "USDC",
+    "name": "zkSync Bridged USDC (zkSync)",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/35262/thumb/USDC_Icon.png?1708008941",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x3613ad277df1d5935d41400a181aa9ec1dc2dc9e",
+    "symbol": "WAGMI",
+    "name": "Wagmi",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/31887/thumb/wagmi_token_logo.png?1696530698",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x39fe7a0dacce31bd90418e3e659fb0b5f0b3db0d",
+    "symbol": "USDE",
+    "name": "Ethena USDe",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/33613/thumb/usde.png?1733810059",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x3a287a06c66f9e95a56327185ca2bdf5f031cecd",
+    "symbol": "CAKE",
+    "name": "PancakeSwap",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/12632/thumb/pancakeswap-cake-logo_%281%29.png?1696512440",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x3a34fa9a1288597ad6c1da709f001d37fef8b19e",
+    "symbol": "SYDX",
+    "name": "SyncDex",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/29746/thumb/Logo200x200.png?1696528678",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x3d19625bb8e4b52ac4ca28ecec2b5e243ae2ee81",
+    "symbol": "PC0000101",
+    "name": "NA Post-Settlement Legal Financing Receivables",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/66791/thumb/tradable.jpg?1750576168",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x47ef4a5641992a72cfd57b9406c9d9cefee8e0c4",
+    "symbol": "ZAT",
+    "name": "zkApes Token",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/30316/thumb/zkApes.png?1696529217",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x493257fd37edb34451f62edf8d2a0c418852ba4c",
+    "symbol": "USDT",
+    "name": "Bridged USDT",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/35001/thumb/logo.png?1706959346",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x4b9eb6c0b6ea15176bbf62841c6b2a8a398cb656",
+    "symbol": "DAI",
+    "name": "ZKsync ERC20 Bridged DAI (zkSync)",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/39805/thumb/dai.png?1724126260",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x503234f203fc7eb888eec8513210612a43cf6115",
+    "symbol": "LUSD",
+    "name": "Liquity USD",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/14666/thumb/Group_3.png?1696514341",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x5165ec33b491d7b67260b3143f96bb4ac4736398",
+    "symbol": "LONG",
+    "name": "Long",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/36497/thumb/Logo_Long_square.png?1717541650",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x52869bae3e091e36b0915941577f2d47d8d8b534",
+    "symbol": "LINK",
+    "name": "Chainlink",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/877/thumb/Chainlink_Logo_500.png?1760023405",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x53acd3c88ec04b8e22b8ef768ec4d928153d892e",
+    "symbol": "PC0000111",
+    "name": "Tradable LatAm Charge Card SSN",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/66795/thumb/tradable.jpg?1750576365",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x5556fe72eb021f97d39ba704f3674f1731e1acc4",
+    "symbol": "PC0000113",
+    "name": "Tradable NA Residential Real Estate-Backed Credit Card SSTN",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/66879/thumb/tradable.jpg?1750921826",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x57fd71a86522dc06d6255537521886057c1772a3",
+    "symbol": "BCAP",
+    "name": "Blockchain Capital",
+    "decimals": 2,
+    "logoURI": "https://assets.coingecko.com/coins/images/56040/thumb/bcap_logo_200.png?1748088291",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x5895024c953bee18d5f026bfcf6259bb2d79e12d",
+    "symbol": "PC0000061",
+    "name": "NA Music Royalties SSTL",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/66881/thumb/tradable.jpg?1750921901",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x5a7d6b2f92c77fad6ccabd7ee0624e64907eaf3e",
+    "symbol": "ZK",
+    "name": "ZKsync",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/38043/large/ZKTokenBlack.png?17186145029",
+    "sources": [
+      "uniswap",
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x5abe0a2ead1357f70e73f5b60e227df64a54ddd5",
+    "symbol": "PC0000097",
+    "name": "Tradable LatAm Fintech SSTN",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/66796/thumb/tradable.jpg?1750576421",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x5aea5775959fbc2557cc8789bc1bf90a239d9a91",
+    "symbol": "WETH",
+    "name": "Bridged WETH",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/39723/thumb/WETH.PNG?1723733967",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x5c8c39e167c604b036afd3fbb65426f9fe78ce6d",
+    "symbol": "PC0000023",
+    "name": "Tradable Singapore Fintech SSL",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/66954/thumb/tradable.jpg?1751254449",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x5d0d7bca050e2e98fd4a5e8d3ba823b49f39868d",
+    "symbol": "ZFI",
+    "name": "Zyfai",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/39770/thumb/Zyfai_logo_with_background.png?1773217949",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x5fc44e95eaa48f9eb84be17bd3ac66b6a82af709",
+    "symbol": "GRAI",
+    "name": "Grai",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/30427/thumb/GRAI_Token.png?1696529315",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x60e7fe7ae4461b535bb9eb40c20424c7c61063d0",
+    "symbol": "ZWIF",
+    "name": "Zeekwifhat",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/36371/thumb/zeekCG.png?1711338998",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x686b311f82b407f0be842652a98e5619f64cc25f",
+    "symbol": "ENA",
+    "name": "Ethena",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/36530/thumb/ethena.png?1711701436",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x6ee46cb7cd2f15ee1ec9534cf29a5b51c83283e6",
+    "symbol": "KNC",
+    "name": "Kyber Network Crystal",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/14899/thumb/RwdVsGcw_400x400.jpg?1696514562",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x6ff4fafd8d604614c704a5936d9146c0af19bd1e",
+    "symbol": "PC0000033",
+    "name": "Tradable APAC Diversified Finance Provider SSTN",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/66798/thumb/tradable.jpg?1750576460",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x703b52f2b28febcb60e1372858af5b18849fe867",
+    "symbol": "WSTETH",
+    "name": "txSync Bridged wstETH (zkSync)",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/53019/thumb/steth.png?1734998126",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x71fd7dfa7db7094e0f857ad3040f1afef76fef85",
+    "symbol": "BLT",
+    "name": "Bullets",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/30475/thumb/Logo_BLT_Token_%28200x200%29.png?1696529362",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x74ed17608cc2b5f30a59d6af07c9ad1b1ab3a5b1",
+    "symbol": "SOLVBTC",
+    "name": "Solv Protocol BTC",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/36800/thumb/solvBTC.png?1719810684",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x7715c206a14ac93cb1a6c0316a6e5f8ad7c9dc31",
+    "symbol": "USDM",
+    "name": "Mountain Protocol USD",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/31719/thumb/usdm.png?1696530540",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x787c09494ec8bcb24dcaf8659e7d5d69979ee508",
+    "symbol": "MAV",
+    "name": "Maverick Protocol",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/30850/thumb/MAV_Logo.png?1696529701",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x79db8c67d0c33203da4efb58f7d325e1e0d4d692",
+    "symbol": "MEOW",
+    "name": "Zeek Coin",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/34101/thumb/Zeek_200_by_200.png?1714928523",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x7f2fd959013eec5144269ac6edd0015cb10968fc",
+    "symbol": "TAROT",
+    "name": "Tarot",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/31800/thumb/TAROT.jpg?1696530615",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x81e7186947fb59aaaaeb476a47daac60680cbbaf",
+    "symbol": "WEFI",
+    "name": "Wefi",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/30540/thumb/wefi.png?1696529412",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x83547ba6b1992f70ae7203de4e95bb74b37ca3ec",
+    "symbol": "PC0000037",
+    "name": "NA Fintech Nonprime Lender SSTN",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/66792/thumb/tradable.jpg?1750576200",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x941fc398d9faebdd9f311011541045a1d66c748e",
+    "symbol": "NOP",
+    "name": "Nop App",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/36376/thumb/191.png?1711342125",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x9929bcac4417a21d7e6fc86f6dae1cc7f27a2e41",
+    "symbol": "DEXTF",
+    "name": "Memento",
+    "decimals": 8,
+    "logoURI": "https://assets.coingecko.com/coins/images/12634/thumb/Logo_DEXTF_avatar_gradientFG_transparentBG.png?1741774960",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x9e22d758629761fc5708c171d06c2fabb60b5159",
+    "symbol": "WOO",
+    "name": "WOO",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/12921/thumb/WOO_Logos_2023_Profile_Pic_WOO.png?1696512709",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xa0a675d08ca63066f48408136f8a71fc65be4afc",
+    "symbol": "BZR",
+    "name": "Bazaars",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/26392/thumb/bazaars_logo-color-black-icon.png?1696525469",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xa4b3dc5433ecabdd1498ca7f3f4d890b185c0b0a",
+    "symbol": "PC0000081",
+    "name": "Tradable NA Legal Receivables SSL",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/66799/thumb/tradable.jpg?1750576475",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xa900cbe7739c96d2b153a273953620a701d5442b",
+    "symbol": "WUSDM",
+    "name": "Wrapped USDM",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/33785/thumb/wUSDM_PNG_240px.png?1702981552",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xa995ad25ce5eb76972ab356168f5e1d9257e4d05",
+    "symbol": "KOI",
+    "name": "Koi",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/35766/thumb/Koi_logo.png?1709782399",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xabec5ecbe08b6c02f5c9a2ff82696e1e7db6f9bf",
+    "symbol": "HEU",
+    "name": "Heurist",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/51361/thumb/200X200.png?1733764636",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xac4de1e9a9e83524f24af77972dd39d588de8164",
+    "symbol": "PC0000031",
+    "name": "Tradable NA Rent Financing Platform SSTN",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/66150/thumb/tradable.jpg?1748488921",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xae0d8cad4ce522538ae34386c319c7ccd11fe428",
+    "symbol": "PC0000023",
+    "name": "Tradable NA Neobank SSTL",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/66797/thumb/tradable.jpg?1750576441",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xb0588f9a9cade7cd5f194a5fe77acd6a58250f82",
+    "symbol": "BONSAI",
+    "name": "Bonsai Token",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/35884/thumb/bonsaiToken.png?1744187538",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xb0c2bdc425fd01c33d8514f8be016070212bdc6a",
+    "symbol": "LMAO",
+    "name": "Long Mao",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/35213/thumb/rsz_longmaopfpp.png?1707898201",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xb6841b40baafedf4e37935270357ff89df42e68e",
+    "symbol": "USDLR",
+    "name": "Stable USDLR",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/33115/thumb/0x68592c5c98c4f4a8a4bc6da2121e65da3d1c0917.png?1700731571",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xb6a09d426861c63722aa0b333a9ce5d5a9b04c4f",
+    "symbol": "SUSN",
+    "name": "Staked USN",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54924/thumb/sUSN_Logo.png?1742538935",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xb7f5b452b381a90ba10bdde6d75c6a4fd65a4239",
+    "symbol": "RMAV",
+    "name": "Rogue MAV",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/32384/thumb/rMAV.png?1698045143",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xbbeb516fb02a01611cbbe0453fe3c580d7281011",
+    "symbol": "WBTC",
+    "name": "zkSync Bridged WBTC (zkSync)",
+    "decimals": 8,
+    "logoURI": "https://assets.coingecko.com/coins/images/39592/thumb/wbtc.png?1723016108",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xbd4372e44c5ee654dd838304006e1f0f69983154",
+    "symbol": "NODL",
+    "name": "Nodle Network",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/27019/thumb/nodle.png?1696526071",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xbe9f8c0d6f0fd7e46cdacca340747ea2f247991d",
+    "symbol": "IBEX",
+    "name": "Impermax",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/27606/thumb/IqwOmX-c_400x400.jpeg?1696526637",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xbfb4b5616044eded03e5b1ad75141f0d9cb1499b",
+    "symbol": "ZKDOGE",
+    "name": "zkDoge",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/29619/thumb/zkdoge.png?1696528555",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xc1fa6e2e8667d9be0ca938a54c7e0285e9df924a",
+    "symbol": "WEETH",
+    "name": "Wrapped eETH",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/33033/thumb/weETH.png?1701438396",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xc629d9e3d1a4325dbfaff85d5a61da956cc5e32b",
+    "symbol": "PC0000027",
+    "name": "Tradable LatAm BNPL SSTN",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/66793/thumb/tradable.jpg?1750576283",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xc6dac3a53d5d6de9d1d05aa6e28b8e9e41722601",
+    "symbol": "LIBERTAS",
+    "name": "Wrapped LIBERTAS OMNIBUS",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/35181/thumb/libertas.png?1707796268",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xc8ac6191cdc9c7bf846ad6b52aaaa7a0757ee305",
+    "symbol": "MVX",
+    "name": "Metavault Trade",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/25402/thumb/mvx.png?1696524534",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xcd2cfa60f04f3421656d6eebee122b3973b3f60c",
+    "symbol": "MELD",
+    "name": "MetaElfLand",
+    "decimals": 8,
+    "logoURI": "https://assets.coingecko.com/coins/images/31469/thumb/MELD_LOGO.png?1696530282",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xcdb7d260c107499c80b4b748e8331c64595972a1",
+    "symbol": "KAT",
+    "name": "Karat",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/31834/thumb/coin1.png?1696530647",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xd4169e045bcf9a86cc00101225d9ed61d2f51af2",
+    "symbol": "WRSETH",
+    "name": "Wrapped rsETH",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/37919/thumb/rseth.png?1715936438",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xd63ef5e9c628c8a0e8984cdfb7444aee44b09044",
+    "symbol": "GOVI",
+    "name": "CVI",
+    "decimals": 8,
+    "logoURI": "https://assets.coingecko.com/coins/images/13875/thumb/GOVI.png?1696513619",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xd78abd81a3d57712a3af080dc4185b698fe9ac5a",
+    "symbol": "XVS",
+    "name": "Venus",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/12677/thumb/XVS_Token.jpg?1727454303",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xd8916e15d351dc728414e99a4883c72010ee11f8",
+    "symbol": "PC0000015",
+    "name": "Tradable NA Third Party Online Merchant SSTN",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/66880/thumb/tradable.jpg?1750921859",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xdd9f72afed3631a6c85b5369d84875e6c42f1827",
+    "symbol": "SIS",
+    "name": "Symbiosis",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/20805/thumb/SymbiosisFinance_logo-150x150.jpeg?1696520198",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xdea6d5161978d36b5c0fa6a491faa754f4bc809c",
+    "symbol": "IDO",
+    "name": "Idexo",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/18523/thumb/qOiqm7T8_400x400.jpg?1696518004",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xe027d939f7de6f521675907cf086f59e4d75b876",
+    "symbol": "SLR",
+    "name": "Solarcoin",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/152/thumb/solarcoin.png?1696501524",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xe3d53addadb3f87adc38b4192171aaf5a07a3738",
+    "symbol": "PC0016245",
+    "name": "NA Capital-as-a-Service SSTN",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/66593/thumb/tradable.jpg?1749883324",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xe53dbcef6f700536a912c51caea4d0e2be2b1388",
+    "symbol": "PC0000049",
+    "name": "Tradable Eu/LatAm PoS Financing SSTL",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/66794/thumb/tradable.jpg?1750576332",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xe593853b4d603d5b8f21036bb4ad0d1880097a6e",
+    "symbol": "FUL",
+    "name": "Fulcrom",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/29684/thumb/FUL_Token_%281%29.png?1696528618",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xe757355edba7ced7b8c0271bba4efda184ad75ab",
+    "symbol": "M-BTC",
+    "name": "Merlin's Seal BTC",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/36566/thumb/photo_2024-03-25_22-04-42.jpg?1711936162",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xe75a17b4f5c4f844688d5670b684515d7c785e63",
+    "symbol": "VNO",
+    "name": "Veno Finance",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/28799/thumb/Veno_Token_dark.png?1696527777",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xe7895ed01a1a6aacf1c2e955af14e7cf612e7f9d",
+    "symbol": "LETH",
+    "name": "Veno Finance Staked ETH",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/34945/thumb/LETH_%281%29.png?1708020787",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xea77c590bb36c43ef7139ce649cfbcfd6163170d",
+    "symbol": "FRXUSD",
+    "name": "Frax USD",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/53963/thumb/frxUSD.png?1737792154",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xfb3fccdd38a96c3f769c62e578323f22c3bfcbec",
+    "symbol": "PC0000089",
+    "name": "LatAm Residential SSTL",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/66590/thumb/tradable.jpg?1749832358",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xfb4c64c144c2bd0e7f2a06da7d6aac32d8cb2514",
+    "symbol": "ARC",
+    "name": "Archly Finance",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/37308/thumb/arc-logo-circle-200.png?1713952763",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xfeafde23fb2364896c297c3fa6628f04601a035b",
+    "symbol": "PC0000085",
+    "name": "Tradable LatAm Middle-Market Lender SSTL",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/66877/thumb/tradable.jpg?1750921571",
+    "sources": [
+      "coingecko"
+    ]
+  }
+]

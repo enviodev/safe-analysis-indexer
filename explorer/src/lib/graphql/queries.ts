@@ -394,6 +394,57 @@ export async function getSafeErc20Transfers(
   return data.ERC20Transfer || [];
 }
 
+// Per-(safe, token) running balance derived from ERC20Transfer in/out flow.
+export interface SafeTokenBalance {
+  id: string;
+  chainId: number;
+  safeAddress: string;
+  token: string;
+  balance: string; // raw on-chain integer
+  inboundCount: number;
+  outboundCount: number;
+  lastUpdatedBlock: number;
+  lastUpdatedTimestamp: string;
+}
+
+// SafeTokenBalance is a recently-added entity. Older deployments don't expose
+// it — return [] in that case so the UI degrades gracefully.
+export async function getSafeTokenBalances(
+  chainId: number,
+  address: string,
+): Promise<SafeTokenBalance[]> {
+  const query = gql`
+    query GetSafeTokenBalances($chainId: Int!, $addr: String!) {
+      SafeTokenBalance(
+        where: {
+          chainId: { _eq: $chainId }
+          safeAddress: { _eq: $addr }
+        }
+      ) {
+        id
+        chainId
+        safeAddress
+        token
+        balance
+        inboundCount
+        outboundCount
+        lastUpdatedBlock
+        lastUpdatedTimestamp
+      }
+    }
+  `;
+
+  try {
+    const data = await graphqlClient.request<{
+      SafeTokenBalance: SafeTokenBalance[];
+    }>(query, { chainId, addr: address.toLowerCase() });
+    return data.SafeTokenBalance || [];
+  } catch {
+    // Endpoint likely doesn't have the SafeTokenBalance entity yet.
+    return [];
+  }
+}
+
 // GlobalStats interface
 export interface GlobalStats {
   id: string;

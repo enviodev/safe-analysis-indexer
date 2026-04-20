@@ -7,6 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { ERC20TransferRow } from "@/components/ERC20TransferRow";
 import type { ERC20Transfer } from "@/lib/graphql/queries";
+import type { TokenInfo } from "@/lib/tokenLists";
 
 interface Erc20TransfersListProps {
   transfers: ERC20Transfer[];
@@ -16,6 +17,8 @@ interface Erc20TransfersListProps {
   pageSize: number;
   chainId: number;
   address: string;
+  /** Pre-resolved token metadata for the rows (lowercase address -> info). */
+  tokenInfoEntries: [string, TokenInfo][];
 }
 
 export function Erc20TransfersList({
@@ -25,7 +28,9 @@ export function Erc20TransfersList({
   pageSize,
   chainId,
   address,
+  tokenInfoEntries,
 }: Erc20TransfersListProps) {
+  const tokenInfoMap = new Map(tokenInfoEntries);
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
@@ -77,6 +82,7 @@ export function Erc20TransfersList({
                   key={t.id}
                   transfer={t}
                   safeAddress={address}
+                  tokenInfo={tokenInfoMap.get(t.token.toLowerCase()) ?? null}
                 />
               ))}
             </div>

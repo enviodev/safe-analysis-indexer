@@ -1,0 +1,1253 @@
+[
+  {
+    "address": "0x000000daa580e54635a043d2773f2c698593836a",
+    "symbol": "OHNO",
+    "name": "Oh no",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/36488/thumb/ohno.jpeg?1711563729",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x00d7dd69a18e346cb5050ebff7529c11a57cac7f",
+    "symbol": "BA.D",
+    "name": "Dinari BA",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54038/thumb/d-token-200.png?1738075918",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x01e8bd212f5f319e7126b62aa020831b92e19cd9",
+    "symbol": "HODL.D",
+    "name": "Dinari HODL",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54053/thumb/d-token-200.png?1738103664",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x049e6a52e2c9b7814c8178908f3630726c134c92",
+    "symbol": "ANKRETH",
+    "name": "Ankr Staked ETH",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/13403/thumb/aETHc.png?1696513165",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x04c0599ae5a44757c0af6f9ec3b93da8976c150a",
+    "symbol": "WEETH",
+    "name": "Wrapped eETH",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/33033/thumb/weETH.png?1701438396",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x08a51d066c12f5b020c3b34817feb6f200aa3ed1",
+    "symbol": "HUT.D",
+    "name": "Dinari HUT",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54079/thumb/d-token-200.png?1738175759",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x08ccb86a31270fd97d927a4e17934c6262a68b7e",
+    "symbol": "SQUAD",
+    "name": "SquadSwap",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/34653/thumb/SquadSwap_Logo_-_main.png?1705599291",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x098dbfd917f59495fdfc30628c0a5dad4bda2b1e",
+    "symbol": "ETHE.D",
+    "name": "Dinari ETHE",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/53949/thumb/d-token-200.png?1737788495",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x09bc998f64d32b83d4a534bb2d5a4806a04c855d",
+    "symbol": "SPWO.D",
+    "name": "Dinari SPWO",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54394/thumb/d-token-200.png?1739485782",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x0b96517fb729c6f6c00ab15abb3d72ae708d5960",
+    "symbol": "TQQQ.D",
+    "name": "Dinari TQQQ",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/53958/thumb/d-token-200.png?1737790158",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x0e576b0c554fbaef9893a2cd7b866af516bab581",
+    "symbol": "SPSK.D",
+    "name": "Dinari SPSK",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54391/thumb/d-token-200.png?1739485728",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x0e8c94ce5f658b52a8d4e30933520b2106a9397c",
+    "symbol": "USHY.D",
+    "name": "Dinari USHY",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54367/thumb/d-token-200.png?1739401403",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x129ed667bf8c065fe5f66c9b44b7cb0126d85cc3",
+    "symbol": "WAI",
+    "name": "AI Waifu",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/50441/thumb/Logo.png?1727768050",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x179004cb725a4d94bfcdffa5eece3b9df0efffe6",
+    "symbol": "MARA.D",
+    "name": "Dinari MARA",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/53868/thumb/d-token-200.png?1737615592",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x1b91eb087e128a0514b9eb8d0804b586641a0849",
+    "symbol": "TJX.D",
+    "name": "Dinari TJX",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54397/thumb/d-token-200.png?1739485840",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x1ea5625399565fa0c3c2499ebf960eb9d9224212",
+    "symbol": "V.D",
+    "name": "Dinari V",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54081/thumb/d-token-200.png?1738176162",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x211cc4dd073734da055fbf44a2b4667d5e5fe5d2",
+    "symbol": "SUSDE",
+    "name": "Ethena Staked USDe",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/33669/thumb/sUSDe-Symbol-Color.png?1716307680",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x216a5a1135a9dab49fa9ad865e0f22fe22b5630a",
+    "symbol": "PUMP",
+    "name": "Pump",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/35676/thumb/pump_%281%29.jpg?1709520871",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x2416092f143378750bb29b79ed961ab195cceea5",
+    "symbol": "EZETH",
+    "name": "Renzo Restaked ETH",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/34753/thumb/Ezeth_logo_circle.png?1713496404",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x28215d9e6444116e194405e93ccf68afde544d5c",
+    "symbol": "IBIT.D",
+    "name": "Dinari IBIT",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/53950/thumb/d-token-200.png?1737788536",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x296c2186948712d66bef4778567c4d2f734bff3c",
+    "symbol": "ARKB.D",
+    "name": "Dinari ARKB",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/53944/thumb/d-token-200.png?1737787573",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x32cbb8cdacd90dbec250f9b1e8b06232c6f3297b",
+    "symbol": "VXX.D",
+    "name": "Dinari VXX",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54396/thumb/d-token-200.png?1739485820",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x3580ac35bed2981d6bdd671a5982c2467d301241",
+    "symbol": "ANKR",
+    "name": "Ankr Network",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/4324/thumb/Ankr_Blue_Symbol.png?1754623142",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x399351786afd19dc7524b6af87aad8339f641494",
+    "symbol": "DAL.D",
+    "name": "Dinari DAL",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54227/thumb/d-token-200.png?1738861070",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x3fada70ea1251bec1e87c2ff9cd5bb72a818c350",
+    "symbol": "ADBE.D",
+    "name": "Dinari ADBE",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/53861/thumb/d-token-200.png?1737614564",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x4040fe823164384d2b719546557f01136990395b",
+    "symbol": "CSCO.D",
+    "name": "Dinari CSCO",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54277/thumb/d-token-200.png?1738998301",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x413e5687814841d65146c062c506c73992a57692",
+    "symbol": "VWO.D",
+    "name": "Dinari VWO",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54082/thumb/d-token-200.png?1738176178",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x4186bfc76e2e237523cbc30fd220fe055156b41f",
+    "symbol": "RSETH",
+    "name": "Kelp DAO Restaked ETH",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/33800/thumb/Icon___Dark.png?1702991855",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x42e4981de9bc8fd4726775f62066cabbe78deab8",
+    "symbol": "WOOD.D",
+    "name": "Dinari WOOD",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/53871/thumb/d-token-200.png?1737616705",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x4300000000000000000000000000000000000003",
+    "symbol": "USDB",
+    "name": "USDB",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/35595/thumb/65c67f0ebf2f6a1bd0feb13c_usdb-icon-yellow.png?1709255427",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x4300000000000000000000000000000000000004",
+    "symbol": "WETH",
+    "name": "L2 Standard Bridged WETH (Blast)",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/39727/thumb/weth.png?1723758119",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x44ba66f8ad159f8f400c7d9e06f670c018bdd57c",
+    "symbol": "KO.D",
+    "name": "Dinari KO",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54185/thumb/d-token-200.png?1738682465",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x45907acf1c9f45450ded33e3f06f96dc298c5d70",
+    "symbol": "MELI.D",
+    "name": "Dinari MELI",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54363/thumb/d-token-200.png?1739401339",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x47c337bd5b9344a6f3d6f58c474d9d8cd419d8ca",
+    "symbol": "DACKIE",
+    "name": "DackieSwap [OLD]",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/30752/thumb/dackieswap_large.png?1707290196",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x491e6de43b55c8eae702edc263e32339da42f58c",
+    "symbol": "ESE",
+    "name": "Eesee",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/35182/thumb/Eesee.jpg?1707796753",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x52056ed29fe015f4ba2e3b079d10c0b87f46e8c6",
+    "symbol": "USDZ",
+    "name": "Anzen USDz",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/38039/thumb/usdz-image-200x200.png?1716334412",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x54e7780089aee73ef98b8238b0866a517914254e",
+    "symbol": "ASO",
+    "name": "Aso Finance",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/38883/thumb/image_-_2024-06-25T182500.895.png?1719377959",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x56de5c6c56f92ecf2da286ea81a0fb74b25f9579",
+    "symbol": "PALL.D",
+    "name": "Dinari PALL",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54270/thumb/d-token-200.png?1738994765",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x578122317baca7a3c7bb5301460d2f4f96e9394a",
+    "symbol": "DUSD",
+    "name": "Davos.xyz USD",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/28775/thumb/dusd_logo_200x200.png?1696527754",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x58538e6a46e07434d7e7375bc268d3cb839c0133",
+    "symbol": "ENA",
+    "name": "Ethena",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/36530/thumb/ethena.png?1711701436",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x59c159e5a4f4d1c86f7abdc94b7907b7473477f6",
+    "symbol": "BLASTUP",
+    "name": "BlastUP",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/36054/thumb/blastup_icon_logo.png?1710403683",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x5d3a1ff2b6bab83b63cd9ad0787074081a52ef34",
+    "symbol": "USDE",
+    "name": "Ethena USDe",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/33613/thumb/usde.png?1733810059",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x5e9e14b2386a9cd3d2ed510285d3389b34d48640",
+    "symbol": "SPUS.D",
+    "name": "Dinari SPUS",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54393/thumb/d-token-200.png?1739485765",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x5ffd9ebd27f2fcab044c0f0a26a45cb62fa29c06",
+    "symbol": "PAC",
+    "name": "PacMoon",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/36459/thumb/pacmoon.png?1711501114",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x64445f0aecc51e94ad52d8ac56b7190e764e561a",
+    "symbol": "WFRAX",
+    "name": "Wrapped FRAX",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/55432/thumb/wfrax_64.png?1745993624",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x64931990e69b55ff7acaf0f20416d29b20855be6",
+    "symbol": "DEFI.D",
+    "name": "Dinari DEFI",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54052/thumb/d-token-200.png?1738103629",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x665b080affb4a7e0ceae3ce88ba0401c864635d8",
+    "symbol": "EZBC.D",
+    "name": "Dinari EZBC",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54267/thumb/d-token-200.png?1738994496",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x67fa2887914fa3729e9eed7630294fe124f417a0",
+    "symbol": "YIELD",
+    "name": "Crypto Valleys YIELD Token",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/36231/thumb/crypto-valleys.jpeg?1710906095",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x68449870eea84453044bd430822827e21fd8f101",
+    "symbol": "ZAI",
+    "name": "Zaibot",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/35781/thumb/zai.jpeg?1709795384",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x688a880ae19e766c6ad4b749a315ec25034a0645",
+    "symbol": "ERO.D",
+    "name": "Dinari ERO",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54230/thumb/d-token-200.png?1738861119",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x6c511dc18572d31c2c3f7b1505cb2bbc08282fcc",
+    "symbol": "AIPO",
+    "name": "Aipocalypto",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/51400/thumb/aipo.png?1731084580",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x6c627b1e04ede1a6e0619727c70f69cb259d06f8",
+    "symbol": "SLX.D",
+    "name": "Dinari SLX",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/53874/thumb/d-token-200.png?1737617906",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x73d23f3778a90be8846e172354a115543df2a7e4",
+    "symbol": "SUSDZ",
+    "name": "Anzen Staked USDz",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/38040/thumb/susdz-symbol-200x200.png?1716334492",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x74798fd1a87e07c7b8bf89fafc922e4bf10c35a9",
+    "symbol": "NLY.D",
+    "name": "Dinari NLY",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/53869/thumb/d-token-200.png?1737615761",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x764933fbad8f5d04ccd088602096655c2ed9879f",
+    "symbol": "AI",
+    "name": "Any Inu",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/34126/thumb/anyinulogo200.png?1704174269",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x76b584c9d5d6c925c7d6768b8430d5fccedba83e",
+    "symbol": "ARKX.D",
+    "name": "Dinari ARKX",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54037/thumb/d-token-200.png?1738075900",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x76da31d7c9cbeae102aff34d3398bc450c8374c1",
+    "symbol": "MIM",
+    "name": "Magic Internet Money (Blast)",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/37657/thumb/mim.png?1715162647",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x771952e0d7701f9d9eeeaf69c51bfdd57cbd6a6a",
+    "symbol": "RKLB.D",
+    "name": "Dinari RKLB",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54280/thumb/d-token-200.png?1738998854",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x80eede496655fb9047dd39d9f418d5483ed600df",
+    "symbol": "FRXUSD",
+    "name": "Frax USD",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/53963/thumb/frxUSD.png?1737792154",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x81100713096041923d65b9f9a2c8dbf8fd8de691",
+    "symbol": "AMC.D",
+    "name": "Dinari AMC",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/39835/thumb/Dinari-token-icon.png?1724254655",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x818a92bc81aad0053d72ba753fb5bc3d0c5c0923",
+    "symbol": "JUICE",
+    "name": "Juice Finance",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/36503/thumb/juice-logo-purple-200x200_%281%29.png?1711619018",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x87084c981709878e3c806ad45fb01e3522e08123",
+    "symbol": "ARKK.D",
+    "name": "Dinari ARKK",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/53945/thumb/d-token-200.png?1737787680",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x870a8f46b62b8bdeda4c02530c1750cddf2ed32e",
+    "symbol": "USDC+",
+    "name": "Overnight.fi USDC+",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/34763/thumb/USDC_.png?1705990720",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x89d0a55a8c2d94c0d4a91c6e3de58dd131ad87fc",
+    "symbol": "SQ.D",
+    "name": "Dinari SQ",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54229/thumb/d-token-200.png?1738861102",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x8ad2b97b7fca40af71bfef9857d10bc1bfe70175",
+    "symbol": "PG.D",
+    "name": "Dinari PG",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54269/thumb/d-token-200.png?1738994720",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x8c3ede5db70719ab9191655994880b088dd03917",
+    "symbol": "YYOLO",
+    "name": "yYOLO",
+    "decimals": 24,
+    "logoURI": "https://assets.coingecko.com/coins/images/38866/thumb/yYOLO.png?1719277542",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x8ce131c8c8b8d46ffe2a72aadc8ebb3d5686613a",
+    "symbol": "CAT.D",
+    "name": "Dinari CAT",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54051/thumb/d-token-200.png?1738103623",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x8d7e838f2feaec8b6d7445bfa699f68fe8e97718",
+    "symbol": "SIVR.D",
+    "name": "Dinari SIVR",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54224/thumb/d-token-200.png?1738861015",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x8f6a976b6c7fe18e31870eadfae09b3cb447541a",
+    "symbol": "UFO.D",
+    "name": "Dinari UFO",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54395/thumb/d-token-200.png?1739485800",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x93202ec683288a9ea75bb829c6bacfb2bfea9013",
+    "symbol": "LINK",
+    "name": "Chainlink",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/877/thumb/Chainlink_Logo_500.png?1760023405",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x93a9f06576cfe91e8c408467cd684df42ca23c23",
+    "symbol": "PHO.D",
+    "name": "Dinari PHO",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54187/thumb/d-token-200.png?1738682583",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x949185d3be66775ea648f4a306740ea9eff9c567",
+    "symbol": "YEL",
+    "name": "Yel.Finance",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/17429/thumb/Logo200.png?1696516976",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x9558e1217e0cb47ade9b5f63cc5aca8d47691ab7",
+    "symbol": "GBTC.D",
+    "name": "Dinari GBTC",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/53867/thumb/d-token-200.png?1737615504",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x963eec23618bbc8e1766661d5f263f18094ae4d5",
+    "symbol": "CYBRO",
+    "name": "CYBRO",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/36941/thumb/Token_light.png?1760674410",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x97dd837806eab484b440f15e60f84c4f312f7cdd",
+    "symbol": "AVGO.D",
+    "name": "Dinari AVGO",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/53862/thumb/d-token-200.png?1737614626",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x9e20461bc2c4c980f62f1b279d71734207a6a356",
+    "symbol": "OMNI",
+    "name": "OmniCat",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/33917/thumb/omnicatlogo.png?1717544778",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x9e23da6c963d9cfc929f3bda89e9e20984c008ef",
+    "symbol": "JNJ.D",
+    "name": "Dinari JNJ",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/53951/thumb/d-token-200.png?1737788564",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x9f04b6cefd5bcd67d76ab708f17553ce40188e6a",
+    "symbol": "IBEX",
+    "name": "Impermax",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/27606/thumb/IqwOmX-c_400x400.jpeg?1696526637",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xa5d7512c6a3b87ad7bf2f597b93845950f738fdd",
+    "symbol": "IAU.D",
+    "name": "Dinari IAU",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54080/thumb/d-token-200.png?1738175780",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xa5de16db7c14cd87fb35042ed8e7a6f4f00b7f26",
+    "symbol": "RIOT.D",
+    "name": "Dinari RIOT",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/39812/thumb/RIOT.d-200.png?1724166370",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xa8ef52a9c4010e20f3811f0a8606c788fccc7a2a",
+    "symbol": "CVX.D",
+    "name": "Dinari CVX",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54360/thumb/d-token-200.png?1739401251",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xa9053e91a9ea714023de577929c3e119264d80d6",
+    "symbol": "BITB.D",
+    "name": "Dinari BITB",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/53863/thumb/d-token-200.png?1737614680",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xac402db779eeabcc6c88f0478bb381cd2d0e15f7",
+    "symbol": "WALRF.D",
+    "name": "Dinari WALRF",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54222/thumb/d-token-200.png?1738860922",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xb127e5d53df0c2056cf337081ec56f01efd5c8bc",
+    "symbol": "SNOW.D",
+    "name": "Dinari SNOW",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54365/thumb/d-token-200.png?1739401375",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xb1a5700fa2358173fe465e6ea4ff52e36e88e2ad",
+    "symbol": "BLAST",
+    "name": "Blast",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/35494/standard/Blast.jpg?1719385662",
+    "sources": [
+      "uniswap",
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xb582dc28968c725d2868130752afa0c13ebf9b1a",
+    "symbol": "BEPE",
+    "name": "Blast Pepe",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/35658/thumb/logo_200.png?1709446390",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xb66fb7a6baaece3edd6b4d506b0e2f0bae5fc6e0",
+    "symbol": "RDDT.D",
+    "name": "Dinari RDDT",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/39618/thumb/Dinari-token-icon.png?1723148750",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xb9dfcd4cf589bb8090569cb52fac1b88dbe4981f",
+    "symbol": "BAG",
+    "name": "Bag",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/35417/thumb/bag-logo-token-listing.png?1727120395",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xba0dda8762c24da9487f5fa026a9b64b695a07ea",
+    "symbol": "OX",
+    "name": "OX Coin",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/35365/thumb/9.png?1727331352",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xbb4ca8935edcafba90dac55652bb938eb961cb36",
+    "symbol": "ITA.D",
+    "name": "Dinari ITA",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54278/thumb/d-token-200.png?1738998357",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xbba2b55370753e326e2fb68161c240e328218bcf",
+    "symbol": "GLD.D",
+    "name": "Dinari GLD",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54228/thumb/d-token-200.png?1738861086",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xbe2019c75ebf9ead0ab3513fd3c1733f2eb490e7",
+    "symbol": "BTCW.D",
+    "name": "Dinari BTCW",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54050/thumb/d-token-200.png?1738103595",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xbf26ece8626c30f6efc6518ac93a773d24e6ff83",
+    "symbol": "FBTC.D",
+    "name": "Dinari FBTC",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/53866/thumb/d-token-200.png?1737615424",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xbf286a9c026f02dd4d2e3fc3887e77e425d15a11",
+    "symbol": "BTCO.D",
+    "name": "Dinari BTCO",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54048/thumb/d-token-200.png?1738103322",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xbfdaa788366593d3c7d15f9abc0b1cab2b1694ba",
+    "symbol": "BLK.D",
+    "name": "Dinari BLK",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/53952/thumb/d-token-200.png?1737788600",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xbffaea400b56da7b7085a27676d4b72361217e35",
+    "symbol": "CCL.D",
+    "name": "Dinari CCL",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54275/thumb/d-token-200.png?1738998063",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xc6561ff3100d8b3c33898dfbfeb6e695134e6957",
+    "symbol": "BAC.D",
+    "name": "Dinari BAC",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54049/thumb/d-token-200.png?1738103338",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xc7edf7b7b3667a06992508e7b156eff794a9e1c8",
+    "symbol": "XPRT",
+    "name": "Persistence One",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/14582/thumb/Download%28black_Dark%29.png?1723470571",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xca838b9437eb20ada32703a8b912922088cf90b5",
+    "symbol": "SPTE.D",
+    "name": "Dinari SPTE",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54392/thumb/d-token-200.png?1739485749",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xcbf7b47e9da345812e3bd732e3ee369a7203b5ae",
+    "symbol": "PSTAKE",
+    "name": "pSTAKE Finance",
+    "decimals": 16,
+    "logoURI": "https://assets.coingecko.com/coins/images/23931/thumb/512_x_512_Dark.png?1721243699",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xcf09205d04647b0dbf99fe702113358df764ced3",
+    "symbol": "YETH",
+    "name": "yETH",
+    "decimals": 24,
+    "logoURI": "https://assets.coingecko.com/coins/images/38871/thumb/yETH.png?1719286818",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xd1fedd031b92f50a50c05e2c45af1adb4cea82f4",
+    "symbol": "BLADE",
+    "name": "BladeSwap",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/37331/thumb/BLADE_CoinGecko.png?1714030403",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xd2c500a8dd36eee1082314d624a46b5ab37c426e",
+    "symbol": "SBUX.D",
+    "name": "Dinari SBUX",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54364/thumb/d-token-200.png?1739401368",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xd55edfc79c0d14084260d16f38bda75e28abfb6a",
+    "symbol": "OFF",
+    "name": "BlastOff",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/37828/thumb/profile-3_1.png?1715669157",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xd951722f5309479cde8ed719fe3e13596290a324",
+    "symbol": "YUM.D",
+    "name": "Dinari YUM",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54188/thumb/d-token-200.png?1738682602",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xda5afff979a356af2cfa75bd0054c2c8c505234a",
+    "symbol": "XOM.D",
+    "name": "Dinari XOM",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54189/thumb/d-token-200.png?1738682617",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xdd31c8b5c899c0f85fb4738accac44180e4d7390",
+    "symbol": "SOXL.D",
+    "name": "Dinari SOXL",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54366/thumb/d-token-200.png?1739401385",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xdd6a4d44987fc974c4113ef403b941fe09d0068c",
+    "symbol": "AZN.D",
+    "name": "Dinari AZN",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/53946/thumb/d-token-200.png?1737787723",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xddcd99775b70bee3b1d06399b69e45465dea010c",
+    "symbol": "HOOD.D",
+    "name": "Dinari HOOD",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54054/thumb/d-token-200.png?1738103671",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xe070b87c4d88826d4cd1b85babe186fdb14cd321",
+    "symbol": "CBR",
+    "name": "Cyberblast Token",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/35649/thumb/Logo.png?1709374259",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xe0ced15bc8ea1335bec573819f1813ffc5e38878",
+    "symbol": "BOXX.D",
+    "name": "Dinari BOXX",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54359/thumb/d-token-200.png?1739401220",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xe231db5f348d709239ef1741ea30961b3b635a61",
+    "symbol": "YNETHX",
+    "name": "ynETH MAX",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/51623/thumb/ynETHx.png?1731659494",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xe2a8b9d1a129df339118c5b10eeefe4dab9334e1",
+    "symbol": "GME.D",
+    "name": "Dinari GME",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/39619/thumb/Dinari-token-icon.png?1723148884",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xe3fc0948bdcada331014590987cc624015403874",
+    "symbol": "RBLX.D",
+    "name": "Dinari RBLX",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54223/thumb/d-token-200.png?1738860997",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xe7903b1f75c534dd8159b313d92cdcfbc62cb3cd",
+    "symbol": "WRSETH",
+    "name": "Wrapped rsETH",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/37919/thumb/rseth.png?1715936438",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xe99292ca55f6e01765b900dadd471c63136e6760",
+    "symbol": "EEM.D",
+    "name": "Dinari EEM",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54361/thumb/d-token-200.png?1739401272",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xeb466342c4d449bc9f53a865d5cb90586f405215",
+    "symbol": "AXLUSDC",
+    "name": "Axelar Bridged USDC",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/26476/thumb/uausdc_D_3x.png?1696525548",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xf020a139d2346cdd2c0e1523395346756f42ad7e",
+    "symbol": "HYMB.D",
+    "name": "Dinari HYMB",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54362/thumb/d-token-200.png?1739401319",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xf0a23fd4a51e9c5055b912e41a6052b56e6108b8",
+    "symbol": "BRRR.D",
+    "name": "Dinari BRRR",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54039/thumb/d-token-200.png?1738075951",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xf77dd21c5ce38ac08786be35ef1d1dec1a6a15f3",
+    "symbol": "YOLO",
+    "name": "YOLO Games",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/38723/thumb/token-yolo.png?1718477580",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xfafda868581ce31b7ef7fe0b146a24dbb4717a5f",
+    "symbol": "F.D",
+    "name": "Dinari F",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54276/thumb/d-token-200.png?1738998264",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xfb3bcdc42d0f884b0f1e53f74ed152ff1cb77dc8",
+    "symbol": "JPM.D",
+    "name": "Dinari JPM",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54184/thumb/d-token-200.png?1738682276",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xfcbe84b53fd3ed33b5dfa82fb005603daa5204a7",
+    "symbol": "MCD.D",
+    "name": "Dinari MCD",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/53954/thumb/d-token-200.png?1737789312",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xfdc1901e40c708e72661af607a8a027740a08676",
+    "symbol": "COST.D",
+    "name": "Dinari COST",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54226/thumb/d-token-200.png?1738861053",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xfecf117ce579acb96e89872af6cc9525980c397c",
+    "symbol": "SONY.D",
+    "name": "Dinari SONY",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54225/thumb/d-token-200.png?1738861032",
+    "sources": [
+      "coingecko"
+    ]
+  }
+]

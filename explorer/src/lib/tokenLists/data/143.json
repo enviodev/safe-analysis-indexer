@@ -1,0 +1,647 @@
+[
+  {
+    "address": "0x00000000efe302beaa2b3e6e1b18d08d69a9012a",
+    "symbol": "AUSD",
+    "name": "AUSD",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/39284/thumb/AUSD_1024px.png?1764684132",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x01bff41798a0bcf287b996046ca68b395dbc1071",
+    "symbol": "XAUt0",
+    "name": "Tether Gold",
+    "decimals": 6,
+    "logoURI": "https://coin-images.coingecko.com/coins/images/66560/large/XAUt0_Token_Icon_Gold.png?1749747942",
+    "sources": [
+      "uniswap",
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x0555e30da8f98308edb960aa94c0db47230d2b9c",
+    "symbol": "WBTC",
+    "name": "Wrapped BTC",
+    "decimals": 8,
+    "logoURI": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599/logo.png",
+    "sources": [
+      "uniswap",
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x095957ceb9f317ac1328f0ab3123622401766d71",
+    "symbol": "STONEUSD",
+    "name": "StakeStone USD",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/71084/thumb/STONEUSD-background_White.png?1765618232",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x0a332311633c0625f63cfc51ee33fc49826e0a3c",
+    "symbol": "APR",
+    "name": "aPriori",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/70220/thumb/logo-icon-Gradient.png?1761118006",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x0c65a0bc65a5d819235b71f554d210d3f80e0852",
+    "symbol": "APRMON",
+    "name": "aPriori Monad LST",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/102171785/thumb/aprmon.png?1769745447",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x1001ff13bf368aa4fa85f21043648079f00e1001",
+    "symbol": "LV",
+    "name": "leverup",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/102172659/thumb/Tokens_1.png?1774539092",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x103222f020e98bba0ad9809a011fdf8e6f067496",
+    "symbol": "EARNAUSD",
+    "name": "earnAUSD",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/71069/thumb/Untitled_design.png?1765520002",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x10aeaf63194db8d453d4d85a06e5efe1dd0b5417",
+    "symbol": "WSTETH",
+    "name": "Wrapped stETH",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/18834/thumb/wstETH.png?1696518295",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x111111d2bf19e43c34263401e0cad979ed1cdb61",
+    "symbol": "USD1",
+    "name": "USD1",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/54977/thumb/USD1_1000x1000_transparent.png?1749297002",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x123468b48eadbc13c65cd9c66a9913cde4e94321",
+    "symbol": "LONG",
+    "name": "Long",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/36497/thumb/Logo_Long_square.png?1717541650",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x1ad7052bb331a0529c1981c3ec2bc4663498a110",
+    "symbol": "ALLOCA",
+    "name": "Alloca",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/70749/thumb/Avatar-min.png?1763461541",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x1b68626dca36c7fe922fd2d55e4f631d962de19c",
+    "symbol": "SHMON",
+    "name": "ShMonad",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/70837/thumb/SHMONAD_ICON_%281%29.png?1764108788",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x1c8ee940b654bfced403f2a44c1603d5be0f50fa",
+    "symbol": "MEDGE",
+    "name": "Midas mEDGE",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/54591/thumb/medge_logo.png?1740565725",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x1f80c65cc2c37af84abbe1ea03183a624a6f8888",
+    "symbol": "GMONAD",
+    "name": "Gmonad",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/70816/thumb/gmonad.jpg?1764001159",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x228c673cae7aad0f4d9f309616d6b546356b7777",
+    "symbol": "BC",
+    "name": "Black Currency",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/70902/thumb/Screenshot_2025-11-29_at_14.48.01.png?1764485818",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x25ac11cb986ca6910501803af5b4e41cf3ad9999",
+    "symbol": "MONADP",
+    "name": "MonadPrinter",
+    "decimals": 9,
+    "logoURI": "https://assets.coingecko.com/coins/images/70817/thumb/monad-printer.jpg?1764001342",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x2f2f2f74ab5db61ae8bd3c13ccd4dc8c9e8a2f2f",
+    "symbol": "ZF",
+    "name": "zkSwap Finance",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/31633/thumb/200x200_Black.png?1747800050",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x336d414754967c6682b5a665c7daf6f1409e63e8",
+    "symbol": "MUBOND",
+    "name": "Mu Digital muBOND",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/70763/thumb/muBOND_4x.png?1763566024",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x350035555e10d9afaf1566aaebfced5ba6c27777",
+    "symbol": "CHOG",
+    "name": "Chog",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/70930/thumb/chog.png?1764628221",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x39b9e06f226ff6d7500c870b82333aacbd2f7777",
+    "symbol": "NADS",
+    "name": "NADS",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/70931/thumb/McXzpmJ3_400x400_%281%29.jpg?1776434327",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x3bd359c1119da7da1d913d1c4d2b7c461115433a",
+    "symbol": "WMON",
+    "name": "Wrapped MON",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/70784/thumb/wmon.png?1766028904",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x3db619ff72d877490699276061fb0fa0618fdf47",
+    "symbol": "EARN",
+    "name": "HOLD",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/32575/thumb/200.png?1698554742",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x3ff60900b70db8d0bde4d4819f028673718c5d1b",
+    "symbol": "GMONAD",
+    "name": "GMONAD",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/70814/thumb/gmonad-logo.jpg?1764000507",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x42a4aa89864a794de135b23c6a8d2e05513d7777",
+    "symbol": "SHRAMP",
+    "name": "shramp",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/102172809/thumb/ij9ijranevqkq1wp7kuhocuqpgbz.?1775837396",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x46080f31351a6568f44575e3effde7f0c86867f9",
+    "symbol": "GILTS",
+    "name": "Etherfuse GILTS",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/102172091/thumb/GILTS_Image.png?1771517121",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x484be0540ad49f351eaa04eeb35df0f937d4e73f",
+    "symbol": "SYZUSD",
+    "name": "Staked Yuzu USD",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/70132/thumb/Group_427319351.png?1760695727",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x4917a5ec9fcb5e10f47cbb197abe6ab63be81fe8",
+    "symbol": "AZND",
+    "name": "Mu Digital AZND",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/70762/thumb/AZND_4x.png?1763565962",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x4e8aaecce10ad9394e96fe5f2bd4e587a7b04298",
+    "symbol": "WNUSDT0",
+    "name": "Wrapped Neverland USDT0",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/102172923/thumb/wnusdt0.png?1776663586",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x65ea4cdaf74537202bfb1124131e1c68f9512d1b",
+    "symbol": "SAL",
+    "name": "Salmonad",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/70818/thumb/salmonad.jpg?1764001840",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x6fe981dbd557f81ff66836af0932cba535cbc343",
+    "symbol": "LINK",
+    "name": "Chainlink",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/877/thumb/Chainlink_Logo_500.png?1760023405",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x754704bc059f8c67012fed69bc8a327a5aafb603",
+    "symbol": "USDC",
+    "name": "USDCoin",
+    "decimals": 6,
+    "logoURI": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48/logo.png",
+    "sources": [
+      "uniswap",
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x7a9990ffe3057edc18558ca4c8804430fe917456",
+    "symbol": "TESOURO",
+    "name": "Etherfuse TESOURO",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/52383/thumb/stable.jpg?1733259572",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x7db552eeb6b77a6babe6e0a739b5382cd653cc3e",
+    "symbol": "GMONAD",
+    "name": "GMONAD",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/70825/thumb/gmonad.jpg?1764041457",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x81a224f8a62f52bde942dbf23a56df77a10b7777",
+    "symbol": "EMO",
+    "name": "emonad",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/102172808/thumb/wi13repazwee6wximmko4nk8jfbo.?1775837251",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x82c370ba90e38ef6acd8b1b078d34fd86fc6bac9",
+    "symbol": "WNAUSD",
+    "name": "Wrapped Neverland AUSD",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/102172924/thumb/wnausd.png?1776663707",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x834df4c1d8f51be24322e39e4766697be015512f",
+    "symbol": "CETES",
+    "name": "Etherfuse CETES",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/37855/thumb/cetes.png?1715788161",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x8498312a6b3cbd158bf0c93abdcf29e6e4f55081",
+    "symbol": "GMON",
+    "name": "Magma Staked Monad",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/39746/thumb/gMonad_200px.png?1723781729",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x8d5c2df3eef09088fcccf3376d8ecd0dd505f642",
+    "symbol": "WNUSDC",
+    "name": "Wrapped Neverland USDC",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/102172925/thumb/wnusdc.png?1776663817",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x91b81bfbe3a747230f0529aa28d8b2bc898e6d56",
+    "symbol": "LVMON",
+    "name": "LeverUp MON",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/102172662/thumb/lvmon_%282%29.png?1774540128",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x96043804d00dcec238718eedad9ac10719778380",
+    "symbol": "SHUSD",
+    "name": "Staked Sherpa USD",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/70906/thumb/Group_1321314974_%281%29.png?1764487804",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x97401d48a80b15bc7291599e24b590eedcd7ce37",
+    "symbol": "HST",
+    "name": "HYPERSTITIONS",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/70965/thumb/agBxURDU_400x400.jpg?1764865069",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0x9c82eb49b51f7dc61e22ff347931ca32adc6cd90",
+    "symbol": "LOAZND",
+    "name": "Mu Digital Locked AZND",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/70764/thumb/loAZND_4x.png?1763566149",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xa3227c5969757783154c60bf0bc1944180ed81b9",
+    "symbol": "SMON",
+    "name": "Kintsu Staked Monad",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/70835/thumb/sMON_%281%29.png?1764091581",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xa3d68b74bf0528fdd07263c60d6488749044914b",
+    "symbol": "WEETH",
+    "name": "Wrapped eETH",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/33033/thumb/weETH.png?1701438396",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xad96c3dffcd6374294e2573a7fbba96097cc8d7c",
+    "symbol": "DUST",
+    "name": "Pixie Dust",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/71148/thumb/dust_200.png?1765996628",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xae4efbc7736f963982aacb17efa37fcbab924cb3",
+    "symbol": "SOLVBTC",
+    "name": "Solv Protocol BTC",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/36800/thumb/solvBTC.png?1719810684",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xc53ac24320e3a54c7211e4993c8095078a0cb3cf",
+    "symbol": "WGC",
+    "name": "Wild Goat Coin",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/37966/thumb/wgc-v3-logo.png?1776225874",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xc88cacd6fe1838c8dd1f0244b6cc0dee910dd261",
+    "symbol": "AETHON",
+    "name": "AethonSwap",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/70760/thumb/AethonSwap_Logo_icon.png?1763560124",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xc99f5c922dae05b6e2ff83463ce705ef7c91f077",
+    "symbol": "XSOLVBTC",
+    "name": "Solv Protocol Staked BTC",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/39384/thumb/xSolvBTC.png?1744170824",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xd18b7ec58cdf4876f6afebd3ed1730e4ce10414b",
+    "symbol": "CBBTC",
+    "name": "Coinbase Wrapped BTC",
+    "decimals": 8,
+    "logoURI": "https://assets.coingecko.com/coins/images/40143/thumb/cbbtc.webp?1726136727",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xd32e9ddd968b18e8429f2d1da7efb2cc1f01d42d",
+    "symbol": "MOLANDAK",
+    "name": "MOLANDAK",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/70815/thumb/molandak-logo.jpg?1764000856",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xd33f18d8d48cbbb2f8b47063de97f94de0d49b99",
+    "symbol": "NXPC",
+    "name": "Bridged NXPC",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/71097/thumb/nxpc.png?1765787220",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xd691b0afed67f96cec28ab6308cbe5b2c103b7e9",
+    "symbol": "EBTC",
+    "name": "eBTC",
+    "decimals": 10,
+    "logoURI": "https://assets.coingecko.com/coins/images/102172176/thumb/eBTC.png?1772034448",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xd786f7569c39a9f64e6a54eb77db21364e90f279",
+    "symbol": "WNLOAZND",
+    "name": "Wrapped Neverland loAZND",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/102172927/thumb/WNLOAZND.png?1776668686",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xd90f6bfed23ffde40106fc4498dd2e9edb95e4e7",
+    "symbol": "MHYPER",
+    "name": "Midas mHYPER",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/68298/thumb/mHYPER.png?1755286538",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xdb39a9d4a1f1b4e93a5684d602207628ad60613c",
+    "symbol": "WNWMON",
+    "name": "Wrapped Neverland WMON",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/102172926/thumb/wnwmon.png?1776664202",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xe7cd86e13ac4309349f30b3435a9d337750fc82d",
+    "symbol": "USDT",
+    "name": "Tether USD",
+    "decimals": 6,
+    "logoURI": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xdAC17F958D2ee523a2206206994597C13D831ec7/logo.png",
+    "sources": [
+      "uniswap",
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xe9c082921dc3564e10196c5cc15db1250ac7d5c6",
+    "symbol": "KTB",
+    "name": "Etherfuse KTB",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/102172092/thumb/KTB_Image.png?1771517177",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xea17e5a9efebf1477db45082d67010e2245217f1",
+    "symbol": "SOL",
+    "name": "SOL Wormhole ",
+    "decimals": 9,
+    "logoURI": "https://assets.coingecko.com/coins/images/22876/thumb/SOL_wh_small.png?1644224316",
+    "sources": [
+      "uniswap"
+    ]
+  },
+  {
+    "address": "0xee8c0e9f1bffb4eb878d8f15f368a02a35481242",
+    "symbol": "WETH",
+    "name": "Wrapped Ether",
+    "decimals": 18,
+    "logoURI": "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2/logo.png",
+    "sources": [
+      "uniswap",
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xf7cf282ec810fded974f99c0163e792f432892bc",
+    "symbol": "MHYPERBTC",
+    "name": "Midas Hyperithm BTC",
+    "decimals": 15,
+    "logoURI": "https://assets.coingecko.com/coins/images/71550/thumb/mhyperbtc-Bvh-K9IL.png?1768299091",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xfd44b35139ae53fff7d8f2a9869c503d987f00d1",
+    "symbol": "LVUSD",
+    "name": "LeverUp USD",
+    "decimals": 18,
+    "logoURI": "https://assets.coingecko.com/coins/images/102172663/thumb/lvusd_%282%29.png?1774540238",
+    "sources": [
+      "coingecko"
+    ]
+  },
+  {
+    "address": "0xff7f8f301f7a706e3cfd3d2275f5dc0b9ee8009b",
+    "symbol": "FOLKS",
+    "name": "FOLKS",
+    "decimals": 6,
+    "logoURI": "https://assets.coingecko.com/coins/images/70268/thumb/1000331462.png?1761335326",
+    "sources": [
+      "coingecko"
+    ]
+  }
+]
