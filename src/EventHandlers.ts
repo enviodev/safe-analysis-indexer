@@ -426,18 +426,36 @@ GnosisSafeL2.ChangedMasterCopy.handler(async ({ event, context }) => {
 // it down to HyperSync as topic1/topic2 filters — one request per partition.
 // Pattern: https://docs.envio.dev/docs/HyperIndex/wildcard-indexing#assert-erc20-transfers-in-handler
 SafeErc20Watcher.Transfer.handler(async ({ event, context }) => {
+  const chainId = event.chainId;
+  const token = event.srcAddress.toLowerCase();
+  const from = event.params.from.toLowerCase();
+  const to = event.params.to.toLowerCase();
+  const value = event.params.value;
+  const block = event.block.number;
+  const ts = BigInt(event.block.timestamp);
+
   context.ERC20Transfer.set({
-    id: `${event.chainId}_${event.block.number}_${event.logIndex}`,
-    chainId: event.chainId,
-    blockNumber: event.block.number,
-    blockTimestamp: BigInt(event.block.timestamp),
+    id: `${chainId}_${block}_${event.logIndex}`,
+    chainId,
+    blockNumber: block,
+    blockTimestamp: ts,
     txHash: event.transaction.hash,
     logIndex: event.logIndex,
-    token: event.srcAddress.toLowerCase(),
-    from: event.params.from.toLowerCase(),
-    to: event.params.to.toLowerCase(),
-    value: event.params.value,
+    token,
+    from,
+    to,
+    value,
   });
+
+  // Maintain per-(safe, token) balance. Each Transfer event is filtered to
+  // touch at least one Safe (HyperSync topic filter), but not necessarily
+  // both ends — and we never know which side is the Safe at decode time, so
+  // try both. context.Safe.get() short-circuits when the address is not a
+  // discovered Safe.
+  await Promise.all([
+    applyBalanceDelta(context, chainId, from, token, -value, block, ts, "out"),
+    applyBalanceDelta(context, chainId, to, token, value, block, ts, "in"),
+  ]);
 }, {
   wildcard: true,
   eventFilters: ({ addresses }) => [
@@ -445,3 +463,34 @@ SafeErc20Watcher.Transfer.handler(async ({ event, context }) => {
     { to: addresses },
   ],
 });
+
+async function applyBalanceDelta(
+  context: any,
+  chainId: number,
+  address: string,
+  token: string,
+  delta: bigint,
+  block: number,
+  ts: bigint,
+  side: "in" | "out",
+) {
+  // Only track balances for known Safes — the wildcard event filter can
+  // surface a transfer where only one side is a Safe.
+  const safe = await context.Safe.get(`${chainId}-${address}`);
+  if (!safe) return;
+
+  const id = `${chainId}-${address}-${token}`;
+  const existing = await context.SafeTokenBalance.get(id);
+
+  context.SafeTokenBalance.set({
+    id,
+    chainId,
+    safeAddress: address,
+    token,
+    balance: (existing?.balance ?? 0n) + delta,
+    inboundCount: (existing?.inboundCount ?? 0) + (side === "in" ? 1 : 0),
+    outboundCount: (existing?.outboundCount ?? 0) + (side === "out" ? 1 : 0),
+    lastUpdatedBlock: block,
+    lastUpdatedTimestamp: ts,
+  });
+}

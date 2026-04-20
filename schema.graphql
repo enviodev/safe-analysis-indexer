@@ -124,3 +124,19 @@ type ERC20Transfer {
   to: String! @index
   value: BigInt!
 }
+
+# Running ERC20 balance for a (Safe, token) pair, derived from ERC20Transfer
+# in/out flow. Updated transactionally inside the Transfer handler.
+# Note: balance is the *raw* on-chain integer (no decimals applied) so the
+# UI must format with the token's decimals from the token-list lookup.
+type SafeTokenBalance {
+  id: ID! # chainId-safeAddress-tokenAddress
+  chainId: Int! @index
+  safeAddress: String! @index
+  token: String! @index
+  balance: BigInt!
+  inboundCount: Int!
+  outboundCount: Int!
+  lastUpdatedBlock: Int!
+  lastUpdatedTimestamp: BigInt!
+}
