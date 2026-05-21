@@ -1,30 +1,30 @@
 import type { Safe } from "generated";
-import { GnosisSafeProxyPre1_3_0, SafePre1_3_0, GnosisSafeL2, GnosisSafeProxy1_3_0, GnosisSafeProxy1_4_1, GnosisSafeProxy1_5_0, SafeErc20Watcher } from "generated";
+import { indexer } from "generated";
 import { addOwner, removeOwner, addSafeToOwner, executionSuccess, executionFailure, incrementSafeCount, incrementTransactionCount, incrementModuleTransactionCount, getOrCreateVersion } from "./helpers";
 import { getSetupTrace, decodeSetupInput, getMasterCopyFromTrace, resolveVersionFromMasterCopy } from "./hypersync";
 import { LEGACY_V1_0_0_PROXY } from "./consts";
 import type { SafeVersion } from "./consts";
 import { decodeAbiParameters } from "viem";
 
-GnosisSafeProxyPre1_3_0.ProxyCreation.contractRegister(async ({ event, context }) => {
+indexer.contractRegister({ contract: "GnosisSafeProxyPre1_3_0", event: "ProxyCreation" }, async ({ event, context }) => {
   const { proxy } = event.params;
-  context.addSafePre1_3_0(proxy);
-  context.addSafeErc20Watcher(proxy);
+  context.chain.SafePre1_3_0.add(proxy);
+  context.chain.SafeErc20Watcher.add(proxy);
 });
 
-GnosisSafeProxy1_3_0.ProxyCreation.contractRegister(async ({ event, context }) => {
-  context.addSafeErc20Watcher(event.params.proxy);
+indexer.contractRegister({ contract: "GnosisSafeProxy1_3_0", event: "ProxyCreation" }, async ({ event, context }) => {
+  context.chain.SafeErc20Watcher.add(event.params.proxy);
 });
 
-GnosisSafeProxy1_4_1.ProxyCreation.contractRegister(async ({ event, context }) => {
-  context.addSafeErc20Watcher(event.params.proxy);
+indexer.contractRegister({ contract: "GnosisSafeProxy1_4_1", event: "ProxyCreation" }, async ({ event, context }) => {
+  context.chain.SafeErc20Watcher.add(event.params.proxy);
 });
 
-GnosisSafeProxy1_5_0.ProxyCreation.contractRegister(async ({ event, context }) => {
-  context.addSafeErc20Watcher(event.params.proxy);
+indexer.contractRegister({ contract: "GnosisSafeProxy1_5_0", event: "ProxyCreation" }, async ({ event, context }) => {
+  context.chain.SafeErc20Watcher.add(event.params.proxy);
 });
 
-GnosisSafeProxyPre1_3_0.ProxyCreation.handler(async ({ event, context }) => {
+indexer.onEvent({ contract: "GnosisSafeProxyPre1_3_0", event: "ProxyCreation" }, async ({ event, context }) => {
   const { proxy } = event.params;
   const { hash } = event.transaction;
   const { chainId, block, srcAddress: factoryAddress } = event;
@@ -110,15 +110,15 @@ GnosisSafeProxyPre1_3_0.ProxyCreation.handler(async ({ event, context }) => {
 });
 
 
-SafePre1_3_0.AddedOwner.handler(async ({ event, context }) => {
+indexer.onEvent({ contract: "SafePre1_3_0", event: "AddedOwner" }, async ({ event, context }) => {
   await addOwner(event, context);
 });
 
-SafePre1_3_0.RemovedOwner.handler(async ({ event, context }) => {
+indexer.onEvent({ contract: "SafePre1_3_0", event: "RemovedOwner" }, async ({ event, context }) => {
   await removeOwner(event, context);
 });
 
-SafePre1_3_0.ChangedThreshold.handler(async ({ event, context }) => {
+indexer.onEvent({ contract: "SafePre1_3_0", event: "ChangedThreshold" }, async ({ event, context }) => {
   const { srcAddress, chainId } = event;
 
   const safeId = `${chainId}-${srcAddress}`;
@@ -194,19 +194,19 @@ async function handleModernProxyCreation(
   await incrementSafeCount(chainId, version, context);
 }
 
-GnosisSafeProxy1_3_0.ProxyCreation.handler(async ({ event, context }) => {
+indexer.onEvent({ contract: "GnosisSafeProxy1_3_0", event: "ProxyCreation" }, async ({ event, context }) => {
   await handleModernProxyCreation(event, context, "V1_3_0");
 });
 
-GnosisSafeProxy1_4_1.ProxyCreation.handler(async ({ event, context }) => {
+indexer.onEvent({ contract: "GnosisSafeProxy1_4_1", event: "ProxyCreation" }, async ({ event, context }) => {
   await handleModernProxyCreation(event, context, "V1_4_1");
 });
 
-GnosisSafeProxy1_5_0.ProxyCreation.handler(async ({ event, context }) => {
+indexer.onEvent({ contract: "GnosisSafeProxy1_5_0", event: "ProxyCreation" }, async ({ event, context }) => {
   await handleModernProxyCreation(event, context, "V1_5_0");
 });
 
-GnosisSafeL2.SafeSetup.handler(async ({ event, context }) => {
+indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeSetup", wildcard: true }, async ({ event, context }) => {
   const { owners, threshold, initializer, initiator } = event.params;
   const { srcAddress, chainId } = event;
   const { hash } = event.transaction;
@@ -258,9 +258,9 @@ GnosisSafeL2.SafeSetup.handler(async ({ event, context }) => {
   for (const owner of ownersArray) {
     await addSafeToOwner(owner, safeId, context);
   }
-}, { wildcard: true });
+});
 
-GnosisSafeL2.SafeMultiSigTransaction.handler(async ({ event, context }) => {
+indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeMultiSigTransaction", wildcard: true }, async ({ event, context }) => {
   const { to, value, data, operation, safeTxGas, baseGas, gasPrice, gasToken, refundReceiver, signatures, additionalInfo } = event.params;
   const { srcAddress, chainId } = event;
   const { hash } = event.transaction;
@@ -310,10 +310,9 @@ GnosisSafeL2.SafeMultiSigTransaction.handler(async ({ event, context }) => {
 
   // Increment global, network, and version transaction counts
   await incrementTransactionCount(chainId, safe.version, context);
-}, { wildcard: true }
-);
+});
 
-GnosisSafeL2.SafeModuleTransaction.handler(async ({ event, context }) => {
+indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeModuleTransaction", wildcard: true }, async ({ event, context }) => {
   const { module, to, value, data, operation } = event.params;
   const { srcAddress, chainId } = event;
   const { hash } = event.transaction;
@@ -345,42 +344,42 @@ GnosisSafeL2.SafeModuleTransaction.handler(async ({ event, context }) => {
 
   // Increment global, network, and version module transaction counts
   await incrementModuleTransactionCount(chainId, safe.version, context);
-}, { wildcard: true });
+});
 
-GnosisSafeL2.AddedOwner.handler(async ({ event, context }) => {
+indexer.onEvent({ contract: "GnosisSafeL2", event: "AddedOwner", wildcard: true }, async ({ event, context }) => {
   await addOwner(event, context);
-}, { wildcard: true });
+});
 
-GnosisSafeL2.AddedOwnerV4.handler(async ({ event, context }) => {
+indexer.onEvent({ contract: "GnosisSafeL2", event: "AddedOwnerV4", wildcard: true }, async ({ event, context }) => {
   await addOwner(event, context);
-}, { wildcard: true });
+});
 
 
-GnosisSafeL2.RemovedOwner.handler(async ({ event, context }) => {
+indexer.onEvent({ contract: "GnosisSafeL2", event: "RemovedOwner", wildcard: true }, async ({ event, context }) => {
   await removeOwner(event, context);
-}, { wildcard: true });
+});
 
-GnosisSafeL2.RemovedOwnerV4.handler(async ({ event, context }) => {
+indexer.onEvent({ contract: "GnosisSafeL2", event: "RemovedOwnerV4", wildcard: true }, async ({ event, context }) => {
   await removeOwner(event, context);
-}, { wildcard: true });
+});
 
-GnosisSafeL2.ExecutionSuccess.handler(async ({ event, context }) => {
+indexer.onEvent({ contract: "GnosisSafeL2", event: "ExecutionSuccess", wildcard: true }, async ({ event, context }) => {
   await executionSuccess(event, context, true);
-}, { wildcard: true });
+});
 
-GnosisSafeL2.ExecutionSuccessV4.handler(async ({ event, context }) => {
+indexer.onEvent({ contract: "GnosisSafeL2", event: "ExecutionSuccessV4", wildcard: true }, async ({ event, context }) => {
   await executionSuccess(event, context, true);
-}, { wildcard: true });
+});
 
-GnosisSafeL2.ExecutionFailure.handler(async ({ event, context }) => {
+indexer.onEvent({ contract: "GnosisSafeL2", event: "ExecutionFailure", wildcard: true }, async ({ event, context }) => {
   await executionFailure(event, context, true);
-}, { wildcard: true });
+});
 
-GnosisSafeL2.ExecutionFailureV4.handler(async ({ event, context }) => {
+indexer.onEvent({ contract: "GnosisSafeL2", event: "ExecutionFailureV4", wildcard: true }, async ({ event, context }) => {
   await executionFailure(event, context, true);
-}, { wildcard: true });
+});
 
-GnosisSafeL2.ChangedMasterCopy.handler(async ({ event, context }) => {
+indexer.onEvent({ contract: "GnosisSafeL2", event: "ChangedMasterCopy", wildcard: true }, async ({ event, context }) => {
   const { singleton } = event.params;
   const { srcAddress, chainId } = event;
   const safeId = `${chainId}-${srcAddress}`;
@@ -419,13 +418,23 @@ GnosisSafeL2.ChangedMasterCopy.handler(async ({ event, context }) => {
       numberOfSafes: newVersionEntity.numberOfSafes + 1,
     });
   }
-}, { wildcard: true });
+});
 
 // Wildcard ERC20 Transfer filtered to transfers touching a known Safe.
 // HyperIndex partitions the Safe address pool at 5000/partition before pushing
 // it down to HyperSync as topic1/topic2 filters — one request per partition.
 // Pattern: https://docs.envio.dev/docs/HyperIndex/wildcard-indexing#assert-erc20-transfers-in-handler
-SafeErc20Watcher.Transfer.handler(async ({ event, context }) => {
+indexer.onEvent({
+  contract: "SafeErc20Watcher",
+  event: "Transfer",
+  wildcard: true,
+  where: ({ chain }) => ({
+    params: [
+      { from: chain.SafeErc20Watcher.addresses },
+      { to:   chain.SafeErc20Watcher.addresses },
+    ],
+  }),
+}, async ({ event, context }) => {
   const chainId = event.chainId;
   const token = event.srcAddress.toLowerCase();
   const from = event.params.from.toLowerCase();
@@ -456,12 +465,6 @@ SafeErc20Watcher.Transfer.handler(async ({ event, context }) => {
     applyBalanceDelta(context, chainId, from, token, -value, block, ts, "out"),
     applyBalanceDelta(context, chainId, to, token, value, block, ts, "in"),
   ]);
-}, {
-  wildcard: true,
-  eventFilters: ({ addresses }) => [
-    { from: addresses },
-    { to: addresses },
-  ],
 });
 
 async function applyBalanceDelta(
