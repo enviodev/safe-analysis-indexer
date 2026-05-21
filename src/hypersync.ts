@@ -23,11 +23,19 @@ export { resolveVersionFromMasterCopy } from "./consts";
 // type-safe. Delete this block when envio ships a first-class mock hook.
 // ---------------------------------------------------------------------------
 const TEST_MODE = process.env.ENVIO_TEST_MODE === "1";
-const TEST_FIXTURES: Record<string, Record<string, unknown>> = TEST_MODE
-    ? JSON.parse(process.env.ENVIO_TEST_EFFECT_FIXTURES ?? "{}")
-    : {};
+
 function lookupFixture<T>(name: string, input: unknown): T | null {
-    return (TEST_FIXTURES[name]?.[JSON.stringify(input)] as T | undefined) ?? null;
+    if (!TEST_MODE) return null;
+    let fixtures: Record<string, Record<string, unknown>> = {};
+    try {
+        fixtures = JSON.parse(process.env.ENVIO_TEST_EFFECT_FIXTURES ?? "{}");
+    } catch {
+        // Malformed JSON shouldn't crash the worker mid-process; treat as no
+        // fixtures and return null. Tests that depended on a fixture will fail
+        // their assertions naturally.
+        return null;
+    }
+    return (fixtures[name]?.[JSON.stringify(input)] as T | undefined) ?? null;
 }
 
 // Cache for HyperSync clients per chain
