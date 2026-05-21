@@ -3,9 +3,14 @@ import { addOwner, removeOwner, addSafeToOwner, executionSuccess, executionFailu
 import { getSetupTrace, decodeSetupInput, getMasterCopyFromTrace, resolveVersionFromMasterCopy } from "./hypersync";
 import { LEGACY_V1_0_0_PROXY } from "./consts";
 import type { SafeVersion } from "./consts";
-import { decodeAbiParameters } from "viem";
+import { decodeAbiParameters, zeroAddress } from "viem";
 
 type Safe = Entity<"Safe">;
+
+// The default transaction guard for any newly-created Safe. Pre-1.3.0 Safes
+// have no guard concept at all; v1.3.0+ Safes can later mutate via
+// ChangedGuard / ChangedGuardV4.
+const NO_GUARD = zeroAddress;
 
 indexer.contractRegister({ contract: "GnosisSafeProxyPre1_3_0", event: "ProxyCreation" }, async ({ event, context }) => {
   const { proxy } = event.params;
@@ -92,6 +97,7 @@ indexer.onEvent({ contract: "GnosisSafeProxyPre1_3_0", event: "ProxyCreation" },
     address: proxy,
     masterCopy: masterCopyAddress,
     fallbackHandler: fallbackHandler ? fallbackHandler.toLowerCase() : undefined,
+    guard: NO_GUARD,
     initializer: "",
     initiator: "",
     numberOfSuccessfulExecutions: 0,
@@ -178,6 +184,7 @@ async function handleModernProxyCreation(
       version,
       masterCopy,
       fallbackHandler: undefined, // Will be set by SafeSetup
+      guard: NO_GUARD,
       creationTxHash: hash,
       creationTimestamp: BigInt(block.timestamp),
       threshold: 0,
@@ -247,6 +254,7 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeSetup", wildcard: true }
       version: "V1_3_0", // Default, will be updated by ProxyCreation
       masterCopy: undefined, // Will be set by ProxyCreation
       fallbackHandler: fallback,
+      guard: NO_GUARD,
       creationTxHash: hash,
       creationTimestamp: BigInt(event.block.timestamp),
       initializer,
@@ -435,6 +443,28 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "ChangedFallbackHandler", wil
   if (!safe) return;
 
   context.Safe.set({ ...safe, fallbackHandler: handler.toLowerCase() });
+});
+
+// ChangedGuard — two ABI variants share the same topic0:
+//   v1.3.0:  ChangedGuard(address guard)             -- non-indexed
+//   v1.4.0+: ChangedGuard(address indexed guard)     -- indexed (named V4 in config)
+// In production a given Safe only emits the variant matching its version, so
+// the two handlers never fire for the same on-chain event. Both delegate to
+// the same idempotent in-place update.
+async function applyGuardChange(event: { params: { guard: string }; srcAddress: string; chainId: number }, context: any) {
+  const { guard } = event.params;
+  const safeId = `${event.chainId}-${event.srcAddress}`;
+  const safe = await context.Safe.get(safeId);
+  if (!safe) return;
+  context.Safe.set({ ...safe, guard: guard.toLowerCase() });
+}
+
+indexer.onEvent({ contract: "GnosisSafeL2", event: "ChangedGuard", wildcard: true }, async ({ event, context }) => {
+  await applyGuardChange(event, context);
+});
+
+indexer.onEvent({ contract: "GnosisSafeL2", event: "ChangedGuardV4", wildcard: true }, async ({ event, context }) => {
+  await applyGuardChange(event, context);
 });
 
 // Wildcard ERC20 Transfer filtered to transfers touching a known Safe.

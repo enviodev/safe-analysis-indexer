@@ -52,6 +52,8 @@ export function clearEffectFixtures(): void {
 // (AddedOwner, ExecutionSuccess, etc.) without simulating the full creation
 // flow. All required Safe fields are filled with sensible zeros so the entity
 // is valid; callers override only what they care about.
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+
 export function seedSafe(
   indexer: TestIndexer,
   args: {
@@ -62,6 +64,7 @@ export function seedSafe(
     threshold?: number;
     masterCopy?: string;
     fallbackHandler?: string;
+    guard?: string;
     nonce?: number;
     numberOfSuccessfulExecutions?: number;
     numberOfFailedExecutions?: number;
@@ -78,6 +81,7 @@ export function seedSafe(
     threshold: args.threshold ?? 1,
     masterCopy: args.masterCopy,
     fallbackHandler: args.fallbackHandler,
+    guard: args.guard ?? ZERO_ADDRESS,
     creationTxHash: "0x" + "0".repeat(64),
     creationTimestamp: 0n,
     initializer: "",

@@ -267,6 +267,34 @@ export function simulateChangedFallbackHandler(args: {
 }
 
 // ---------------------------------------------------------------------------
+// ChangedGuard / ChangedGuardV4 (GnosisSafeL2, wildcard) — emitted when the
+// Safe rotates its transaction guard. Two variants share topic0:
+//   v1.3.0:  ChangedGuard(address guard)            -- non-indexed
+//   v1.4.0+: ChangedGuard(address indexed guard)    -- indexed, named V4.
+// ---------------------------------------------------------------------------
+export function simulateChangedGuard(args: {
+  safeAddress: `0x${string}`;
+  guard: `0x${string}`;
+  v4?: boolean;
+  block?: { number?: number; timestamp?: number; hash?: string };
+  tx?: { hash?: string };
+  logIndex?: number;
+}) {
+  const block = autoBlock(args.block);
+  const li = args.logIndex ?? nextLogIndex();
+  const event = args.v4 ? "ChangedGuardV4" : "ChangedGuard";
+  return {
+    contract: "GnosisSafeL2" as const,
+    event,
+    srcAddress: args.safeAddress,
+    logIndex: li,
+    block,
+    transaction: autoTx(args.tx, block.number, li),
+    params: { guard: args.guard },
+  } as const;
+}
+
+// ---------------------------------------------------------------------------
 // SafeMultiSigTransaction (GnosisSafeL2, wildcard) — additionalInfo is the
 // ABI-encoded (uint256 nonce, address msgSender, uint256 threshold) tuple.
 // ---------------------------------------------------------------------------
