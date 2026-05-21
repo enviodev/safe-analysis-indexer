@@ -20,7 +20,7 @@ def _get_client():
             port=int(os.environ["CLICKHOUSE_PORT"]),
             username=os.environ["CLICKHOUSE_USER"],
             password=os.environ["CLICKHOUSE_PASSWORD"],
-            database=os.environ.get("CLICKHOUSE_DATABASE", "envio"),
+            database=os.environ.get("CLICKHOUSE_DATABASE", "envio_sink"),
         )
     return _client
 

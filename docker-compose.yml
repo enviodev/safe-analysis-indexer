@@ -1,11 +1,12 @@
 # Optional local ClickHouse sink for the analytics/ directory.
 #
-# NOT started automatically. Bring it up only when you want to mirror entities
-# into ClickHouse alongside the primary Postgres store (populated by `pnpm dev`):
+# alpha.23+ auto-launches ClickHouse on `envio dev` when storage.clickhouse: true
+# and ENVIO_CLICKHOUSE_HOST is unset. Use this compose file directly only if you
+# want a long-running container managed outside `envio dev`:
 #
 #     docker compose up -d
 #
-# Then populate the ENVIO_CLICKHOUSE_SINK_* env vars (see .env.example).
+# Then populate the ENVIO_CLICKHOUSE_* env vars (see .env.example).
 services:
   clickhouse:
     image: clickhouse/clickhouse-server:25.3-alpine

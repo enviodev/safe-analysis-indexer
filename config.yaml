@@ -1,5 +1,8 @@
 # yaml-language-server: $schema=./node_modules/envio/evm.schema.json
 name: envio-indexer
+storage:
+  postgres: true
+  clickhouse: false
 contracts:
   - name: GnosisSafeProxyPre1_3_0
     handler: src/EventHandlers.ts
