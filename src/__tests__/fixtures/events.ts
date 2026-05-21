@@ -243,6 +243,30 @@ export function simulateChangedMasterCopy(args: {
 }
 
 // ---------------------------------------------------------------------------
+// ChangedFallbackHandler (GnosisSafeL2, wildcard) — emitted when the Safe's
+// fallback handler is rotated post-creation.
+// ---------------------------------------------------------------------------
+export function simulateChangedFallbackHandler(args: {
+  safeAddress: `0x${string}`;
+  handler: `0x${string}`;
+  block?: { number?: number; timestamp?: number; hash?: string };
+  tx?: { hash?: string };
+  logIndex?: number;
+}) {
+  const block = autoBlock(args.block);
+  const li = args.logIndex ?? nextLogIndex();
+  return {
+    contract: "GnosisSafeL2" as const,
+    event: "ChangedFallbackHandler" as const,
+    srcAddress: args.safeAddress,
+    logIndex: li,
+    block,
+    transaction: autoTx(args.tx, block.number, li),
+    params: { handler: args.handler },
+  };
+}
+
+// ---------------------------------------------------------------------------
 // SafeMultiSigTransaction (GnosisSafeL2, wildcard) — additionalInfo is the
 // ABI-encoded (uint256 nonce, address msgSender, uint256 threshold) tuple.
 // ---------------------------------------------------------------------------

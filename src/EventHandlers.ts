@@ -75,9 +75,9 @@ indexer.onEvent({ contract: "GnosisSafeProxyPre1_3_0", event: "ProxyCreation" },
     version,
   });
 
-  const { owners, threshold } = inputData
+  const { owners, threshold, fallbackHandler } = inputData
     ? decodeSetupInput(inputData, version)
-    : { owners: [], threshold: 0 };
+    : { owners: [], threshold: 0, fallbackHandler: null };
 
   const safeId = `${chainId}-${proxy}`;
 
@@ -91,6 +91,7 @@ indexer.onEvent({ contract: "GnosisSafeProxyPre1_3_0", event: "ProxyCreation" },
     chainId,
     address: proxy,
     masterCopy: masterCopyAddress,
+    fallbackHandler: fallbackHandler ? fallbackHandler.toLowerCase() : undefined,
     initializer: "",
     initiator: "",
     numberOfSuccessfulExecutions: 0,
@@ -169,13 +170,14 @@ async function handleModernProxyCreation(
       creationTimestamp: BigInt(block.timestamp),
     });
   } else {
-    // Create placeholder - SafeSetup will update owners/threshold
+    // Create placeholder - SafeSetup will update owners/threshold/fallbackHandler
     const safe: Safe = {
       id: safeId,
       owners: [],
       chainId,
       version,
       masterCopy,
+      fallbackHandler: undefined, // Will be set by SafeSetup
       creationTxHash: hash,
       creationTimestamp: BigInt(block.timestamp),
       threshold: 0,
@@ -208,11 +210,12 @@ indexer.onEvent({ contract: "GnosisSafeProxy1_5_0", event: "ProxyCreation" }, as
 });
 
 indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeSetup", wildcard: true }, async ({ event, context }) => {
-  const { owners, threshold, initializer, initiator } = event.params;
+  const { owners, threshold, initializer, initiator, fallbackHandler } = event.params;
   const { srcAddress, chainId } = event;
   const { hash } = event.transaction;
 
   const safeId = `${chainId}-${srcAddress}`;
+  const fallback = fallbackHandler ? fallbackHandler.toLowerCase() : undefined;
 
   // Convert owners to a regular array (event params can be readonly)
   const ownersArray = Array.isArray(owners) ? [...owners] : [];
@@ -228,6 +231,7 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeSetup", wildcard: true }
       threshold: Number(threshold),
       initializer,
       initiator,
+      fallbackHandler: fallback,
     };
 
     context.Safe.set(safe);
@@ -242,6 +246,7 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeSetup", wildcard: true }
       address: srcAddress,
       version: "V1_3_0", // Default, will be updated by ProxyCreation
       masterCopy: undefined, // Will be set by ProxyCreation
+      fallbackHandler: fallback,
       creationTxHash: hash,
       creationTimestamp: BigInt(event.block.timestamp),
       initializer,
@@ -419,6 +424,17 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "ChangedMasterCopy", wildcard
       numberOfSafes: newVersionEntity.numberOfSafes + 1,
     });
   }
+});
+
+indexer.onEvent({ contract: "GnosisSafeL2", event: "ChangedFallbackHandler", wildcard: true }, async ({ event, context }) => {
+  const { handler } = event.params;
+  const { srcAddress, chainId } = event;
+  const safeId = `${chainId}-${srcAddress}`;
+
+  const safe = await context.Safe.get(safeId);
+  if (!safe) return;
+
+  context.Safe.set({ ...safe, fallbackHandler: handler.toLowerCase() });
 });
 
 // Wildcard ERC20 Transfer filtered to transfers touching a known Safe.

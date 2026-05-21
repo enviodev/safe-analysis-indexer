@@ -80,14 +80,18 @@ describe("decodeSetupInput", () => {
       zeroAddress,
     ]);
   }
-  function encodeV1_1_1Setup(owners: string[], threshold: number): string {
+  function encodeV1_1_1Setup(
+    owners: string[],
+    threshold: number,
+    fallbackHandler: string = zeroAddress,
+  ): string {
     const iface = new ethers.Interface(SETUP_ABI_V1_1_1);
     return iface.encodeFunctionData("setup", [
       owners,
       threshold,
       zeroAddress,
       "0x",
-      zeroAddress, // fallbackHandler — the extra param vs 1.0.0
+      fallbackHandler, // the extra param vs 1.0.0
       zeroAddress,
       0,
       zeroAddress,
@@ -95,11 +99,11 @@ describe("decodeSetupInput", () => {
   }
 
   it("returns {owners: [], threshold: 0} for empty input", () => {
-    expect(decodeSetupInput("", "V1_3_0")).toEqual({ owners: [], threshold: 0 });
+    expect(decodeSetupInput("", "V1_3_0")).toEqual({ owners: [], threshold: 0, fallbackHandler: null });
   });
 
   it("returns {owners: [], threshold: 0} for input shorter than selector", () => {
-    expect(decodeSetupInput("0x12", "V1_3_0")).toEqual({ owners: [], threshold: 0 });
+    expect(decodeSetupInput("0x12", "V1_3_0")).toEqual({ owners: [], threshold: 0, fallbackHandler: null });
   });
 
   it("returns {owners: [], threshold: 0} when selector doesn't match the version's setup", () => {
@@ -108,28 +112,40 @@ describe("decodeSetupInput", () => {
     const wrong = iface.encodeFunctionData("execTransaction", [
       zeroAddress, 0, "0x", 0, 0, 0, 0, zeroAddress, zeroAddress, "0x",
     ]);
-    expect(decodeSetupInput(wrong, "V1_3_0")).toEqual({ owners: [], threshold: 0 });
+    expect(decodeSetupInput(wrong, "V1_3_0")).toEqual({ owners: [], threshold: 0, fallbackHandler: null });
   });
 
-  it("decodes a v1.0.0-shaped setup correctly", () => {
+  it("decodes a v1.0.0-shaped setup correctly (no fallbackHandler in this ABI)", () => {
     const input = encodeV1_0_0Setup([ownerA, ownerB], 2);
     const result = decodeSetupInput(input, "V1_0_0");
     expect(result.owners.map((o) => o.toLowerCase())).toEqual([ownerA, ownerB]);
     expect(result.threshold).toBe(2);
+    // v1.0.0 ABI has no fallbackHandler param — must be null.
+    expect(result.fallbackHandler).toBeNull();
   });
 
-  it("decodes a v1.1.1+ setup correctly", () => {
-    const input = encodeV1_1_1Setup([ownerA], 1);
+  it("decodes a v1.1.1+ setup and returns the fallbackHandler", () => {
+    const fallback = addr("fallback-handler-a");
+    const input = encodeV1_1_1Setup([ownerA], 1, fallback);
     const result = decodeSetupInput(input, "V1_3_0");
     expect(result.owners.map((o) => o.toLowerCase())).toEqual([ownerA]);
     expect(result.threshold).toBe(1);
+    expect(result.fallbackHandler?.toLowerCase()).toBe(fallback);
   });
 
-  it("UNKNOWN version falls back to v1.1.1 ABI", () => {
-    const input = encodeV1_1_1Setup([ownerA, ownerB], 1);
+  it("v1.1.1+ ABI with zero-address fallbackHandler still returns the zero address (not null)", () => {
+    const input = encodeV1_1_1Setup([ownerA], 1, zeroAddress);
+    const result = decodeSetupInput(input, "V1_3_0");
+    expect(result.fallbackHandler?.toLowerCase()).toBe(zeroAddress);
+  });
+
+  it("UNKNOWN version falls back to v1.1.1 ABI and still decodes fallbackHandler", () => {
+    const fallback = addr("unknown-fallback");
+    const input = encodeV1_1_1Setup([ownerA, ownerB], 1, fallback);
     const result = decodeSetupInput(input, "UNKNOWN" as SafeVersion);
     expect(result.owners.map((o) => o.toLowerCase())).toEqual([ownerA, ownerB]);
     expect(result.threshold).toBe(1);
+    expect(result.fallbackHandler?.toLowerCase()).toBe(fallback);
   });
 
   it("returns {owners: [], threshold: 0} on decode failure (right selector, malformed body)", () => {
@@ -137,7 +153,7 @@ describe("decodeSetupInput", () => {
     const selector = iface.getFunction("setup")!.selector;
     // selector + garbage that won't decode as the setup tuple
     const malformed = selector + "deadbeef";
-    expect(decodeSetupInput(malformed, "V1_3_0")).toEqual({ owners: [], threshold: 0 });
+    expect(decodeSetupInput(malformed, "V1_3_0")).toEqual({ owners: [], threshold: 0, fallbackHandler: null });
   });
 });
 
