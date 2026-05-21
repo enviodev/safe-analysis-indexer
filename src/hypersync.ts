@@ -139,7 +139,7 @@ export const getSetupTrace = createEffect(
             }
         }
 
-        return undefined;
+        return null;
     }
 );
 
@@ -209,7 +209,7 @@ export const getMasterCopyFromTrace = createEffect(
         // Debug logging when no masterCopy found
         console.log(`[TRACE DEBUG] chainId=${input.chainId} block=${input.blockNumber} txHash=${input.txHash.slice(0, 10)}... factory=${input.factoryAddress.slice(0, 10)}... | totalTraces=${totalTraces} matchingTx=${matchingTxTraces} parsed=${parsedTraces}`);
 
-        return undefined;
+        return null;
     }
 );
 
@@ -254,7 +254,7 @@ export const getExecTransactionViaRpcTrace = createEffect(
     },
     async ({ input }) => {
         const rpcUrl = getRpcUrl(input.chainId);
-        if (!rpcUrl) return undefined;
+        if (!rpcUrl) return null;
 
         const body = JSON.stringify({
             jsonrpc: "2.0",
@@ -271,7 +271,7 @@ export const getExecTransactionViaRpcTrace = createEffect(
 
         if (!res.ok) {
             console.log(`[RPC TRACE] trace_transaction HTTP ${res.status} for tx=${input.txHash}`);
-            return undefined;
+            return null;
         }
 
         const json = await res.json() as {
@@ -283,10 +283,10 @@ export const getExecTransactionViaRpcTrace = createEffect(
 
         if (json.error) {
             console.log(`[RPC TRACE] trace_transaction RPC error for tx=${input.txHash}: ${json.error.message}`);
-            return undefined;
+            return null;
         }
 
-        if (!json.result) return undefined;
+        if (!json.result) return null;
 
         const safeAddr = input.safeAddress.toLowerCase();
 
@@ -305,7 +305,7 @@ export const getExecTransactionViaRpcTrace = createEffect(
             }
         }
 
-        return undefined;
+        return null;
     }
 );
 

@@ -29,6 +29,9 @@ benchmarks/
 artifacts
 cache
 generated
+.envio/
+envio-env.d.ts
+tsconfig.tsbuildinfo
 logs
 *.bs.js
 *.bs.mjs
@@ -36,3 +39,6 @@ logs
 build
 .env
 .DS_Store
+.cache/
+.timesheet/
+local/
