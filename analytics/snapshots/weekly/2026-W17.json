@@ -1,0 +1,247 @@
+{
+  "week": "2026-W17",
+  "period_start": "2026-04-20",
+  "period_end": "2026-04-26",
+  "totals": {
+    "safes": 54034,
+    "erc20_transfers": 820401,
+    "safe_txs": 57002,
+    "safe_module_txs": 6373,
+    "owners": 51571
+  },
+  "this_week": {
+    "safes_created": 0,
+    "erc20_transfers": 0
+  },
+  "safes_per_chain": [
+    {
+      "chainId": 10,
+      "safes": 17578
+    },
+    {
+      "chainId": 8453,
+      "safes": 12247
+    },
+    {
+      "chainId": 324,
+      "safes": 6194
+    },
+    {
+      "chainId": 5000,
+      "safes": 4776
+    },
+    {
+      "chainId": 1101,
+      "safes": 2863
+    },
+    {
+      "chainId": 81457,
+      "safes": 2138
+    },
+    {
+      "chainId": 534352,
+      "safes": 2087
+    },
+    {
+      "chainId": 59144,
+      "safes": 1844
+    },
+    {
+      "chainId": 43114,
+      "safes": 1030
+    },
+    {
+      "chainId": 42161,
+      "safes": 887
+    },
+    {
+      "chainId": 56,
+      "safes": 670
+    },
+    {
+      "chainId": 204,
+      "safes": 388
+    },
+    {
+      "chainId": 42220,
+      "safes": 350
+    },
+    {
+      "chainId": 143,
+      "safes": 251
+    },
+    {
+      "chainId": 999,
+      "safes": 239
+    },
+    {
+      "chainId": 1313161554,
+      "safes": 238
+    },
+    {
+      "chainId": 137,
+      "safes": 169
+    },
+    {
+      "chainId": 1,
+      "safes": 84
+    },
+    {
+      "chainId": 100,
+      "safes": 18
+    }
+  ],
+  "transfers_per_chain": [
+    {
+      "chainId": 81457,
+      "transfers": 353332
+    },
+    {
+      "chainId": 42161,
+      "transfers": 183099
+    },
+    {
+      "chainId": 1,
+      "transfers": 174365
+    },
+    {
+      "chainId": 1101,
+      "transfers": 38811
+    },
+    {
+      "chainId": 1313161554,
+      "transfers": 29987
+    },
+    {
+      "chainId": 56,
+      "transfers": 20758
+    },
+    {
+      "chainId": 137,
+      "transfers": 14179
+    },
+    {
+      "chainId": 59144,
+      "transfers": 4834
+    },
+    {
+      "chainId": 143,
+      "transfers": 3072
+    },
+    {
+      "chainId": 999,
+      "transfers": 2359
+    },
+    {
+      "chainId": 534352,
+      "transfers": 106
+    },
+    {
+      "chainId": 10,
+      "transfers": 75
+    },
+    {
+      "chainId": 8453,
+      "transfers": 51
+    },
+    {
+      "chainId": 204,
+      "transfers": 17
+    }
+  ],
+  "version_distribution": [
+    {
+      "version": "V1_3_0",
+      "safes": 53469
+    },
+    {
+      "version": "V1_4_1",
+      "safes": 495
+    },
+    {
+      "version": "V1_0_0",
+      "safes": 83
+    },
+    {
+      "version": "V1_1_1",
+      "safes": 21
+    },
+    {
+      "version": "V0_1_0",
+      "safes": 1
+    }
+  ],
+  "top_tokens_this_week": [],
+  "coverage": [
+    {
+      "chainId": 1,
+      "max_block": 7988836,
+      "max_ts": "2019-06-19 12:53:13"
+    },
+    {
+      "chainId": 10,
+      "max_block": 18894993,
+      "max_ts": "2022-08-12 20:23:59"
+    },
+    {
+      "chainId": 56,
+      "max_block": 9859582,
+      "max_ts": "2021-08-08 18:12:09"
+    },
+    {
+      "chainId": 137,
+      "max_block": 16822280,
+      "max_ts": "2021-07-13 16:36:35"
+    },
+    {
+      "chainId": 143,
+      "max_block": 37713905,
+      "max_ts": "2025-11-24 15:33:06"
+    },
+    {
+      "chainId": 204,
+      "max_block": 14160112,
+      "max_ts": "2024-01-22 08:57:15"
+    },
+    {
+      "chainId": 999,
+      "max_block": 5342148,
+      "max_ts": "2025-06-09 20:16:57"
+    },
+    {
+      "chainId": 1101,
+      "max_block": 3647326,
+      "max_ts": "2023-08-02 07:23:10"
+    },
+    {
+      "chainId": 8453,
+      "max_block": 5973035,
+      "max_ts": "2023-10-31 06:56:57"
+    },
+    {
+      "chainId": 42161,
+      "max_block": 10062105,
+      "max_ts": "2022-04-19 01:28:59"
+    },
+    {
+      "chainId": 59144,
+      "max_block": 574073,
+      "max_ts": "2023-10-06 12:05:08"
+    },
+    {
+      "chainId": 81457,
+      "max_block": 2088171,
+      "max_ts": "2024-04-13 05:29:17"
+    },
+    {
+      "chainId": 534352,
+      "max_block": 657544,
+      "max_ts": "2023-11-08 22:40:59"
+    },
+    {
+      "chainId": 1313161554,
+      "max_block": 70571956,
+      "max_ts": "2022-07-24 22:29:55"
+    }
+  ]
+}
