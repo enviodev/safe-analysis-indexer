@@ -61,6 +61,7 @@ export function seedSafe(
     owners?: `0x${string}`[];
     threshold?: number;
     masterCopy?: string;
+    fallbackHandler?: string;
     nonce?: number;
     numberOfSuccessfulExecutions?: number;
     numberOfFailedExecutions?: number;
@@ -76,6 +77,7 @@ export function seedSafe(
     owners: (args.owners ?? []).map((o) => o.toLowerCase()),
     threshold: args.threshold ?? 1,
     masterCopy: args.masterCopy,
+    fallbackHandler: args.fallbackHandler,
     creationTxHash: "0x" + "0".repeat(64),
     creationTimestamp: 0n,
     initializer: "",

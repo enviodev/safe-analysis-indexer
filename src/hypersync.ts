@@ -101,11 +101,18 @@ const versionConfig = {
     },
 } as const;
 
-// Decode the setup function input data for a specific version
-export function decodeSetupInput(inputData: string, version: SafeVersion): { owners: string[], threshold: number } {
+// Decode the setup function input data for a specific version. The v1.1.1+
+// ABI exposes a fallbackHandler at index 4; the v1.0.0 ABI doesn't have it
+// (returned as null — "legacy, unknown").
+export function decodeSetupInput(
+    inputData: string,
+    version: SafeVersion,
+): { owners: string[]; threshold: number; fallbackHandler: string | null } {
+    const empty = { owners: [] as string[], threshold: 0, fallbackHandler: null };
+
     // Check if input is valid (at least 4 bytes for selector + some data)
     if (!inputData || inputData.length < 10) {
-        return { owners: [], threshold: 0 };
+        return empty;
     }
 
     const config = versionConfig[version];
@@ -113,18 +120,31 @@ export function decodeSetupInput(inputData: string, version: SafeVersion): { own
     // Check if it's a setup call for this version
     const selector = inputData.slice(0, 10);
     if (selector.toLowerCase() !== config.selector.toLowerCase()) {
-        return { owners: [], threshold: 0 };
+        return empty;
     }
 
     try {
         const decoded = config.interface.decodeFunctionData("setup", inputData);
+        // The v1.1.1+ ABI inserts `fallbackHandler` between `data` and
+        // `paymentToken` (index 4). The v1.0.0 ABI is the same setup function
+        // signature minus the fallbackHandler, so its index 4 is paymentToken
+        // — only extract fallbackHandler when the v1.1.1+ ABI was used.
+        const fallbackHandler =
+            config.interface === safeInterface1_1_1
+                ? ((decoded[4] as string) ?? null)
+                : null;
+        // ethers v6 returns a Result instance for tuple-shaped params (like
+        // `address[]`). It's array-like but isn't a plain Array, so envio's
+        // entity-serialisation path can choke on it. Spread to a flat
+        // string[] before handing it back.
         return {
-            owners: decoded[0] as string[],
+            owners: [...(decoded[0] as Iterable<string>)],
             threshold: Number(decoded[1]),
+            fallbackHandler,
         };
     } catch (e) {
         console.log(`decodeSetupInput error for ${version}:`, e);
-        return { owners: [], threshold: 0 };
+        return empty;
     }
 }
 
