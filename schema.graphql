@@ -140,3 +140,17 @@ type SafeTokenBalance {
   lastUpdatedBlock: Int!
   lastUpdatedTimestamp: BigInt!
 }
+
+# Latest USD price for a token, upserted by AMM Swap handlers.
+# Head-only — every Swap on a curated pool overwrites the previous row.
+# TVL queries JOIN SafeTokenBalance × TokenPrice using (chainId, token).
+type TokenPrice {
+  id: ID! # chainId-tokenAddress
+  chainId: Int! @index
+  token: String! @index
+  priceUSD: BigDecimal!
+  lastUpdatedBlock: Int!
+  lastUpdatedTimestamp: BigInt! @index
+  pricingPool: String! # the pool address whose Swap produced this price
+  pricingDex: String! # "uniswap-v3" | "uniswap-v2" | "pancake-v3" | …
+}
