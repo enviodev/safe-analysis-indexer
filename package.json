@@ -11,7 +11,8 @@
     "watch": "tsc --watch",
     "codegen": "envio codegen",
     "dev": "envio dev",
-    "test": "vitest",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "start": "node generated/src/Index.res.mjs"
   },
   "devDependencies": {

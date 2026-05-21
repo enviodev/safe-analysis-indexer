@@ -14,6 +14,22 @@ export type { SafeVersion } from "./consts";
 // Re-export resolveVersionFromMasterCopy
 export { resolveVersionFromMasterCopy } from "./consts";
 
+// ---------------------------------------------------------------------------
+// Test-mode shim — when ENVIO_TEST_MODE=1, the createEffect handlers below
+// short-circuit to a fixture map (or null) instead of hitting HyperSync/RPC.
+// Tests set the map via ENVIO_TEST_EFFECT_FIXTURES, a JSON object of shape:
+//   { [effectName]: { [JSON.stringify(input)]: output } }
+// All three Effects have nullable output schemas, so default-null is
+// type-safe. Delete this block when envio ships a first-class mock hook.
+// ---------------------------------------------------------------------------
+const TEST_MODE = process.env.ENVIO_TEST_MODE === "1";
+const TEST_FIXTURES: Record<string, Record<string, unknown>> = TEST_MODE
+    ? JSON.parse(process.env.ENVIO_TEST_EFFECT_FIXTURES ?? "{}")
+    : {};
+function lookupFixture<T>(name: string, input: unknown): T | null {
+    return (TEST_FIXTURES[name]?.[JSON.stringify(input)] as T | undefined) ?? null;
+}
+
 // Cache for HyperSync clients per chain
 const clients: Record<number, HypersyncClient> = {};
 
@@ -119,6 +135,8 @@ export const getSetupTrace = createEffect(
         cache: true,
     },
     async ({ input }) => {
+        if (TEST_MODE) return lookupFixture<string>("getSetupTrace", input);
+
         const client = getClient(input.chainId);
         const config = versionConfig[input.version];
 
@@ -162,6 +180,8 @@ export const getMasterCopyFromTrace = createEffect(
         cache: true,
     },
     async ({ input }) => {
+        if (TEST_MODE) return lookupFixture<string>("getMasterCopyFromTrace", input);
+
         const client = getClient(input.chainId);
 
         const data = await client.get({
@@ -253,6 +273,13 @@ export const getExecTransactionViaRpcTrace = createEffect(
         cache: true,
     },
     async ({ input }) => {
+        if (TEST_MODE) {
+            return lookupFixture<{ input: string; from: string }>(
+                "getExecTransactionViaRpcTrace",
+                input,
+            );
+        }
+
         const rpcUrl = getRpcUrl(input.chainId);
         if (!rpcUrl) return null;
 
