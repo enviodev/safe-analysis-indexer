@@ -36,3 +36,6 @@ logs
 build
 .env
 .DS_Store
+.timesheet/
+local/
+.cache/
