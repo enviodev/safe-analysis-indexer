@@ -44,10 +44,18 @@ function autoBlock(block?: { number?: number; timestamp?: number; hash?: string 
   return nextBlock();
 }
 
-// Default tx stub. `hash` is required for the handlers that read it.
-function autoTx(tx?: { hash?: string; input?: string; from?: string }) {
+// Default tx stub. Hash is deterministically derived from the resolved
+// (blockNumber, logIndex) the caller passes — NOT from module-level counters,
+// which can drift between when logIndex is captured and when autoTx runs (the
+// intervening autoBlock call may have advanced `blockNumber` and reset
+// `logIndex`).
+function autoTx(
+  tx: { hash?: string; input?: string; from?: string } | undefined,
+  blockNumberArg: number,
+  logIndexArg: number,
+) {
   return {
-    hash: tx?.hash ?? keccak256(toBytes(`tx-${blockNumber}-${logIndex}`)),
+    hash: tx?.hash ?? keccak256(toBytes(`tx-${blockNumberArg}-${logIndexArg}`)),
     input: tx?.input ?? "0x",
     from: tx?.from ?? zeroAddress,
   };
@@ -66,13 +74,14 @@ type ProxyCreationPre = {
 
 export function simulateProxyCreationPre1_3_0(args: ProxyCreationPre) {
   const block = autoBlock(args.block);
+  const li = args.logIndex ?? nextLogIndex();
   return {
     contract: "GnosisSafeProxyPre1_3_0" as const,
     event: "ProxyCreation" as const,
     srcAddress: args.factoryAddress ?? (zeroAddress as `0x${string}`),
-    logIndex: args.logIndex ?? nextLogIndex(),
+    logIndex: li,
     block,
-    transaction: autoTx(args.tx),
+    transaction: autoTx(args.tx, block.number, li),
     params: { proxy: args.proxy },
   };
 }
@@ -91,13 +100,15 @@ type ProxyCreationModern = {
 };
 
 export function simulateProxyCreationModern(args: ProxyCreationModern) {
+  const block = autoBlock(args.block);
+  const li = args.logIndex ?? nextLogIndex();
   return {
     contract: args.contract,
     event: "ProxyCreation" as const,
     srcAddress: args.factoryAddress ?? (zeroAddress as `0x${string}`),
-    logIndex: args.logIndex ?? nextLogIndex(),
-    block: autoBlock(args.block),
-    transaction: autoTx(args.tx),
+    logIndex: li,
+    block,
+    transaction: autoTx(args.tx, block.number, li),
     params: { proxy: args.proxy, singleton: args.singleton },
   };
 }
@@ -118,13 +129,15 @@ type SafeSetup = {
 };
 
 export function simulateSafeSetup(args: SafeSetup) {
+  const block = autoBlock(args.block);
+  const li = args.logIndex ?? nextLogIndex();
   return {
     contract: "GnosisSafeL2" as const,
     event: "SafeSetup" as const,
     srcAddress: args.safeAddress,
-    logIndex: args.logIndex ?? nextLogIndex(),
-    block: autoBlock(args.block),
-    transaction: autoTx(args.tx),
+    logIndex: li,
+    block,
+    transaction: autoTx(args.tx, block.number, li),
     params: {
       initiator: args.initiator ?? (zeroAddress as `0x${string}`),
       owners: args.owners,
@@ -150,13 +163,15 @@ type AddedOwnerArgs = {
 
 export function simulateAddedOwner(args: AddedOwnerArgs) {
   const event = args.v4 ? "AddedOwnerV4" : "AddedOwner";
+  const block = autoBlock(args.block);
+  const li = args.logIndex ?? nextLogIndex();
   return {
     contract: args.contract,
     event,
     srcAddress: args.safeAddress,
-    logIndex: args.logIndex ?? nextLogIndex(),
-    block: autoBlock(args.block),
-    transaction: autoTx(args.tx),
+    logIndex: li,
+    block,
+    transaction: autoTx(args.tx, block.number, li),
     params: { owner: args.owner },
   } as const;
 }
@@ -168,13 +183,15 @@ type RemovedOwnerArgs = AddedOwnerArgs;
 
 export function simulateRemovedOwner(args: RemovedOwnerArgs) {
   const event = args.v4 ? "RemovedOwnerV4" : "RemovedOwner";
+  const block = autoBlock(args.block);
+  const li = args.logIndex ?? nextLogIndex();
   return {
     contract: args.contract,
     event,
     srcAddress: args.safeAddress,
-    logIndex: args.logIndex ?? nextLogIndex(),
-    block: autoBlock(args.block),
-    transaction: autoTx(args.tx),
+    logIndex: li,
+    block,
+    transaction: autoTx(args.tx, block.number, li),
     params: { owner: args.owner },
   } as const;
 }
@@ -189,13 +206,15 @@ export function simulateChangedThreshold(args: {
   tx?: { hash?: string };
   logIndex?: number;
 }) {
+  const block = autoBlock(args.block);
+  const li = args.logIndex ?? nextLogIndex();
   return {
     contract: "SafePre1_3_0" as const,
     event: "ChangedThreshold" as const,
     srcAddress: args.safeAddress,
-    logIndex: args.logIndex ?? nextLogIndex(),
-    block: autoBlock(args.block),
-    transaction: autoTx(args.tx),
+    logIndex: li,
+    block,
+    transaction: autoTx(args.tx, block.number, li),
     params: { threshold: args.threshold },
   };
 }
@@ -210,13 +229,15 @@ export function simulateChangedMasterCopy(args: {
   tx?: { hash?: string };
   logIndex?: number;
 }) {
+  const block = autoBlock(args.block);
+  const li = args.logIndex ?? nextLogIndex();
   return {
     contract: "GnosisSafeL2" as const,
     event: "ChangedMasterCopy" as const,
     srcAddress: args.safeAddress,
-    logIndex: args.logIndex ?? nextLogIndex(),
-    block: autoBlock(args.block),
-    transaction: autoTx(args.tx),
+    logIndex: li,
+    block,
+    transaction: autoTx(args.tx, block.number, li),
     params: { singleton: args.singleton },
   };
 }
@@ -260,13 +281,15 @@ export function simulateSafeMultiSigTransaction(args: {
   tx?: { hash?: string };
   logIndex?: number;
 }) {
+  const block = autoBlock(args.block);
+  const li = args.logIndex ?? nextLogIndex();
   return {
     contract: "GnosisSafeL2" as const,
     event: "SafeMultiSigTransaction" as const,
     srcAddress: args.safeAddress,
-    logIndex: args.logIndex ?? nextLogIndex(),
-    block: autoBlock(args.block),
-    transaction: autoTx(args.tx),
+    logIndex: li,
+    block,
+    transaction: autoTx(args.tx, block.number, li),
     params: {
       to: args.to ?? (zeroAddress as `0x${string}`),
       value: args.value ?? 0n,
@@ -298,13 +321,15 @@ export function simulateSafeModuleTransaction(args: {
   tx?: { hash?: string };
   logIndex?: number;
 }) {
+  const block = autoBlock(args.block);
+  const li = args.logIndex ?? nextLogIndex();
   return {
     contract: "GnosisSafeL2" as const,
     event: "SafeModuleTransaction" as const,
     srcAddress: args.safeAddress,
-    logIndex: args.logIndex ?? nextLogIndex(),
-    block: autoBlock(args.block),
-    transaction: autoTx(args.tx),
+    logIndex: li,
+    block,
+    transaction: autoTx(args.tx, block.number, li),
     params: {
       module: args.module,
       to: args.to ?? (zeroAddress as `0x${string}`),
@@ -330,13 +355,15 @@ type ExecutionArgs = {
 
 function buildExecution(eventBase: "ExecutionSuccess" | "ExecutionFailure", args: ExecutionArgs) {
   const event = args.v4 ? `${eventBase}V4` : eventBase;
+  const block = autoBlock(args.block);
+  const li = args.logIndex ?? nextLogIndex();
   return {
     contract: "GnosisSafeL2" as const,
     event,
     srcAddress: args.safeAddress,
-    logIndex: args.logIndex ?? nextLogIndex(),
-    block: autoBlock(args.block),
-    transaction: autoTx(args.tx),
+    logIndex: li,
+    block,
+    transaction: autoTx(args.tx, block.number, li),
     params: {
       txHash: args.txHash ?? ("0x" + "0".repeat(64)) as `0x${string}`,
       payment: args.payment ?? 0n,
@@ -359,13 +386,15 @@ export function simulateErc20Transfer(args: {
   tx?: { hash?: string };
   logIndex?: number;
 }) {
+  const block = autoBlock(args.block);
+  const li = args.logIndex ?? nextLogIndex();
   return {
     contract: "SafeErc20Watcher" as const,
     event: "Transfer" as const,
     srcAddress: args.token,
-    logIndex: args.logIndex ?? nextLogIndex(),
-    block: autoBlock(args.block),
-    transaction: autoTx(args.tx),
+    logIndex: li,
+    block,
+    transaction: autoTx(args.tx, block.number, li),
     params: { from: args.from, to: args.to, value: args.value },
   };
 }
