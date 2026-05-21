@@ -17,6 +17,9 @@ importers:
       ethers:
         specifier: 6.8.0
         version: 6.8.0
+      viem:
+        specifier: ^2.46.2
+        version: 2.46.2(typescript@5.9.3)(zod@4.3.6)
     devDependencies:
       '@types/node':
         specifier: ^22.10.5

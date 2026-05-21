@@ -1,0 +1,36 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.2.2
+        with:
+          persist-credentials: false
+
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.1.0
+        with:
+          version: 10
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Generates .envio/types.d.ts (gitignored) so tsc + vitest see the
+      # contract-event union types. Doesn't hit the network — reads
+      # config.yaml + schema.graphql only.
+      - run: pnpm codegen
+
+      # ENVIO_TEST_MODE is set inside the vitest setupFile, but the envio
+      # codegen / API-token check on `pnpm dev` would need a real token. Tests
+      # don't touch HyperSync or DRPC thanks to the hypersync.ts shim, so no
+      # secrets are required here.
+      - run: pnpm test
