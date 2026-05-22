@@ -219,7 +219,7 @@ function executionDedup(event: any): boolean {
 export const executionSuccess = async (event: any, context: any, enableTraces: boolean = false) => {
   if (executionDedup(event)) return;
 
-  const { payment } = event.params;
+  const { payment, txHash: safeTxHash } = event.params;
   const { srcAddress, chainId } = event;
   const safeId = chainId + "-" + srcAddress;
 
@@ -244,17 +244,17 @@ export const executionSuccess = async (event: any, context: any, enableTraces: b
   const txId = `${safeId}-${currentNonce}`;
   const existingTx = await context.SafeTransaction.get(txId);
   if (existingTx) {
-    context.SafeTransaction.set({ ...existingTx, success: true });
+    context.SafeTransaction.set({ ...existingTx, success: true, safeTxHash });
   } else if (enableTraces && isL1Safe(safe)) {
     // L1 Safes: no SafeMultiSigTransaction event, create from traces
-    await createL1SafeTransaction(event, context, safe, currentNonce, true);
+    await createL1SafeTransaction(event, context, safe, currentNonce, true, safeTxHash);
   }
 };
 
 export const executionFailure = async (event: any, context: any, enableTraces: boolean = false) => {
   if (executionDedup(event)) return;
 
-  const { payment } = event.params;
+  const { payment, txHash: safeTxHash } = event.params;
   const { srcAddress, chainId } = event;
   const safeId = chainId + "-" + srcAddress;
 
@@ -279,17 +279,17 @@ export const executionFailure = async (event: any, context: any, enableTraces: b
   const txId = `${safeId}-${currentNonce}`;
   const existingTx = await context.SafeTransaction.get(txId);
   if (existingTx) {
-    context.SafeTransaction.set({ ...existingTx, success: false });
+    context.SafeTransaction.set({ ...existingTx, success: false, safeTxHash });
   } else if (enableTraces && isL1Safe(safe)) {
     // L1 Safes: no SafeMultiSigTransaction event, create from traces
-    await createL1SafeTransaction(event, context, safe, currentNonce, false);
+    await createL1SafeTransaction(event, context, safe, currentNonce, false, safeTxHash);
   }
 };
 
 // Create a SafeTransaction entity for L1 Safes by decoding execTransaction.
 // Primary: decode directly from event.transaction.input (works for direct calls).
 // Fallback: fetch via RPC trace_transaction (works for relayed calls).
-async function createL1SafeTransaction(event: any, context: any, safe: any, nonce: number, isSuccess: boolean) {
+async function createL1SafeTransaction(event: any, context: any, safe: any, nonce: number, isSuccess: boolean, safeTxHash: string) {
   const { srcAddress, chainId, block } = event;
   const { hash, input, from } = event.transaction;
   const safeId = `${chainId}-${srcAddress}`;
@@ -334,6 +334,7 @@ async function createL1SafeTransaction(event: any, context: any, safe: any, nonc
       threshold: safe.threshold,
       executionDate: BigInt(block.timestamp),
       txHash: hash,
+      safeTxHash,
       success: isSuccess,
     });
 
