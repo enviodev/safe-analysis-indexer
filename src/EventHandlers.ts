@@ -336,6 +336,7 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeMultiSigTransaction", wi
     executionDate: BigInt(timestamp),
     txHash: hash,
     safeTxHash: undefined, // set later by ExecutionSuccess/Failure
+    blockNum: event.block.number,
     success: undefined,
   });
 
@@ -371,6 +372,7 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeModuleTransaction", wild
     operation: BigInt(operation),
     txHash: hash,
     timestamp: BigInt(timestamp),
+    blockNum: event.block.number,
   });
 
   // Increment global, network, and version module transaction counts
