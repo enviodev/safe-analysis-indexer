@@ -66,8 +66,8 @@ describe("SafeMultiSigTransaction", () => {
     // safeTxHash is null until ExecutionSuccess/Failure fires — the
     // SafeMultiSigTransaction event doesn't carry it.
     expect(tx.safeTxHash).toBeUndefined();
-    // blockNum is the execution block, set at row creation.
-    expect(tx.blockNum).toBe(4242);
+    // blockNumber is the execution block, set at row creation.
+    expect(tx.blockNumber).toBe(4242);
 
     await expectTxCount(indexer, {
       global: 1,
@@ -110,7 +110,7 @@ describe("SafeModuleTransaction", () => {
     expect(rows.length).toBe(1);
     expect(rows[0]!.safeModule.toLowerCase()).toBe(addr("the-module"));
     expect(rows[0]!.value).toBe(42n);
-    expect(rows[0]!.blockNum).toBe(1337);
+    expect(rows[0]!.blockNumber).toBe(1337);
 
     await expectModuleTxCount(indexer, {
       global: 1,
