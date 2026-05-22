@@ -62,6 +62,9 @@ describe("SafeMultiSigTransaction", () => {
     expect(tx.threshold).toBe(2);
     expect(tx.to.toLowerCase()).toBe(addr("multisig-to"));
     expect(tx.value).toBe(1000n);
+    // safeTxHash is null until ExecutionSuccess/Failure fires — the
+    // SafeMultiSigTransaction event doesn't carry it.
+    expect(tx.safeTxHash).toBeUndefined();
 
     await expectTxCount(indexer, {
       global: 1,
@@ -153,4 +156,15 @@ describe("ExecutionSuccess / ExecutionFailure", () => {
   it.todo("ExecutionSuccess L1 path: decodes execTransaction from event.transaction.input directly (blocked: envio dual-fire + dedup)");
   it.todo("ExecutionSuccess L1 path: falls back to getExecTransactionViaRpcTrace when tx.input isn't decodable (blocked: envio dual-fire + dedup)");
   it.todo("Sequence multisig→success→multisig→failure: nonce, gas, success flags (blocked: envio dual-fire + dedup)");
+});
+
+describe("safeTxHash linking (Section 3.6)", () => {
+  // safeTxHash is read from ExecutionSuccess/Failure's `txHash` event
+  // param and persisted onto the SafeTransaction row. Linking through
+  // TestIndexer is blocked by the same envio dual-fire + dedup quirk
+  // documented above the other execution todos — converted to it.todo
+  // with the same restoration path.
+  it.todo("ExecutionSuccess sets safeTxHash + success=true on the prior SafeTransaction (blocked: envio dual-fire + dedup)");
+  it.todo("ExecutionFailure sets safeTxHash + success=false on the prior SafeTransaction (blocked: envio dual-fire + dedup)");
+  it.todo("L1 path createL1SafeTransaction stores safeTxHash from the event (blocked: envio dual-fire + dedup)");
 });

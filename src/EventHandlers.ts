@@ -335,6 +335,7 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeMultiSigTransaction", wi
     threshold: Number(decodedThreshold),
     executionDate: BigInt(timestamp),
     txHash: hash,
+    safeTxHash: undefined, // set later by ExecutionSuccess/Failure
     success: undefined,
   });
 
