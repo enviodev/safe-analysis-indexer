@@ -69,6 +69,9 @@ export function seedSafe(
     numberOfSuccessfulExecutions?: number;
     numberOfFailedExecutions?: number;
     totalGasSpent?: bigint;
+    blockCreationNum?: number;
+    factoryAddress?: string;
+    setupData?: string;
   },
 ): string {
   const id = `${args.chainId}-${args.address.toLowerCase()}`;
@@ -84,6 +87,9 @@ export function seedSafe(
     guard: args.guard ?? ZERO_ADDRESS,
     creationTxHash: "0x" + "0".repeat(64),
     creationTimestamp: 0n,
+    blockCreationNum: args.blockCreationNum ?? 0,
+    factoryAddress: args.factoryAddress,
+    setupData: args.setupData,
     initializer: "",
     initiator: "",
     numberOfSuccessfulExecutions: args.numberOfSuccessfulExecutions ?? 0,

@@ -42,6 +42,9 @@ type Safe {
   id: ID! # chainId-address
   creationTxHash: String! @index
   creationTimestamp: BigInt! @index
+  blockCreationNum: Int! @index # creation block number — set by ProxyCreation; SafeSetup-first seeds it, ProxyCreation overrides if it fires later in the same tx
+  factoryAddress: String @index # factory contract that emitted ProxyCreation; null for SafeSetup-first orphans where ProxyCreation never arrived
+  setupData: String # raw setup() calldata; populated for pre-1.3.0 from the setup trace, null for modern creation paths (event params don't carry it and decoding from tx.input is unsafe under batched-deploy txs)
   address: String! @index
   chainId: Int! @index
   owners: [String!]!
