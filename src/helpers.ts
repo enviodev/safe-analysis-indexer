@@ -335,6 +335,7 @@ async function createL1SafeTransaction(event: any, context: any, safe: any, nonc
       executionDate: BigInt(block.timestamp),
       txHash: hash,
       safeTxHash,
+      blockNumber: block.number,
       success: isSuccess,
     });
 

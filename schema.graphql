@@ -103,6 +103,7 @@ type SafeModuleTransaction {
   operation: BigInt!
   txHash: String! @index
   timestamp: BigInt! @index
+  blockNumber: Int! @index # execution block number — enables ordering / "since block X" filtering
 }
 
 type SafeTransaction {
@@ -126,6 +127,7 @@ type SafeTransaction {
   executionDate: BigInt! @index
   txHash: String! @index # on-chain transaction hash
   safeTxHash: String @index # EIP-712 safe-tx hash (the key Safe Transaction Service uses). Null until ExecutionSuccess/Failure fires — the SafeMultiSigTransaction event doesn't carry it, so it's set when execution lands.
+  blockNumber: Int! @index # execution block number — enables ordering / "since block X" filtering
   success: Boolean # null until ExecutionSuccess/Failure fires
 }
 
