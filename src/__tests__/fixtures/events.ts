@@ -295,6 +295,51 @@ export function simulateChangedGuard(args: {
 }
 
 // ---------------------------------------------------------------------------
+// EnabledModule / DisabledModule (+ V4 variants) (GnosisSafeL2, wildcard) —
+// two ABI variants share each topic0:
+//   pre-1.4.0: EnabledModule(address module)              -- non-indexed
+//   v1.4.0+:   EnabledModule(address indexed module)      -- indexed, named V4.
+// ---------------------------------------------------------------------------
+type ModuleArgs = {
+  safeAddress: `0x${string}`;
+  module: `0x${string}`;
+  v4?: boolean;
+  block?: { number?: number; timestamp?: number; hash?: string };
+  tx?: { hash?: string };
+  logIndex?: number;
+};
+
+export function simulateEnabledModule(args: ModuleArgs) {
+  const block = autoBlock(args.block);
+  const li = args.logIndex ?? nextLogIndex();
+  const event = args.v4 ? "EnabledModuleV4" : "EnabledModule";
+  return {
+    contract: "GnosisSafeL2" as const,
+    event,
+    srcAddress: args.safeAddress,
+    logIndex: li,
+    block,
+    transaction: autoTx(args.tx, block.number, li),
+    params: { module: args.module },
+  } as const;
+}
+
+export function simulateDisabledModule(args: ModuleArgs) {
+  const block = autoBlock(args.block);
+  const li = args.logIndex ?? nextLogIndex();
+  const event = args.v4 ? "DisabledModuleV4" : "DisabledModule";
+  return {
+    contract: "GnosisSafeL2" as const,
+    event,
+    srcAddress: args.safeAddress,
+    logIndex: li,
+    block,
+    transaction: autoTx(args.tx, block.number, li),
+    params: { module: args.module },
+  } as const;
+}
+
+// ---------------------------------------------------------------------------
 // SafeMultiSigTransaction (GnosisSafeL2, wildcard) — additionalInfo is the
 // ABI-encoded (uint256 nonce, address msgSender, uint256 threshold) tuple.
 // ---------------------------------------------------------------------------

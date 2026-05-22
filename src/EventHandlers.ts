@@ -467,6 +467,74 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "ChangedGuardV4", wildcard: t
   await applyGuardChange(event, context);
 });
 
+// EnabledModule / DisabledModule — two ABI variants share each topic0:
+//   pre-1.4.0: EnabledModule(address module)              -- non-indexed
+//   v1.4.0+:   EnabledModule(address indexed module)      -- indexed (named V4)
+// A Safe only emits the variant matching its version, so the V4/non-V4
+// handlers never both fire for the same on-chain event. Both delegate to the
+// same idempotent helpers below.
+//
+// SafeModule rows exist iff the module is currently enabled. Re-enabling a
+// previously-disabled module re-creates the row with a fresh enabledAt; the
+// id is deterministic on (chainId, safe, module) so there's no row drift.
+async function applyEnableModule(
+  event: {
+    params: { module: string };
+    srcAddress: string;
+    chainId: number;
+    block: { number: number; timestamp: number };
+    transaction: { hash: string };
+  },
+  context: any,
+) {
+  const { module } = event.params;
+  const safeId = `${event.chainId}-${event.srcAddress}`;
+  const safe = await context.Safe.get(safeId);
+  if (!safe) return;
+
+  const moduleAddr = module.toLowerCase();
+  context.SafeModule.set({
+    id: `${safeId}-${moduleAddr}`,
+    safe_id: safeId,
+    module: moduleAddr,
+    chainId: event.chainId,
+    enabledAtBlock: event.block.number,
+    enabledAtTimestamp: BigInt(event.block.timestamp),
+    enabledTxHash: event.transaction.hash,
+  });
+}
+
+async function applyDisableModule(
+  event: { params: { module: string }; srcAddress: string; chainId: number },
+  context: any,
+) {
+  const { module } = event.params;
+  const safeId = `${event.chainId}-${event.srcAddress}`;
+  const safe = await context.Safe.get(safeId);
+  if (!safe) return;
+
+  const rowId = `${safeId}-${module.toLowerCase()}`;
+  const existing = await context.SafeModule.get(rowId);
+  if (!existing) return;
+  context.SafeModule.deleteUnsafe(rowId);
+}
+
+indexer.onEvent({ contract: "GnosisSafeL2", event: "EnabledModule", wildcard: true }, async ({ event, context }) => {
+  await applyEnableModule(event, context);
+});
+
+indexer.onEvent({ contract: "GnosisSafeL2", event: "EnabledModuleV4", wildcard: true }, async ({ event, context }) => {
+  await applyEnableModule(event, context);
+});
+
+indexer.onEvent({ contract: "GnosisSafeL2", event: "DisabledModule", wildcard: true }, async ({ event, context }) => {
+  await applyDisableModule(event, context);
+});
+
+indexer.onEvent({ contract: "GnosisSafeL2", event: "DisabledModuleV4", wildcard: true }, async ({ event, context }) => {
+  await applyDisableModule(event, context);
+});
+
 // Wildcard ERC20 Transfer filtered to transfers touching a known Safe.
 // HyperIndex partitions the Safe address pool at 5000/partition before pushing
 // it down to HyperSync as topic1/topic2 filters — one request per partition.
