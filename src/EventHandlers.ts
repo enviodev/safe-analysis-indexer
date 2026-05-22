@@ -91,6 +91,9 @@ indexer.onEvent({ contract: "GnosisSafeProxyPre1_3_0", event: "ProxyCreation" },
     version,
     creationTxHash: hash,
     creationTimestamp: BigInt(block.timestamp),
+    blockCreationNum: block.number,
+    factoryAddress: factoryAddress.toLowerCase(),
+    setupData: inputData ?? undefined,
     owners,
     threshold,
     chainId,
@@ -148,14 +151,15 @@ indexer.onEvent({ contract: "SafePre1_3_0", event: "ChangedThreshold" }, async (
 // Shared handler for v1.3.0+ ProxyCreation events.
 // Resolves version from singleton address, falling back to factory-implied version.
 async function handleModernProxyCreation(
-  event: { params: { proxy: string; singleton?: string }; transaction: { hash: string }; chainId: number; block: { timestamp: number } },
+  event: { params: { proxy: string; singleton?: string }; transaction: { hash: string }; srcAddress: string; chainId: number; block: { number: number; timestamp: number } },
   context: any,
   factoryImpliedVersion: SafeVersion
 ) {
   const { proxy, singleton } = event.params;
   const { hash } = event.transaction;
-  const { chainId, block } = event;
+  const { chainId, block, srcAddress: factoryAddress } = event;
   const masterCopy = singleton?.toLowerCase();
+  const factory = factoryAddress.toLowerCase();
 
   // Resolve version from singleton address; fall back to factory-implied version
   const resolvedVersion = masterCopy ? resolveVersionFromMasterCopy(masterCopy) : undefined;
@@ -167,13 +171,17 @@ async function handleModernProxyCreation(
   const existingSafe = await context.Safe.get(safeId);
 
   if (existingSafe) {
-    // SafeSetup already created the Safe - just update version, creation info, and masterCopy
+    // SafeSetup already created the Safe - update version, creation info, masterCopy,
+    // and creation-context fields (SafeSetup-first only knew its own block; ProxyCreation
+    // is the authoritative creation point, and only it knows the factory).
     context.Safe.set({
       ...existingSafe,
       version,
       masterCopy,
       creationTxHash: hash,
       creationTimestamp: BigInt(block.timestamp),
+      blockCreationNum: block.number,
+      factoryAddress: factory,
     });
   } else {
     // Create placeholder - SafeSetup will update owners/threshold/fallbackHandler
@@ -187,6 +195,9 @@ async function handleModernProxyCreation(
       guard: NO_GUARD,
       creationTxHash: hash,
       creationTimestamp: BigInt(block.timestamp),
+      blockCreationNum: block.number,
+      factoryAddress: factory,
+      setupData: undefined, // Modern path: not extracted (see schema comment)
       threshold: 0,
       address: proxy,
       initializer: "",
@@ -244,7 +255,9 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeSetup", wildcard: true }
     context.Safe.set(safe);
   } else {
     // SafeSetup fired before ProxyCreation - create the Safe now
-    // ProxyCreation will update version, creationTxHash, and masterCopy when it fires
+    // ProxyCreation will update version, creationTxHash, masterCopy, blockCreationNum,
+    // and factoryAddress when it fires. If ProxyCreation never arrives (orphan
+    // SafeSetup), these stay at the SafeSetup-derived defaults.
     const safe: Safe = {
       id: safeId,
       owners: ownersArray,
@@ -257,6 +270,9 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeSetup", wildcard: true }
       guard: NO_GUARD,
       creationTxHash: hash,
       creationTimestamp: BigInt(event.block.timestamp),
+      blockCreationNum: event.block.number,
+      factoryAddress: undefined, // Not known from SafeSetup; ProxyCreation will fill it
+      setupData: undefined,
       initializer,
       initiator,
       numberOfSuccessfulExecutions: 0,
