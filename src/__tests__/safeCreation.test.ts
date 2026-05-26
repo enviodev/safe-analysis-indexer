@@ -274,17 +274,17 @@ describe("Safe creation counters", () => {
         singleton: MASTER_COPIES.V1_3_0_L2 as `0x${string}`,
       }),
     ]);
-    await processOnChain(indexer, 137, [
+    await processOnChain(indexer, 100, [
       simulateProxyCreationModern({
         contract: "GnosisSafeProxy1_3_0",
-        proxy: addr("count-multi-137"),
+        proxy: addr("count-multi-100"),
         singleton: MASTER_COPIES.V1_3_0_L2 as `0x${string}`,
       }),
     ]);
 
     await expectSafeCount(indexer, { global: 2 });
     await expectSafeCount(indexer, { chainId: 1, network: 1 });
-    await expectSafeCount(indexer, { chainId: 137, network: 1 });
+    await expectSafeCount(indexer, { chainId: 100, network: 1 });
     await expectSafeCount(indexer, { version: "V1_3_0", versionCount: 2 });
   });
 });
