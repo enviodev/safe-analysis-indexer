@@ -15,6 +15,7 @@ import type {
   SafeApiSafe,
   SafeApiMultisigTx,
   SafeApiModuleTx,
+  SafeApiCreation,
 } from "../normalize";
 
 const BASE = "https://api.safe.global/tx-service";
@@ -80,6 +81,14 @@ export async function getSafe(
   return getJson<SafeApiSafe>(url);
 }
 
+export async function getSafeCreation(
+  chainId: ChainId,
+  address: string,
+): Promise<SafeApiCreation | null> {
+  const url = `${baseUrl(chainId)}/v1/safes/${toChecksum(address)}/creation/`;
+  return getJson<SafeApiCreation>(url);
+}
+
 export async function getOwnerSafes(
   chainId: ChainId,
   ownerAddress: string,
@@ -95,7 +104,7 @@ export async function getOwnerSafes(
   const page = await getJson<Paginated<Row>>(url);
   if (!page) return null;
   return {
-    safes: page.results.map((r) => r.toChecksum(address)),
+    safes: page.results.map((r) => r.address.toLowerCase()),
     total: page.count,
   };
 }

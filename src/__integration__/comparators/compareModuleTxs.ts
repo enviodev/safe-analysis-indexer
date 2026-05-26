@@ -1,5 +1,13 @@
 // Compare module transactions: total count + top-N most recent field-level
 // compare keyed by (txHash, module).
+//
+// Field coverage (per matched tx):
+//   - blockNumber, executionTimestamp
+//   - to, value, data, operation
+//
+// success is intentionally not compared: our SafeModuleTransaction schema
+// doesn't track success on module txs (the contract event doesn't carry it
+// the way ExecutionSuccess/Failure does for multisig txs).
 
 import * as safeApi from "../clients/safeApi";
 import * as indexerApi from "../clients/indexerApi";
@@ -8,7 +16,38 @@ import {
   normaliseModuleFromIndexer,
 } from "../normalize";
 import { DEFAULT_TOP_N_TX_COMPARE } from "../sampling.config";
-import type { ChainId, DiffResult, FieldDiff } from "../types";
+import type { ChainId, DiffResult, FieldDiff, NormalisedModuleTx } from "../types";
+
+function diffField(
+  diffs: FieldDiff[],
+  field: string,
+  canonical: unknown,
+  indexer: unknown,
+): void {
+  if (canonical !== indexer) {
+    diffs.push({ field, canonical, indexer });
+  }
+}
+
+function compareOne(
+  diffs: FieldDiff[],
+  canonical: NormalisedModuleTx,
+  indexer: NormalisedModuleTx,
+): void {
+  const tag = `${canonical.txHash}:${canonical.module}`;
+  diffField(diffs, `blockNumber[${tag}]`, canonical.blockNumber, indexer.blockNumber);
+  diffField(diffs, `to[${tag}]`, canonical.to, indexer.to);
+  diffField(diffs, `value[${tag}]`, canonical.value, indexer.value);
+  diffField(diffs, `data[${tag}]`, canonical.data, indexer.data);
+  diffField(diffs, `operation[${tag}]`, canonical.operation, indexer.operation);
+  if (Math.abs(canonical.executionTimestamp - indexer.executionTimestamp) > 1) {
+    diffs.push({
+      field: `executionTimestamp[${tag}]`,
+      canonical: canonical.executionTimestamp,
+      indexer: indexer.executionTimestamp,
+    });
+  }
+}
 
 export async function compareModuleTxs(
   chainId: ChainId,
@@ -34,7 +73,6 @@ export async function compareModuleTxs(
         };
   }
 
-  // Most Safes have zero module transactions — that's a valid pass, not a skip.
   if (canonicalPage.total === 0 && indexerResult.txs.length === 0) {
     return { kind: "passed" };
   }
@@ -51,14 +89,10 @@ export async function compareModuleTxs(
     diffs.push({ field: "count", canonical: canonicalCount, indexer: indexerCount });
   }
 
-  // Top-N field compare. Match on (txHash, module) since the Safe TX Service
-  // module endpoint can have multiple module-tx rows per containing tx (one
-  // per module call).
+  // Match on (txHash, module) since one tx can host multiple module-tx rows
+  // (one per module call).
   const indexerKey = (txHash: string, module: string) => `${txHash}:${module}`;
-  const indexerByKey = new Map<
-    string,
-    ReturnType<typeof normaliseModuleFromIndexer>
-  >();
+  const indexerByKey = new Map<string, NormalisedModuleTx>();
   for (const tx of indexerResult.txs) {
     const n = normaliseModuleFromIndexer(tx);
     indexerByKey.set(indexerKey(n.txHash, n.module), n);
@@ -76,14 +110,7 @@ export async function compareModuleTxs(
       });
       continue;
     }
-    if (canonical.blockNumber !== indexer.blockNumber) {
-      diffs.push({
-        field: `blockNumber[${key}]`,
-        canonical: canonical.blockNumber,
-        indexer: indexer.blockNumber,
-      });
-    }
-    // success isn't tracked on our SafeModuleTransaction — skip.
+    compareOne(diffs, canonical, indexer);
   }
 
   return diffs.length === 0 ? { kind: "passed" } : { kind: "mismatched", diffs };

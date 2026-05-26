@@ -12,6 +12,7 @@ import type {
   IndexerMultisigTx,
   IndexerModuleTx,
   IndexerSafe,
+  IndexerSafeCreation,
 } from "../normalize";
 
 const DEFAULT_ENDPOINT = "https://indexer.eu.hyperindex.xyz/a078e76/v1/graphql";
@@ -64,6 +65,29 @@ export async function getSafe(
   return data.Safe[0] ?? null;
 }
 
+const SAFE_CREATION_QUERY = `
+  query GetSafeCreation($id: String!) {
+    Safe(where: { id: { _eq: $id } }, limit: 1) {
+      address
+      chainId
+      creationTxHash
+      factoryAddress
+      masterCopy
+      setupData
+      initiator
+    }
+  }
+`;
+
+export async function getSafeCreation(
+  chainId: ChainId,
+  address: string,
+): Promise<IndexerSafeCreation | null> {
+  const id = `${chainId}-${address.toLowerCase()}`;
+  const data = await query<{ Safe: IndexerSafeCreation[] }>(SAFE_CREATION_QUERY, { id });
+  return data.Safe[0] ?? null;
+}
+
 const MULTISIG_TX_QUERY = `
   query GetMultisigTxs($safeId: String!, $limit: Int!) {
     SafeTransaction(
@@ -76,6 +100,19 @@ const MULTISIG_TX_QUERY = `
       txHash
       executionDate
       success
+      to
+      value
+      data
+      operation
+      safeTxGas
+      baseGas
+      gasPrice
+      gasToken
+      refundReceiver
+      signatures
+      threshold
+      msgSender
+      blockNumber
       safe { address chainId }
     }
   }
@@ -83,8 +120,8 @@ const MULTISIG_TX_QUERY = `
 
 // We can't get an exact total without _aggregate, but for the sampling we do
 // (top-N most recent), capping at 1000 gives us enough headroom. Returns the
-// rows and the rows.length as a "count-or-cap" so the comparator can decide
-// whether to trust the count.
+// rows and a `capped` flag so the comparator can decide whether to trust the
+// count.
 export async function getMultisigTransactions(
   chainId: ChainId,
   safeAddress: string,
@@ -108,6 +145,11 @@ const MODULE_TX_QUERY = `
       safeModule
       txHash
       blockNumber
+      to
+      value
+      data
+      operation
+      timestamp
       safe { address chainId }
     }
   }

@@ -15,6 +15,7 @@
 import { afterAll, describe, expect, it } from "vitest";
 import { buildSample } from "./samplers";
 import { compareSafeMetadata } from "./comparators/compareSafeMetadata";
+import { compareSafeCreation } from "./comparators/compareSafeCreation";
 import { compareMultisigTxs } from "./comparators/compareMultisigTxs";
 import { compareModuleTxs } from "./comparators/compareModuleTxs";
 import { ping, indexerEndpoint } from "./clients/indexerApi";
@@ -32,7 +33,7 @@ const CHAINS: ChainId[] = (process.env.INTEGRATION_CHAINS
   ? process.env.INTEGRATION_CHAINS.split(",").map((s) => Number(s.trim()))
   : DEFAULT_CHAINS) as ChainId[];
 
-type ComparatorName = "metadata" | "multisigTxs" | "moduleTxs";
+type ComparatorName = "metadata" | "creation" | "multisigTxs" | "moduleTxs";
 
 interface RunRow {
   chainId: ChainId;
@@ -82,6 +83,17 @@ describe("cross-reference integration (Safe TX Service ↔ Envio indexer)", () =
       results.push({ chainId, safeAddress, comparator: "metadata", result });
       if (result.kind === "mismatched") {
         throw new Error(formatMismatch("metadata", chainId, safeAddress, result));
+      }
+    },
+  );
+
+  it.each(samples)(
+    "[chain $chainId][$source] $safeAddress — creation",
+    async ({ chainId, safeAddress }) => {
+      const result = await compareSafeCreation(chainId, safeAddress);
+      results.push({ chainId, safeAddress, comparator: "creation", result });
+      if (result.kind === "mismatched") {
+        throw new Error(formatMismatch("creation", chainId, safeAddress, result));
       }
     },
   );

@@ -33,6 +33,19 @@ export interface NormalisedSafe {
   nonce: number;
 }
 
+// Creation context from `/v1/safes/{address}/creation/` vs our Safe entity's
+// creation fields. Compared in a separate comparator so a failure here points
+// at the creation handlers specifically.
+export interface NormalisedSafeCreation {
+  chainId: ChainId;
+  safeAddress: string;
+  creationTxHash: string; // lowercase
+  factoryAddress: string | null; // lowercase or null (orphan SafeSetup case)
+  masterCopy: string | null; // lowercase or null
+  setupData: string | null; // lowercase hex or null
+  creator: string; // lowercase — Safe TX Service `creator`, our `initiator`
+}
+
 export interface NormalisedMultisigTx {
   safeAddress: string; // lowercase
   chainId: ChainId;
@@ -41,6 +54,20 @@ export interface NormalisedMultisigTx {
   executionDate: number; // unix seconds; both sources expose this
   success: boolean | null;
   nonce: number;
+  // Transaction payload (matched against our SafeTransaction entity)
+  to: string; // lowercase
+  value: string; // decimal string (BigInt-normalised)
+  data: string; // "0x" if empty (Safe TX Service can return null; we canonicalise)
+  operation: number; // 0 CALL, 1 DELEGATECALL, 2 CREATE
+  safeTxGas: string;
+  baseGas: string;
+  gasPrice: string;
+  gasToken: string; // lowercase, "0x000…" if no token (indexer ZERO_ADDRESS convention)
+  refundReceiver: string; // lowercase, "0x000…" if null
+  signatures: string; // lowercase hex; "0x" if missing
+  threshold: number; // confirmationsRequired snapshot at execution
+  executor: string | null; // lowercase or null — our msgSender, Safe TX Service executor
+  blockNumber: number | null; // null on Safe TX Service side until executed
 }
 
 export interface NormalisedModuleTx {
@@ -50,6 +77,12 @@ export interface NormalisedModuleTx {
   module: string; // lowercase
   blockNumber: number;
   success: boolean | null; // Safe TX Service has isSuccessful; our schema doesn't track success on module txs (always null)
+  // Transaction payload (matched against our SafeModuleTransaction entity)
+  to: string;
+  value: string;
+  data: string;
+  operation: number;
+  executionTimestamp: number; // unix seconds — Safe TX Service executionDate, our `timestamp`
 }
 
 // One field-level diff inside a mismatched DiffResult.
