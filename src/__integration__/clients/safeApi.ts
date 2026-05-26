@@ -109,19 +109,27 @@ export async function getOwnerSafes(
   };
 }
 
+export interface MultisigTxQuery {
+  limit?: number;
+  offset?: number;
+  executedOnly?: boolean;
+  // ISO 8601 (e.g. "2026-05-26T12:00:00Z") — Safe TX Service multisig endpoint
+  // has no block-number filter, so we bound by date.
+  executionDateLte?: string;
+}
+
 export async function getMultisigTransactions(
   chainId: ChainId,
   safeAddress: string,
-  limit = 20,
-  offset = 0,
-  executedOnly = true,
+  opts: MultisigTxQuery = {},
 ): Promise<{ txs: SafeApiMultisigTx[]; total: number } | null> {
   const params = new URLSearchParams({
-    limit: String(limit),
-    offset: String(offset),
+    limit: String(opts.limit ?? 20),
+    offset: String(opts.offset ?? 0),
     ordering: "-execution_date",
   });
-  if (executedOnly) params.set("executed", "true");
+  if (opts.executedOnly ?? true) params.set("executed", "true");
+  if (opts.executionDateLte) params.set("execution_date__lte", opts.executionDateLte);
   const url =
     `${baseUrl(chainId)}/v2/safes/${toChecksum(safeAddress)}/multisig-transactions/` +
     `?${params.toString()}`;
@@ -130,17 +138,25 @@ export async function getMultisigTransactions(
   return { txs: page.results, total: page.count };
 }
 
+export interface ModuleTxQuery {
+  limit?: number;
+  offset?: number;
+  blockNumberLte?: number; // sent as block_number__lt = ceiling + 1
+}
+
 export async function getModuleTransactions(
   chainId: ChainId,
   safeAddress: string,
-  limit = 20,
-  offset = 0,
+  opts: ModuleTxQuery = {},
 ): Promise<{ txs: SafeApiModuleTx[]; total: number } | null> {
   const params = new URLSearchParams({
-    limit: String(limit),
-    offset: String(offset),
+    limit: String(opts.limit ?? 20),
+    offset: String(opts.offset ?? 0),
     ordering: "-block_number",
   });
+  if (opts.blockNumberLte != null) {
+    params.set("block_number__lt", String(opts.blockNumberLte + 1));
+  }
   const url =
     `${baseUrl(chainId)}/v1/safes/${toChecksum(safeAddress)}/module-transactions/` +
     `?${params.toString()}`;

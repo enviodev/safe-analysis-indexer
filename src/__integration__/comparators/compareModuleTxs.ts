@@ -16,7 +16,13 @@ import {
   normaliseModuleFromIndexer,
 } from "../normalize";
 import { DEFAULT_TOP_N_TX_COMPARE } from "../sampling.config";
-import type { ChainId, DiffResult, FieldDiff, NormalisedModuleTx } from "../types";
+import type {
+  ChainId,
+  ComparisonCeiling,
+  DiffResult,
+  FieldDiff,
+  NormalisedModuleTx,
+} from "../types";
 
 function diffField(
   diffs: FieldDiff[],
@@ -52,10 +58,14 @@ function compareOne(
 export async function compareModuleTxs(
   chainId: ChainId,
   safeAddress: string,
+  ceiling: ComparisonCeiling,
 ): Promise<DiffResult> {
   const [canonicalPage, indexerResult] = await Promise.all([
-    safeApi.getModuleTransactions(chainId, safeAddress, DEFAULT_TOP_N_TX_COMPARE, 0),
-    indexerApi.getModuleTransactions(chainId, safeAddress, 1000),
+    safeApi.getModuleTransactions(chainId, safeAddress, {
+      limit: DEFAULT_TOP_N_TX_COMPARE,
+      blockNumberLte: ceiling.block,
+    }),
+    indexerApi.getModuleTransactions(chainId, safeAddress, ceiling.block, 1000),
   ]);
 
   if (!canonicalPage) {

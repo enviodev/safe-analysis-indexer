@@ -19,7 +19,7 @@
 import "dotenv/config";
 
 import { afterAll, describe, expect, it } from "vitest";
-import { buildSample } from "./samplers";
+import { buildSample, filterByCeiling } from "./samplers";
 import { compareSafeMetadata } from "./comparators/compareSafeMetadata";
 import { compareSafeCreation } from "./comparators/compareSafeCreation";
 import { compareMultisigTxs } from "./comparators/compareMultisigTxs";
@@ -28,6 +28,7 @@ import {
   ping,
   isIndexerEndpointConfigured,
   indexerEndpoint,
+  getCeiling,
 } from "./clients/indexerApi";
 import {
   DEFAULT_CHAINS,
@@ -40,7 +41,7 @@ import {
   summariseSamples,
   type RunRow,
 } from "./formatting";
-import type { ChainId, DiffResult, SampleEntry } from "./types";
+import type { ChainId, ComparisonCeiling, DiffResult, SampleEntry } from "./types";
 
 const SAMPLE_SIZE_RAW = process.env.INTEGRATION_SAMPLE_SIZE;
 const SAMPLE_SIZE =
@@ -96,25 +97,59 @@ if (endpointConfigured && !preflightOk) {
   writeErr(`[cross-ref] indexer not reachable at ${indexerEndpoint()}`);
 }
 
-const samples: SampleEntry[] = preflightOk
-  ? (
-      await Promise.all(CHAINS.map((chainId) => buildSample(chainId, SAMPLE_SIZE)))
-    ).flat()
-  : [];
-
+// Fetch per-chain comparison ceilings from the indexer's _meta. Ceiling =
+// progressBlock minus a small safety margin to absorb the canonical service's
+// 1-2 block lag. Both sides of every comparison are bounded to this so the
+// suite produces meaningful diffs even while our indexer is mid historical
+// sync.
+const ceilings = new Map<ChainId, ComparisonCeiling>();
 if (preflightOk) {
-  const breakdown = summariseSamples(samples);
-  if (breakdown.length === 0) {
-    writeErr(`[cross-ref] no samples built — sampling.config.ts seed owners may be empty and indexer-direct fallback returned nothing`);
-  } else {
-    for (const b of breakdown) {
+  const fetched = await Promise.all(
+    CHAINS.map(async (chainId) => [chainId, await getCeiling(chainId)] as const),
+  );
+  for (const [chainId, ceiling] of fetched) {
+    if (ceiling) {
+      ceilings.set(chainId, ceiling);
       writeErr(
-        `[cross-ref] sample chain=${b.chainId}: total=${b.total}` +
-          ` owner-anchored=${b.bySource["owner-anchored"]}` +
-          ` recent-activity=${b.bySource["recent-activity"]}` +
-          ` indexer-direct=${b.bySource["indexer-direct"]}`,
+        `[cross-ref] ceiling chain=${chainId}: block=${ceiling.block}` +
+          ` (progressBlock=${ceiling.rawProgressBlock}, isReady=${ceiling.isReady}` +
+          `, anchorTs=${ceiling.timestamp ?? "<none>"})`,
       );
+    } else {
+      writeErr(`[cross-ref] ceiling chain=${chainId}: <_meta returned nothing — chain not indexed yet?>`);
     }
+  }
+}
+
+// Build candidate samples then filter each chain's candidates down to Safes
+// the indexer has at or before the ceiling.
+const samples: SampleEntry[] = [];
+if (preflightOk) {
+  for (const chainId of CHAINS) {
+    const ceiling = ceilings.get(chainId);
+    if (!ceiling) continue;
+    const candidates = await buildSample(chainId, SAMPLE_SIZE);
+    const { kept, droppedAboveCeiling, droppedMissing } = await filterByCeiling(
+      candidates,
+      ceiling,
+    );
+    samples.push(...kept.slice(0, SAMPLE_SIZE));
+    writeErr(
+      `[cross-ref] sample chain=${chainId}: kept=${Math.min(kept.length, SAMPLE_SIZE)}` +
+        ` (candidates=${candidates.length}, dropped above-ceiling=${droppedAboveCeiling}, dropped missing-in-indexer=${droppedMissing})`,
+    );
+  }
+  const breakdown = summariseSamples(samples);
+  for (const b of breakdown) {
+    writeErr(
+      `[cross-ref] sample chain=${b.chainId}: sources` +
+        ` owner-anchored=${b.bySource["owner-anchored"]}` +
+        ` recent-activity=${b.bySource["recent-activity"]}` +
+        ` indexer-direct=${b.bySource["indexer-direct"]}`,
+    );
+  }
+  if (samples.length === 0) {
+    writeErr(`[cross-ref] no samples remain after ceiling filtering`);
   }
 }
 
@@ -178,7 +213,9 @@ describe("cross-reference integration (Safe TX Service ↔ Envio indexer)", () =
   it.each(samples)(
     "[chain $chainId][$source] $safeAddress — multisig txs",
     async ({ chainId, safeAddress }) => {
-      const result = await compareMultisigTxs(chainId, safeAddress);
+      const ceiling = ceilings.get(chainId);
+      if (!ceiling) throw new Error(`no ceiling for chain ${chainId}`);
+      const result = await compareMultisigTxs(chainId, safeAddress, ceiling);
       results.push({ chainId, safeAddress, comparator: "multisigTxs", result });
       if (result.kind === "mismatched") reportMismatch("multisigTxs", chainId, safeAddress, result);
     },
@@ -187,7 +224,9 @@ describe("cross-reference integration (Safe TX Service ↔ Envio indexer)", () =
   it.each(samples)(
     "[chain $chainId][$source] $safeAddress — module txs",
     async ({ chainId, safeAddress }) => {
-      const result = await compareModuleTxs(chainId, safeAddress);
+      const ceiling = ceilings.get(chainId);
+      if (!ceiling) throw new Error(`no ceiling for chain ${chainId}`);
+      const result = await compareModuleTxs(chainId, safeAddress, ceiling);
       results.push({ chainId, safeAddress, comparator: "moduleTxs", result });
       if (result.kind === "mismatched") reportMismatch("moduleTxs", chainId, safeAddress, result);
     },

@@ -8,9 +8,10 @@ import * as safeApi from "./clients/safeApi";
 import {
   indexerEndpoint,
   isIndexerEndpointConfigured,
+  getSafeCreationBlocks,
 } from "./clients/indexerApi";
 import { SEED_OWNERS } from "./sampling.config";
-import type { ChainId, SampleEntry } from "./types";
+import type { ChainId, ComparisonCeiling, SampleEntry } from "./types";
 
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
@@ -91,7 +92,10 @@ export async function recentActivitySample(
     for (const safeAddress of shuffle(page.safes)) {
       if (out.length >= target) break;
       try {
-        const txs = await safeApi.getMultisigTransactions(chainId, safeAddress, 1, 0, true);
+        const txs = await safeApi.getMultisigTransactions(chainId, safeAddress, {
+          limit: 1,
+          executedOnly: true,
+        });
         if (txs && txs.total > 0) {
           out.push({ chainId, safeAddress, source: "recent-activity" });
         }
@@ -150,22 +154,59 @@ export async function indexerDirectSample(
   }));
 }
 
+// Filter the candidate list down to Safes the indexer has already seen at or
+// before the ceiling block. This is the key step that makes the suite
+// runnable while the indexer is mid historical-sync — Safes whose creation
+// block is past the ceiling are dropped so comparators only see data both
+// sides should agree on. Returns the kept entries; the dropped count is
+// reported separately for the summary.
+export async function filterByCeiling(
+  candidates: SampleEntry[],
+  ceiling: ComparisonCeiling,
+): Promise<{ kept: SampleEntry[]; droppedAboveCeiling: number; droppedMissing: number }> {
+  if (candidates.length === 0) {
+    return { kept: [], droppedAboveCeiling: 0, droppedMissing: 0 };
+  }
+  const blocks = await getSafeCreationBlocks(
+    ceiling.chainId,
+    candidates.map((c) => c.safeAddress),
+  );
+  let droppedMissing = 0;
+  let droppedAboveCeiling = 0;
+  const kept: SampleEntry[] = [];
+  for (const c of candidates) {
+    const block = blocks.get(c.safeAddress);
+    if (block == null) {
+      droppedMissing++;
+      continue;
+    }
+    if (block > ceiling.block) {
+      droppedAboveCeiling++;
+      continue;
+    }
+    kept.push(c);
+  }
+  return { kept, droppedAboveCeiling, droppedMissing };
+}
+
 // Mix strategies, dedup, and trim to size. Halve the budget between the two
 // API-driven strategies. If both yield nothing (no seed owners curated yet,
 // or seed owners have no Safes), backfill from the indexer-direct sampler so
-// the suite has something to run.
+// the suite has something to run. Oversamples by 2x to leave headroom for
+// ceiling-filtering.
 export async function buildSample(
   chainId: ChainId,
   target: number,
 ): Promise<SampleEntry[]> {
-  const half = Math.ceil(target / 2);
+  const oversample = target * 2;
+  const half = Math.ceil(oversample / 2);
   const [owner, recent] = await Promise.all([
     ownerAnchoredSample(chainId, half),
     recentActivitySample(chainId, half),
   ]);
-  let combined = uniq([...owner, ...recent]).slice(0, target);
+  let combined = uniq([...owner, ...recent]).slice(0, oversample);
   if (combined.length === 0) {
-    combined = await indexerDirectSample(chainId, target);
+    combined = await indexerDirectSample(chainId, oversample);
   }
-  return combined;
+  return combined.slice(0, oversample);
 }

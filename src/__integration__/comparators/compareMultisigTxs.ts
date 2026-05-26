@@ -26,7 +26,13 @@ import {
   normaliseMultisigFromIndexer,
 } from "../normalize";
 import { DEFAULT_TOP_N_TX_COMPARE } from "../sampling.config";
-import type { ChainId, DiffResult, FieldDiff, NormalisedMultisigTx } from "../types";
+import type {
+  ChainId,
+  ComparisonCeiling,
+  DiffResult,
+  FieldDiff,
+  NormalisedMultisigTx,
+} from "../types";
 
 function indexBy<T>(rows: T[], key: (r: T) => string | null): Map<string, T> {
   const out = new Map<string, T>();
@@ -91,10 +97,23 @@ function compareOne(
 export async function compareMultisigTxs(
   chainId: ChainId,
   safeAddress: string,
+  ceiling: ComparisonCeiling,
 ): Promise<DiffResult> {
+  // Bound canonical by date (no block filter on multisig endpoint). If we
+  // don't have an anchor timestamp (indexer has no SafeTransactions yet),
+  // skip the canonical-side date bound — the indexer's own ceiling-block
+  // filter keeps things symmetric since both sides will return [].
+  const isoCeiling =
+    ceiling.timestamp != null
+      ? new Date(ceiling.timestamp * 1000).toISOString()
+      : undefined;
   const [canonicalPage, indexerResult] = await Promise.all([
-    safeApi.getMultisigTransactions(chainId, safeAddress, DEFAULT_TOP_N_TX_COMPARE, 0, true),
-    indexerApi.getMultisigTransactions(chainId, safeAddress, 1000),
+    safeApi.getMultisigTransactions(chainId, safeAddress, {
+      limit: DEFAULT_TOP_N_TX_COMPARE,
+      executedOnly: true,
+      executionDateLte: isoCeiling,
+    }),
+    indexerApi.getMultisigTransactions(chainId, safeAddress, ceiling.block, 1000),
   ]);
 
   if (!canonicalPage) {

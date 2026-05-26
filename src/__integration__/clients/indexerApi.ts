@@ -10,13 +10,17 @@
 // imported, so this integration suite stays decoupled from the explorer
 // build.
 
-import type { ChainId } from "../types";
+import type { ChainId, ComparisonCeiling } from "../types";
 import type {
   IndexerMultisigTx,
   IndexerModuleTx,
   IndexerSafe,
   IndexerSafeCreation,
 } from "../normalize";
+
+// Safety margin (in blocks) subtracted from `_meta.progressBlock` to absorb
+// the canonical Safe Transaction Service lagging our indexer by 1-2 blocks.
+const DEFAULT_CEILING_MARGIN_BLOCKS = 5;
 
 const ENV_NAME = "INTEGRATION_INDEXER_ENDPOINT";
 const FETCH_TIMEOUT_MS = 15_000;
@@ -119,10 +123,36 @@ export async function getSafeCreation(
   return data.Safe[0] ?? null;
 }
 
+// Batched lookup used by the sampler to filter candidate Safe addresses down
+// to ones the indexer has seen at or before the ceiling block. Returns a
+// map of address → blockCreationNum (or absent if the indexer doesn't have
+// the Safe yet). Lowercases on input.
+const SAFE_CREATION_BLOCK_QUERY = `
+  query GetSafeCreationBlocks($ids: [String!]!) {
+    Safe(where: { id: { _in: $ids } }) {
+      address
+      chainId
+      blockCreationNum
+    }
+  }
+`;
+
+export async function getSafeCreationBlocks(
+  chainId: ChainId,
+  addresses: string[],
+): Promise<Map<string, number>> {
+  if (addresses.length === 0) return new Map();
+  const ids = addresses.map((a) => `${chainId}-${a.toLowerCase()}`);
+  const data = await query<{
+    Safe: { address: string; blockCreationNum: number }[];
+  }>(SAFE_CREATION_BLOCK_QUERY, { ids });
+  return new Map(data.Safe.map((s) => [s.address.toLowerCase(), s.blockCreationNum]));
+}
+
 const MULTISIG_TX_QUERY = `
-  query GetMultisigTxs($safeId: String!, $limit: Int!) {
+  query GetMultisigTxs($safeId: String!, $limit: Int!, $ceiling: Int!) {
     SafeTransaction(
-      where: { safe_id: { _eq: $safeId } }
+      where: { safe_id: { _eq: $safeId }, blockNumber: { _lte: $ceiling } }
       order_by: { executionDate: desc }
       limit: $limit
     ) {
@@ -156,20 +186,22 @@ const MULTISIG_TX_QUERY = `
 export async function getMultisigTransactions(
   chainId: ChainId,
   safeAddress: string,
+  ceilingBlock: number,
   limit = 1000,
 ): Promise<{ txs: IndexerMultisigTx[]; capped: boolean }> {
   const safeId = `${chainId}-${safeAddress.toLowerCase()}`;
   const data = await query<{ SafeTransaction: IndexerMultisigTx[] }>(MULTISIG_TX_QUERY, {
     safeId,
     limit,
+    ceiling: ceilingBlock,
   });
   return { txs: data.SafeTransaction, capped: data.SafeTransaction.length === limit };
 }
 
 const MODULE_TX_QUERY = `
-  query GetModuleTxs($safeId: String!, $limit: Int!) {
+  query GetModuleTxs($safeId: String!, $limit: Int!, $ceiling: Int!) {
     SafeModuleTransaction(
-      where: { safe_id: { _eq: $safeId } }
+      where: { safe_id: { _eq: $safeId }, blockNumber: { _lte: $ceiling } }
       order_by: { blockNumber: desc }
       limit: $limit
     ) {
@@ -189,14 +221,100 @@ const MODULE_TX_QUERY = `
 export async function getModuleTransactions(
   chainId: ChainId,
   safeAddress: string,
+  ceilingBlock: number,
   limit = 1000,
 ): Promise<{ txs: IndexerModuleTx[]; capped: boolean }> {
   const safeId = `${chainId}-${safeAddress.toLowerCase()}`;
   const data = await query<{ SafeModuleTransaction: IndexerModuleTx[] }>(MODULE_TX_QUERY, {
     safeId,
     limit,
+    ceiling: ceilingBlock,
   });
   return { txs: data.SafeModuleTransaction, capped: data.SafeModuleTransaction.length === limit };
+}
+
+// --- _meta and ceiling ----------------------------------------------------
+
+interface MetaRow {
+  chainId: number;
+  progressBlock: number;
+  bufferBlock: number;
+  firstEventBlock: number | null;
+  isReady: boolean;
+}
+
+const META_QUERY = `
+  query GetMeta {
+    _meta {
+      chainId
+      progressBlock
+      bufferBlock
+      firstEventBlock
+      isReady
+    }
+  }
+`;
+
+let metaCache: Map<number, MetaRow> | null = null;
+
+async function getAllMeta(): Promise<Map<number, MetaRow>> {
+  if (metaCache) return metaCache;
+  const data = await query<{ _meta: MetaRow[] }>(META_QUERY, {});
+  metaCache = new Map(data._meta.map((m) => [m.chainId, m]));
+  return metaCache;
+}
+
+export async function getMeta(chainId: ChainId): Promise<MetaRow | null> {
+  const map = await getAllMeta();
+  return map.get(chainId) ?? null;
+}
+
+// Look up an anchor timestamp at-or-below the ceiling block. Used to derive
+// the canonical-side `execution_date__lte` filter for multisig txs (Safe TX
+// Service doesn't support block-number filtering on that endpoint). Returns
+// `null` if no SafeTransaction exists at or below the ceiling — in that case
+// callers should skip date-bounding for canonical, since there's nothing to
+// compare anyway.
+const CEILING_TIMESTAMP_QUERY = `
+  query GetCeilingTimestamp($chainId: Int!, $ceiling: Int!) {
+    SafeTransaction(
+      where: { chainId: { _eq: $chainId }, blockNumber: { _lte: $ceiling } }
+      order_by: { blockNumber: desc }
+      limit: 1
+    ) { blockNumber executionDate }
+  }
+`;
+
+export async function getCeilingTimestamp(
+  chainId: ChainId,
+  ceilingBlock: number,
+): Promise<number | null> {
+  try {
+    const data = await query<{
+      SafeTransaction: { blockNumber: number; executionDate: string }[];
+    }>(CEILING_TIMESTAMP_QUERY, { chainId, ceiling: ceilingBlock });
+    const row = data.SafeTransaction[0];
+    return row ? Number(row.executionDate) : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function getCeiling(
+  chainId: ChainId,
+  marginBlocks: number = DEFAULT_CEILING_MARGIN_BLOCKS,
+): Promise<ComparisonCeiling | null> {
+  const meta = await getMeta(chainId);
+  if (!meta) return null;
+  const block = Math.max(0, meta.progressBlock - marginBlocks);
+  const timestamp = await getCeilingTimestamp(chainId, block);
+  return {
+    chainId,
+    block,
+    timestamp,
+    rawProgressBlock: meta.progressBlock,
+    isReady: meta.isReady,
+  };
 }
 
 // Cheap connectivity probe used by the runner's preflight check. Returns

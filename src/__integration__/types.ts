@@ -108,3 +108,16 @@ export interface SampleEntry {
   safeAddress: string; // lowercase
   source: "owner-anchored" | "recent-activity" | "indexer-direct";
 }
+
+// The "comparison ceiling" — derived from the indexer's `_meta.progressBlock`
+// minus a small safety margin to absorb the 1-2 block lag the canonical Safe
+// Transaction Service can run behind. Both sides of every comparison are
+// bounded to this so we can run the suite while our indexer is mid historical
+// sync without false "missing" diffs.
+export interface ComparisonCeiling {
+  chainId: ChainId;
+  block: number; // safe ceiling — query bound on both sides
+  timestamp: number | null; // unix seconds derived from an entity at-or-below ceiling; null if no anchor
+  rawProgressBlock: number; // unmargined _meta.progressBlock, kept for logs
+  isReady: boolean; // _meta.isReady — true once we've caught up to chain tip
+}
