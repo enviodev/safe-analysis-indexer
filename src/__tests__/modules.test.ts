@@ -259,19 +259,19 @@ describe("Module lifecycle", () => {
     const indexer = createIndexer();
     const safeAddr = addr("mod-multichain");
     seedSafe(indexer, { chainId: CHAIN_ID, address: safeAddr });
-    seedSafe(indexer, { chainId: 10, address: safeAddr });
+    seedSafe(indexer, { chainId: 100, address: safeAddr });
     const moduleAddr = addr("mod-shared");
 
     await processOnChain(indexer, CHAIN_ID, [
       simulateEnabledModule({ safeAddress: safeAddr, module: moduleAddr }),
     ]);
-    await processOnChain(indexer, 10, [
+    await processOnChain(indexer, 100, [
       simulateEnabledModule({ safeAddress: safeAddr, module: moduleAddr }),
     ]);
 
     const all = await indexer.SafeModule.getAll();
     const matchingModule = all.filter((m) => m.module === moduleAddr);
     expect(matchingModule).toHaveLength(2);
-    expect(matchingModule.map((m) => m.chainId).sort()).toEqual([1, 10]);
+    expect(matchingModule.map((m) => m.chainId).sort()).toEqual([1, 100]);
   });
 });
