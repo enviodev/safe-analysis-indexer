@@ -36,13 +36,31 @@ import {
 } from "./formatting";
 import type { ChainId, DiffResult, SampleEntry } from "./types";
 
-const SAMPLE_SIZE = process.env.INTEGRATION_SAMPLE_SIZE
-  ? Number(process.env.INTEGRATION_SAMPLE_SIZE)
-  : DEFAULT_SAMPLE_SIZE;
+const SAMPLE_SIZE_RAW = process.env.INTEGRATION_SAMPLE_SIZE;
+const SAMPLE_SIZE =
+  SAMPLE_SIZE_RAW == null || SAMPLE_SIZE_RAW.trim() === ""
+    ? DEFAULT_SAMPLE_SIZE
+    : Number(SAMPLE_SIZE_RAW);
+if (!Number.isInteger(SAMPLE_SIZE) || SAMPLE_SIZE <= 0) {
+  throw new Error(
+    `Invalid INTEGRATION_SAMPLE_SIZE="${SAMPLE_SIZE_RAW}". Expected a positive integer.`,
+  );
+}
 
-const CHAINS: ChainId[] = (process.env.INTEGRATION_CHAINS
-  ? process.env.INTEGRATION_CHAINS.split(",").map((s) => Number(s.trim()))
-  : DEFAULT_CHAINS) as ChainId[];
+const CHAINS_RAW = process.env.INTEGRATION_CHAINS;
+const CHAINS: ChainId[] = (() => {
+  if (CHAINS_RAW == null || CHAINS_RAW.trim() === "") return DEFAULT_CHAINS;
+  const parsed = CHAINS_RAW.split(",")
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0)
+    .map((s) => Number(s));
+  if (parsed.length === 0 || parsed.some((n) => !Number.isInteger(n) || n <= 0)) {
+    throw new Error(
+      `Invalid INTEGRATION_CHAINS="${CHAINS_RAW}". Expected comma-separated positive integers.`,
+    );
+  }
+  return parsed as ChainId[];
+})();
 
 type ComparatorName = "metadata" | "creation" | "multisigTxs" | "moduleTxs";
 

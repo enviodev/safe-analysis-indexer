@@ -121,15 +121,22 @@ export async function indexerDirectSample(
       ) { address }
     }
   `;
+  // Bound the fetch — a stalled endpoint would block sampling, which runs
+  // before any tests execute and would freeze the whole suite.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15_000);
   let res: Response;
   try {
     res = await fetch(indexerEndpoint(), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query, variables: { chainId, limit: target } }),
+      signal: controller.signal,
     });
   } catch {
     return [];
+  } finally {
+    clearTimeout(timer);
   }
   if (!res.ok) return [];
   const body = (await res.json().catch(() => null)) as

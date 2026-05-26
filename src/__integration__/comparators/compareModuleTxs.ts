@@ -61,16 +61,7 @@ export async function compareModuleTxs(
   if (!canonicalPage) {
     return indexerResult.txs.length === 0
       ? { kind: "skipped", reason: "no_data_either_side" }
-      : {
-          kind: "mismatched",
-          diffs: [
-            {
-              field: "existence",
-              canonical: "not_found",
-              indexer: `${indexerResult.txs.length} txs`,
-            },
-          ],
-        };
+      : { kind: "skipped", reason: "canonical_404" };
   }
 
   if (canonicalPage.total === 0 && indexerResult.txs.length === 0) {

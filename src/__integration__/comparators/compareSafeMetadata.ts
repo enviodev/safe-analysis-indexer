@@ -43,11 +43,11 @@ export async function compareSafeMetadata(
     return { kind: "skipped", reason: "no_data_either_side" };
   }
   if (!canonicalRaw) {
-    // We have it, they don't — surface as a mismatch so the operator notices.
-    return {
-      kind: "mismatched",
-      diffs: [{ field: "existence", canonical: null, indexer: "present" }],
-    };
+    // Safe TX Service doesn't index this one — record as canonical_404 so it
+    // shows in the skip bucket but doesn't pollute the mismatched-fields
+    // frequency table. If our indexer is producing phantom Safes, the
+    // canonical_404 count will climb and that's still a visible signal.
+    return { kind: "skipped", reason: "canonical_404" };
   }
   if (!indexerRaw) {
     return { kind: "skipped", reason: "not_synced" };

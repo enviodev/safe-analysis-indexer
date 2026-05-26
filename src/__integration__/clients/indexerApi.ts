@@ -19,15 +19,18 @@ import type {
 } from "../normalize";
 
 const ENV_NAME = "INTEGRATION_INDEXER_ENDPOINT";
+const FETCH_TIMEOUT_MS = 15_000;
 
-// True if the env var is set to a non-empty value. Use this before calling
-// `indexerEndpoint()` if you want to branch instead of throw.
+const readEndpoint = (): string => (process.env[ENV_NAME] ?? "").trim();
+
+// True if the env var is set to a non-empty (non-whitespace) value. Use this
+// before calling `indexerEndpoint()` if you want to branch instead of throw.
 export function isIndexerEndpointConfigured(): boolean {
-  return !!process.env[ENV_NAME];
+  return readEndpoint().length > 0;
 }
 
 export function indexerEndpoint(): string {
-  const v = process.env[ENV_NAME];
+  const v = readEndpoint();
   if (!v) {
     throw new Error(
       `${ENV_NAME} is not set. The cross-reference suite needs an explicit ` +
@@ -40,11 +43,21 @@ export function indexerEndpoint(): string {
 }
 
 async function query<T>(q: string, variables: Record<string, unknown>): Promise<T> {
-  const res = await fetch(indexerEndpoint(), {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({ query: q, variables }),
-  });
+  // AbortController-bounded fetch — a stalled indexer endpoint would
+  // otherwise hang the entire suite.
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  let res: Response;
+  try {
+    res = await fetch(indexerEndpoint(), {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify({ query: q, variables }),
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timer);
+  }
   if (!res.ok) {
     const body = await res.text().catch(() => "");
     throw new Error(`Indexer GraphQL ${res.status}: ${body.slice(0, 200)}`);

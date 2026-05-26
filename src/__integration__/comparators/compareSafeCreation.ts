@@ -73,7 +73,9 @@ export async function compareSafeCreation(
     });
   }
   // setupData: tolerate the documented modern-path null gap on our side. Only
-  // flag a real mismatch when both sides have it AND they differ.
+  // flag a real mismatch when both sides have it AND they differ. The two
+  // asymmetric cases get distinct field names so they can be filtered apart
+  // from real divergence by a CSV/grep step.
   if (canonical.setupData != null && indexer.setupData != null) {
     if (canonical.setupData !== indexer.setupData) {
       diffs.push({
@@ -83,12 +85,20 @@ export async function compareSafeCreation(
       });
     }
   } else if (canonical.setupData != null && indexer.setupData == null) {
-    // Known gap from local/TODO.md — surface as a separate field so it can be
-    // filtered out of "real" diffs by a CSV/grep step.
+    // Known gap from local/TODO.md — canonical has it, we don't.
     diffs.push({
       field: "setupData_missing_indexer",
       canonical: "<populated>",
       indexer: null,
+    });
+  } else if (canonical.setupData == null && indexer.setupData != null) {
+    // Inverse: we have setupData but Safe TX Service doesn't — would point at
+    // us inferring setupData where the canonical source has none. Surface as
+    // its own field so it doesn't silently pass.
+    diffs.push({
+      field: "setupData_unexpected_indexer",
+      canonical: null,
+      indexer: "<populated>",
     });
   }
 
