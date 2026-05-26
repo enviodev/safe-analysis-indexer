@@ -6,11 +6,17 @@
 //
 // Run with: `pnpm test:integration`
 //
-// Env vars:
+// Env vars (read from `.env` at the project root if present; shell vars win):
 //   INTEGRATION_INDEXER_ENDPOINT  (required) indexer GraphQL URL — no default
 //   INTEGRATION_SAMPLE_SIZE       default 10
 //   INTEGRATION_CHAINS            comma-separated, default "1,100"
 //   INTEGRATION_SKIP_PING         if "1", skip the indexer-reachable precondition
+
+// Side-effect import — populates process.env from `.env` BEFORE the env reads
+// further down execute. Existing shell-set vars are preserved (dotenv default).
+// Must stay at the very top: any import below could touch process.env at
+// module-init time.
+import "dotenv/config";
 
 import { afterAll, describe, expect, it } from "vitest";
 import { buildSample } from "./samplers";
