@@ -18,7 +18,11 @@ import { compareSafeMetadata } from "./comparators/compareSafeMetadata";
 import { compareSafeCreation } from "./comparators/compareSafeCreation";
 import { compareMultisigTxs } from "./comparators/compareMultisigTxs";
 import { compareModuleTxs } from "./comparators/compareModuleTxs";
-import { ping, indexerEndpoint } from "./clients/indexerApi";
+import {
+  ping,
+  isIndexerEndpointConfigured,
+  indexerEndpoint,
+} from "./clients/indexerApi";
 import {
   DEFAULT_CHAINS,
   DEFAULT_SAMPLE_SIZE,
@@ -49,8 +53,19 @@ const results: RunRow[] = [];
 // If the indexer is unreachable or sampling yields nothing, the
 // preflight/empty-sample assertions inside the describe still report the
 // problem.
+const endpointConfigured = isIndexerEndpointConfigured();
+if (!endpointConfigured) {
+  process.stderr.write(
+    "[cross-ref] INTEGRATION_INDEXER_ENDPOINT is not set. " +
+      "Provide your indexer GraphQL URL via env, e.g. " +
+      "INTEGRATION_INDEXER_ENDPOINT=https://indexer.eu.hyperindex.xyz/<hash>/v1/graphql\n",
+  );
+}
+
 const preflightOk =
-  process.env.INTEGRATION_SKIP_PING === "1" ? true : await ping();
+  process.env.INTEGRATION_SKIP_PING === "1"
+    ? endpointConfigured
+    : endpointConfigured && (await ping());
 
 const samples: SampleEntry[] = preflightOk
   ? (
@@ -59,9 +74,17 @@ const samples: SampleEntry[] = preflightOk
   : [];
 
 describe("cross-reference integration (Safe TX Service ↔ Envio indexer)", () => {
-  it("preflight: indexer endpoint is reachable", () => {
+  it("preflight: INTEGRATION_INDEXER_ENDPOINT is set and reachable", () => {
+    if (!endpointConfigured) {
+      throw new Error(
+        "INTEGRATION_INDEXER_ENDPOINT is not set. " +
+          "Set it to the indexer GraphQL URL you want to cross-reference against, e.g. " +
+          "INTEGRATION_INDEXER_ENDPOINT=https://indexer.eu.hyperindex.xyz/<hash>/v1/graphql " +
+          "pnpm test:integration",
+      );
+    }
     if (!preflightOk) {
-      console.warn(`[cross-ref] indexer not reachable at ${indexerEndpoint()}`);
+      throw new Error(`indexer not reachable at ${indexerEndpoint()}`);
     }
     expect(preflightOk).toBe(true);
   });

@@ -5,7 +5,10 @@
 // indexed empty Safes).
 
 import * as safeApi from "./clients/safeApi";
-import { indexerEndpoint } from "./clients/indexerApi";
+import {
+  indexerEndpoint,
+  isIndexerEndpointConfigured,
+} from "./clients/indexerApi";
 import { SEED_OWNERS } from "./sampling.config";
 import type { ChainId, SampleEntry } from "./types";
 
@@ -108,6 +111,7 @@ export async function indexerDirectSample(
   chainId: ChainId,
   target: number,
 ): Promise<SampleEntry[]> {
+  if (!isIndexerEndpointConfigured()) return [];
   const query = `
     query RecentSafes($chainId: Int!, $limit: Int!) {
       Safe(

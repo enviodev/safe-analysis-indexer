@@ -15,9 +15,8 @@ on:
         required: false
         default: "10"
       indexer_endpoint:
-        description: "Override indexer GraphQL endpoint (blank = built-in default)"
-        required: false
-        default: ""
+        description: "Indexer GraphQL endpoint (required — no default; deployment hashes rotate)"
+        required: true
 
 jobs:
   integration:

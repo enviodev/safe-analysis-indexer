@@ -1,6 +1,9 @@
 // Read-only client for our deployed Envio indexer's GraphQL endpoint.
-// Default: https://indexer.eu.hyperindex.xyz/a078e76/v1/graphql (override
-// with INTEGRATION_INDEXER_ENDPOINT).
+//
+// The endpoint URL MUST be supplied via the INTEGRATION_INDEXER_ENDPOINT env
+// var — there's deliberately no baked-in default. Deployment hashes rotate
+// frequently and a stale default would silently cross-reference against the
+// wrong indexer build.
 //
 // Uses native fetch so no extra deps. Query shapes mirror the ones already
 // in `explorer/src/lib/graphql/queries.ts` but are duplicated rather than
@@ -15,10 +18,25 @@ import type {
   IndexerSafeCreation,
 } from "../normalize";
 
-const DEFAULT_ENDPOINT = "https://indexer.eu.hyperindex.xyz/a078e76/v1/graphql";
+const ENV_NAME = "INTEGRATION_INDEXER_ENDPOINT";
+
+// True if the env var is set to a non-empty value. Use this before calling
+// `indexerEndpoint()` if you want to branch instead of throw.
+export function isIndexerEndpointConfigured(): boolean {
+  return !!process.env[ENV_NAME];
+}
 
 export function indexerEndpoint(): string {
-  return process.env.INTEGRATION_INDEXER_ENDPOINT ?? DEFAULT_ENDPOINT;
+  const v = process.env[ENV_NAME];
+  if (!v) {
+    throw new Error(
+      `${ENV_NAME} is not set. The cross-reference suite needs an explicit ` +
+        `indexer GraphQL URL — deployment hashes rotate too often for a ` +
+        `baked-in default. Set e.g. ` +
+        `${ENV_NAME}=https://indexer.eu.hyperindex.xyz/<hash>/v1/graphql`,
+    );
+  }
+  return v;
 }
 
 async function query<T>(q: string, variables: Record<string, unknown>): Promise<T> {
@@ -168,8 +186,11 @@ export async function getModuleTransactions(
   return { txs: data.SafeModuleTransaction, capped: data.SafeModuleTransaction.length === limit };
 }
 
-// Cheap connectivity probe used by the runner's beforeAll.
+// Cheap connectivity probe used by the runner's preflight check. Returns
+// false on any failure — missing env var, network error, GraphQL error — so
+// the runner can branch without try/catch.
 export async function ping(): Promise<boolean> {
+  if (!isIndexerEndpointConfigured()) return false;
   try {
     await query<{ GlobalStats: unknown[] }>(
       `query { GlobalStats(where: { id: { _eq: "global" } }) { id } }`,
