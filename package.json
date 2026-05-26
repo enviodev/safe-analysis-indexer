@@ -12,7 +12,9 @@
     "codegen": "envio codegen",
     "dev": "envio dev",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test:all": "vitest run && vitest run --config vitest.integration.config.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.5",
