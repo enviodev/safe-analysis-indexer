@@ -139,7 +139,7 @@ export async function indexerDirectSample(
   return rows.map((r) => ({
     chainId,
     safeAddress: r.address.toLowerCase(),
-    source: "recent-activity" as const,
+    source: "indexer-direct" as const,
   }));
 }
 

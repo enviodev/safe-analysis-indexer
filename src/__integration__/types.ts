@@ -106,5 +106,5 @@ export type SkipReason =
 export interface SampleEntry {
   chainId: ChainId;
   safeAddress: string; // lowercase
-  source: "owner-anchored" | "recent-activity";
+  source: "owner-anchored" | "recent-activity" | "indexer-direct";
 }
