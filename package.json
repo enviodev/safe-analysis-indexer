@@ -12,8 +12,7 @@
     "codegen": "envio codegen",
     "dev": "envio dev",
     "test": "vitest run",
-    "test:watch": "vitest",
-    "start": "node generated/src/Index.res.mjs"
+    "test:watch": "vitest"
   },
   "devDependencies": {
     "@types/node": "^22.10.5",
