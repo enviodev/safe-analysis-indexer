@@ -62,7 +62,7 @@ type Safe {
   numberOfFailedExecutions: Int!
   nonce: Int!
   totalGasSpent: BigInt!
-  initiator: String!
+  initiator: String! # tx.from of the deployment transaction — the EOA / account that submitted the creation. Matches the Safe Transaction Service `creator` field. Lowercase. Distinct from SafeSetup.initiator event param (which is msg.sender of setup() = factory address); we deliberately store tx.from instead since it's the canonically useful identity.
 }
 
 type Owner {

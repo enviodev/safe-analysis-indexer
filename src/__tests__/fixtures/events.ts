@@ -124,7 +124,7 @@ type SafeSetup = {
   initializer?: `0x${string}`;
   fallbackHandler?: `0x${string}`;
   block?: { number?: number; timestamp?: number; hash?: string };
-  tx?: { hash?: string };
+  tx?: { hash?: string; from?: `0x${string}` };
   logIndex?: number;
 };
 
