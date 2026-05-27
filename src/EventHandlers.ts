@@ -32,7 +32,8 @@ indexer.contractRegister({ contract: "GnosisSafeProxy1_5_0", event: "ProxyCreati
 
 indexer.onEvent({ contract: "GnosisSafeProxyPre1_3_0", event: "ProxyCreation" }, async ({ event, context }) => {
   const { proxy } = event.params;
-  const { hash } = event.transaction;
+  const { hash, from: txFrom } = event.transaction;
+  const initiator = (txFrom ?? zeroAddress).toLowerCase();
   const { chainId, block, srcAddress: factoryAddress } = event;
 
   // 1.0.0 is still detected by the legacy special-cased proxy address
@@ -102,7 +103,7 @@ indexer.onEvent({ contract: "GnosisSafeProxyPre1_3_0", event: "ProxyCreation" },
     fallbackHandler: fallbackHandler ? fallbackHandler.toLowerCase() : undefined,
     guard: NO_GUARD,
     initializer: "",
-    initiator: "",
+    initiator,
     numberOfSuccessfulExecutions: 0,
     numberOfFailedExecutions: 0,
     nonce: 0,
@@ -151,12 +152,13 @@ indexer.onEvent({ contract: "SafePre1_3_0", event: "ChangedThreshold" }, async (
 // Shared handler for v1.3.0+ ProxyCreation events.
 // Resolves version from singleton address, falling back to factory-implied version.
 async function handleModernProxyCreation(
-  event: { params: { proxy: string; singleton?: string }; transaction: { hash: string }; srcAddress: string; chainId: number; block: { number: number; timestamp: number } },
+  event: { params: { proxy: string; singleton?: string }; transaction: { hash: string; from?: string }; srcAddress: string; chainId: number; block: { number: number; timestamp: number } },
   context: any,
   factoryImpliedVersion: SafeVersion
 ) {
   const { proxy, singleton } = event.params;
-  const { hash } = event.transaction;
+  const { hash, from: txFrom } = event.transaction;
+  const initiator = (txFrom ?? zeroAddress).toLowerCase();
   const { chainId, block, srcAddress: factoryAddress } = event;
   const masterCopy = singleton?.toLowerCase();
   const factory = factoryAddress.toLowerCase();
@@ -201,7 +203,7 @@ async function handleModernProxyCreation(
       threshold: 0,
       address: proxy,
       initializer: "",
-      initiator: "",
+      initiator,
       numberOfSuccessfulExecutions: 0,
       numberOfFailedExecutions: 0,
       nonce: 0,
@@ -228,9 +230,14 @@ indexer.onEvent({ contract: "GnosisSafeProxy1_5_0", event: "ProxyCreation" }, as
 });
 
 indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeSetup", wildcard: true }, async ({ event, context }) => {
-  const { owners, threshold, initializer, initiator, fallbackHandler } = event.params;
+  // Note: SafeSetup.initiator event param is msg.sender of setup() — the
+  // factory contract address when deployed via factory. We instead record
+  // tx.from (the EOA / account that submitted the deployment) under
+  // `Safe.initiator` to match the Safe Transaction Service `creator` field.
+  const { owners, threshold, initializer, fallbackHandler } = event.params;
   const { srcAddress, chainId } = event;
-  const { hash } = event.transaction;
+  const { hash, from: txFrom } = event.transaction;
+  const initiator = (txFrom ?? zeroAddress).toLowerCase();
 
   const safeId = `${chainId}-${srcAddress}`;
   const fallback = fallbackHandler ? fallbackHandler.toLowerCase() : undefined;

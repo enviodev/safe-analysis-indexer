@@ -11,6 +11,7 @@ contracts:
         field_selection:
           transaction_fields:
             - hash
+            - from
   # Safe event signatures are the same in v1.0.0, v1.1.1, and v1.2.0
   - name: SafePre1_3_0
     handler: src/EventHandlers.ts
@@ -25,6 +26,7 @@ contracts:
         field_selection:
           transaction_fields:
             - hash
+            - from
       - event: ExecutionSuccess(bytes32 txHash, uint256 payment)
         field_selection:
           transaction_fields:
@@ -83,6 +85,7 @@ contracts:
         field_selection:
           transaction_fields:
             - hash
+            - from
   - name: GnosisSafeProxy1_4_1
     handler: src/EventHandlers.ts
     events:
@@ -90,6 +93,7 @@ contracts:
         field_selection:
           transaction_fields:
             - hash
+            - from
   - name: GnosisSafeProxy1_5_0
     handler: src/EventHandlers.ts
     events:
@@ -97,6 +101,7 @@ contracts:
         field_selection:
           transaction_fields:
             - hash
+            - from
   # Wildcard ERC20 Transfer filtered to transfers touching a known Safe address.
   # Safe addresses are registered dynamically (see the ProxyCreation handlers),
   # and HyperIndex auto-partitions the address pool at 5000/partition before

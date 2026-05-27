@@ -288,3 +288,82 @@ describe("Safe creation counters", () => {
     await expectSafeCount(indexer, { version: "V1_3_0", versionCount: 2 });
   });
 });
+
+// Safe.initiator should always be tx.from (the EOA / account that submitted
+// the deployment tx), not the SafeSetup.initiator event param (which is
+// msg.sender of setup() = the factory contract). This matches the Safe
+// Transaction Service `/v1/safes/{addr}/creation/.creator` field.
+describe("Safe.initiator = tx.from (matches Safe Transaction Service `creator`)", () => {
+  const EOA_CREATOR = "0x9c8a7e1b3d4f5a2c6e8b0d1f3a5c7e9b0d2f4a6c" as `0x${string}`;
+
+  it("modern ProxyCreation records tx.from as initiator (lowercase)", async () => {
+    const indexer = createIndexer();
+    const proxy = addr("init-modern");
+    await processOnChain(indexer, CHAIN_ID, [
+      simulateProxyCreationModern({
+        contract: "GnosisSafeProxy1_3_0",
+        proxy,
+        singleton: MASTER_COPIES.V1_3_0_L2 as `0x${string}`,
+        tx: { from: EOA_CREATOR },
+      }),
+    ]);
+    const safe = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, proxy));
+    expect(safe.initiator).toBe(EOA_CREATOR.toLowerCase());
+  });
+
+  it("pre-1.3.0 ProxyCreation records tx.from as initiator", async () => {
+    const indexer = createIndexer();
+    await processOnChain(indexer, CHAIN_ID, [
+      simulateProxyCreationPre1_3_0({
+        proxy: LEGACY_V1_0_0_PROXY as `0x${string}`,
+        tx: { from: EOA_CREATOR },
+      }),
+    ]);
+    const safe = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, LEGACY_V1_0_0_PROXY));
+    expect(safe.initiator).toBe(EOA_CREATOR.toLowerCase());
+  });
+
+  it("SafeSetup-first orphan records tx.from, NOT the SafeSetup.initiator event param", async () => {
+    const indexer = createIndexer();
+    const proxy = addr("init-setup-orphan");
+    const factoryParam = "0xa6b71e26c5e0845f74c812102ca7114b6a896ab2" as `0x${string}`;
+
+    await processOnChain(indexer, CHAIN_ID, [
+      simulateSafeSetup({
+        safeAddress: proxy,
+        owners: [addr("orphan-owner")],
+        threshold: 1n,
+        // SafeSetup.initiator event param is the factory in real-world deploys —
+        // we should NOT store this, we should store tx.from instead.
+        initiator: factoryParam,
+        tx: { from: EOA_CREATOR },
+      }),
+    ]);
+
+    const safe = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, proxy));
+    expect(safe.initiator).toBe(EOA_CREATOR.toLowerCase());
+    expect(safe.initiator).not.toBe(factoryParam.toLowerCase());
+  });
+
+  it("ProxyCreation then SafeSetup: tx.from from BOTH events resolves to the same EOA (same tx)", async () => {
+    const indexer = createIndexer();
+    const proxy = addr("init-merge");
+    await processOnChain(indexer, CHAIN_ID, [
+      simulateProxyCreationModern({
+        contract: "GnosisSafeProxy1_3_0",
+        proxy,
+        singleton: MASTER_COPIES.V1_3_0_L2 as `0x${string}`,
+        tx: { from: EOA_CREATOR },
+      }),
+      simulateSafeSetup({
+        safeAddress: proxy,
+        owners: [addr("merged-owner")],
+        threshold: 1n,
+        tx: { from: EOA_CREATOR },
+      }),
+    ]);
+
+    const safe = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, proxy));
+    expect(safe.initiator).toBe(EOA_CREATOR.toLowerCase());
+  });
+});
