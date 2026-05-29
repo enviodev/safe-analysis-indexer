@@ -73,7 +73,7 @@ contracts:
           transaction_fields:
             - hash
       - event: AddedOwner(address owner)
-      - event: AddedOwnerV4(address indexed owner)
+      - event: AddedOwner(address indexed owner)
         name: AddedOwnerV4
       - event: RemovedOwner(address owner)
       - event: RemovedOwner(address indexed owner)

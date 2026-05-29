@@ -5,6 +5,7 @@ import {
   simulateAddedOwner,
   simulateRemovedOwner,
   simulateChangedThreshold,
+  simulateSafeSetup,
   resetBlockCounter,
 } from "./fixtures/events";
 import { expectOwnerMembership } from "./fixtures/assertions";
@@ -40,6 +41,32 @@ describe("AddedOwner", () => {
     const safe = await indexer.Safe.getOrThrow(id);
     expect(safe.owners).toEqual([aliceAddr]);
     await expectOwnerMembership(indexer, { owner: aliceAddr, safeIds: [id] });
+  });
+
+  it("SafeSetup then AddedOwner in same batch: second owner is appended", async () => {
+    // Reproduces the v1.5.0 deployment pattern surfaced by the cross-reference
+    // suite: setup() is called with one owner, then a delegate-call inside the
+    // same tx invokes addOwnerWithThreshold(extraOwner). On-chain log order is
+    // SafeSetup (initial owner) → AddedOwner (extra owner) — both within the
+    // same tx and processed in one batch.
+    resetBlockCounter();
+    const indexer = createIndexer();
+    const proxy = addr("setup-then-add");
+    const ownerA = addr("setup-owner");
+    const ownerB = addr("delegate-call-owner");
+
+    await processOnChain(indexer, CHAIN_ID, [
+      simulateSafeSetup({ safeAddress: proxy, owners: [ownerA], threshold: 1n }),
+      simulateAddedOwner({
+        contract: "GnosisSafeL2",
+        safeAddress: proxy,
+        owner: ownerB,
+        v4: true,
+      }),
+    ]);
+
+    const safe = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, proxy));
+    expect(safe.owners.sort()).toEqual([ownerA, ownerB].sort());
   });
 
   it("dedups AddedOwner + AddedOwnerV4 fired at the same event (owners array length 1)", async () => {
