@@ -272,16 +272,31 @@ const execTransactionSelector = execTransactionInterface.getFunction("execTransa
 // RPC trace fallback for chains without HyperSync traces support
 // ------------------------------------------------------------------------------------
 
-// DRPC endpoint per chain. Extend this map as needed.
+// Public-RPC fallback per chain. Used when no ENVIO_DRPC_API_KEY is set.
+// Anything production should set the DRPC key — public RPCs rate-limit hard
+// and the masterCopy backfill below can issue ~1 read per orphan Safe.
 const RPC_URLS: Record<number, string> = {
+    1: `https://eth.llamarpc.com`,
+    100: `https://rpc.gnosischain.com`,
     480: `https://worldchain.drpc.org`,
+};
+
+// DRPC network slug per chain — required because drpc keys on a network
+// name in the URL, not the chain id. Keep in sync with RPC_URLS keys.
+const DRPC_NETWORKS: Record<number, string> = {
+    1: "ethereum",
+    100: "gnosis",
+    480: "worldchain",
 };
 
 function getRpcUrl(chainId: number): string | undefined {
     const base = RPC_URLS[chainId];
     if (!base) return undefined;
     const apiKey = process.env.ENVIO_DRPC_API_KEY;
-    return apiKey ? `https://lb.drpc.org/ogrpc?network=worldchain&dkey=${apiKey}` : base;
+    if (!apiKey) return base;
+    const network = DRPC_NETWORKS[chainId];
+    if (!network) return base;
+    return `https://lb.drpc.org/ogrpc?network=${network}&dkey=${apiKey}`;
 }
 
 // Fetch execTransaction calldata via RPC trace_transaction for relayed txs
@@ -405,5 +420,90 @@ export function decodeExecTransaction(inputData: string, from: string): ExecTran
         return undefined;
     }
 }
+
+// ------------------------------------------------------------------------------------
+// Orphan masterCopy backfill via RPC eth_getStorageAt(slot 0)
+// ------------------------------------------------------------------------------------
+//
+// Safe proxies (SafeProxy.sol) store the singleton/masterCopy address at storage
+// slot 0 — declared as the first contract variable explicitly so it sits at a
+// known offset for the delegatecall trampoline. eth_getStorageAt at slot 0
+// returns the singleton, regardless of whether we ever saw the deploying
+// factory's ProxyCreation event.
+//
+// Use case: 3rd-party-factory deployments (Circles deployer etc.) where
+// SafeSetup fires on the new Safe (we catch it via wildcard) but the factory
+// isn't in our subscriptions list, so ProxyCreation never reaches us and
+// masterCopy stays null. ~15K such Safes observed in the live indexer
+// (≈2% of V1.3.0 Safes), almost all on Gnosis.
+//
+// Cached on (chainId, safeAddress): slot 0 only changes on intentional
+// ChangedMasterCopy (rare) — which we already index and would apply as a
+// regular update. Cache hit means zero RPC traffic on replays.
+const SLOT_ZERO_HEX = "0x0";
+
+export const getSafeMasterCopyViaRpc = createEffect(
+    {
+        name: "getSafeMasterCopyViaRpc",
+        input: S.schema({
+            chainId: S.number,
+            safeAddress: S.string,
+        }),
+        output: S.nullable(S.string),
+        rateLimit: false,
+        cache: true,
+    },
+    async ({ input }) => {
+        if (TEST_MODE) return lookupFixture<string>("getSafeMasterCopyViaRpc", input);
+
+        const rpcUrl = getRpcUrl(input.chainId);
+        if (!rpcUrl) return null;
+
+        const body = JSON.stringify({
+            jsonrpc: "2.0",
+            id: 1,
+            method: "eth_getStorageAt",
+            params: [input.safeAddress, SLOT_ZERO_HEX, "latest"],
+        });
+
+        let res: Response;
+        try {
+            res = await fetch(rpcUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body,
+            });
+        } catch (e) {
+            console.log(`[RPC SLOT0] fetch error for safe=${input.safeAddress} chain=${input.chainId}:`, e);
+            return null;
+        }
+
+        if (!res.ok) {
+            console.log(`[RPC SLOT0] HTTP ${res.status} for safe=${input.safeAddress} chain=${input.chainId}`);
+            return null;
+        }
+
+        const json = (await res.json()) as {
+            result?: string;
+            error?: { message?: string };
+        };
+
+        if (json.error) {
+            console.log(`[RPC SLOT0] RPC error for safe=${input.safeAddress} chain=${input.chainId}: ${json.error.message}`);
+            return null;
+        }
+        if (!json.result) return null;
+
+        // Storage slot is 32 bytes, address right-aligned. Expected format:
+        // "0x" + 24 hex zeros + 40 hex chars (= 66 chars total).
+        const hex = json.result;
+        if (!hex.startsWith("0x") || hex.length !== 66) return null;
+        const addr = "0x" + hex.slice(26);
+        // A zero singleton means the slot was never written (or the address
+        // isn't actually a Safe proxy) — don't surface that as a masterCopy.
+        if (addr === "0x" + "0".repeat(40)) return null;
+        return addr.toLowerCase();
+    }
+);
 
 

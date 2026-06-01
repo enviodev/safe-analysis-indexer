@@ -1,6 +1,6 @@
 import { indexer, type Entity } from "envio";
 import { addOwner, removeOwner, addSafeToOwner, executionSuccess, executionFailure, incrementSafeCount, incrementTransactionCount, incrementModuleTransactionCount, getOrCreateVersion, ensureSafeStub } from "./helpers";
-import { getSetupTrace, decodeSetupInput, getMasterCopyFromTrace, resolveVersionFromMasterCopy } from "./hypersync";
+import { getSetupTrace, decodeSetupInput, getMasterCopyFromTrace, getSafeMasterCopyViaRpc, resolveVersionFromMasterCopy } from "./hypersync";
 import { LEGACY_V1_0_0_PROXY } from "./consts";
 import type { SafeVersion } from "./consts";
 import { decodeAbiParameters, zeroAddress } from "viem";
@@ -250,8 +250,41 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeSetup", wildcard: true }
   // Get existing safe - might exist if ProxyCreation fired first, or might not exist yet
   let existingSafe = await context.Safe.get(safeId);
 
+  // Backfill masterCopy via RPC ONLY when we'd otherwise leave it null —
+  // either the entity doesn't exist yet (orphan branch will create it) OR it
+  // exists as a stub without masterCopy (e.g., ensureSafeStub from a
+  // pre-SafeSetup state event, or an earlier SafeSetup orphan branch).
+  // Skipping when existingSafe.masterCopy is already set avoids redundant
+  // calls for canonical Safes where ProxyCreation ran first and populated it
+  // via the singleton event param. Effect is cached on (chainId, safeAddress)
+  // so re-hits are free anyway, but the conditional avoids paying even the
+  // cache-lookup cost.
+  //
+  // SafeSetup typically fires BEFORE ProxyCreation in the same tx (the
+  // factory emits ProxyCreation only after returning from setup()), so for
+  // canonical Safes the orphan branch is still hit and the RPC still fires.
+  // ProxyCreation arriving later overwrites masterCopy with the singleton
+  // param — same value, harmless. The redundant call is the tradeoff for not
+  // having to enumerate every 3rd-party factory.
+  let rpcMasterCopy: string | null = null;
+  let resolvedVersion: SafeVersion | null = null;
+  if (!existingSafe || !existingSafe.masterCopy) {
+    rpcMasterCopy = await context.effect(getSafeMasterCopyViaRpc, {
+      chainId,
+      safeAddress: srcAddress,
+    });
+    if (rpcMasterCopy) {
+      resolvedVersion = resolveVersionFromMasterCopy(rpcMasterCopy) ?? null;
+    }
+  }
+
   if (existingSafe) {
-    // Update existing safe with owners and threshold from SafeSetup
+    // Update existing safe with owners and threshold from SafeSetup. If
+    // the existing entity is a stub (masterCopy still null because it was
+    // created by ensureSafeStub or a SafeSetup-orphan that beat ProxyCreation
+    // in order), apply the RPC-resolved masterCopy/version too. If
+    // ProxyCreation already populated them on a previous handler call, leave
+    // them alone — ProxyCreation's singleton param is the canonical source.
     const safe: Safe = {
       ...existingSafe,
       owners: ownersArray,
@@ -259,6 +292,11 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeSetup", wildcard: true }
       initializer,
       creationTxFrom,
       fallbackHandler: fallback,
+      masterCopy: existingSafe.masterCopy ?? rpcMasterCopy ?? undefined,
+      version:
+        existingSafe.version !== "UNKNOWN"
+          ? existingSafe.version
+          : (resolvedVersion ?? "UNKNOWN"),
     };
 
     context.Safe.set(safe);
@@ -266,19 +304,22 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeSetup", wildcard: true }
     // SafeSetup fired before ProxyCreation - create the Safe now
     // ProxyCreation will update version, creationTxHash, masterCopy, blockCreationNum,
     // and factoryAddress when it fires. If ProxyCreation never arrives (orphan
-    // SafeSetup), these stay at the SafeSetup-derived defaults.
-    // `version: "UNKNOWN"` is the honest default — we can't infer the version
-    // from SafeSetup alone (no masterCopy / factory in its params). It also
-    // marks the Safe as uncounted, so any later `ChangedMasterCopy` knows to
-    // skip Version-stats reconciliation until `ProxyCreation` blesses it.
+    // SafeSetup), the RPC-backfilled masterCopy / resolved version above are
+    // the source of truth.
+    // `version: "UNKNOWN"` remains the marker for "uncounted" — used by
+    // ChangedMasterCopy to skip Version-stats reconciliation until
+    // ProxyCreation blesses the Safe. Note this means RPC-backfilled
+    // orphans are NOT counted in Version stats today (we still want
+    // ProxyCreation as the canonical counting event); the counter divergence
+    // for orphans is a separate concern.
     const safe: Safe = {
       id: safeId,
       owners: ownersArray,
       threshold: Number(threshold),
       chainId,
       address: srcAddress,
-      version: "UNKNOWN", // SafeSetup can't infer it; ProxyCreation will resolve
-      masterCopy: undefined, // Will be set by ProxyCreation
+      version: resolvedVersion ?? "UNKNOWN",
+      masterCopy: rpcMasterCopy ?? undefined,
       fallbackHandler: fallback,
       guard: NO_GUARD,
       creationTxHash: hash,
