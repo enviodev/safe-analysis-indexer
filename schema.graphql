@@ -63,6 +63,7 @@ type Safe {
   nonce: Int!
   totalGasSpent: BigInt!
   creationTxFrom: String! @index # `tx.from` of the deployment transaction. For directly-submitted deployments this IS the user who created the Safe — matches Safe Transaction Service `creator`. For sponsored deployments (ERC-4337 bundlers via EntryPoint, Gelato/Pimlico relayers, Safe Relay, …) this is the bundler/relayer EOA paying gas, NOT the end user — Safe TX Service derives `creator` from the UserOp sender or inner call frame in those cases and will diverge from this field. Renamed from `initiator` to reflect the honest semantic; consumers wanting the canonical creator should fetch from Safe TX Service for sponsored deployments. Lowercase. Indexed so "Safes created by tx-sender X" is a fast lookup.
+  counted: Boolean! # Has this Safe been counted in Global/Network/Version stats yet? Flipped to true exactly once, on the canonical counting event (ProxyCreation, in either branch of handleModernProxyCreation / the pre-1.3.0 handler). Stays false for stubs (ensureSafeStub) and SafeSetup-only orphans whose ProxyCreation never arrived — including RPC-backfilled orphans where masterCopy/version are resolved via eth_getStorageAt but ProxyCreation is still missing. ChangedMasterCopy and similar Version-stats-mutating events guard on this flag so they don't touch counters for Safes that were never counted in the first place.
 }
 
 type Owner {

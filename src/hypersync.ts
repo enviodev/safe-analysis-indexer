@@ -272,30 +272,37 @@ const execTransactionSelector = execTransactionInterface.getFunction("execTransa
 // RPC trace fallback for chains without HyperSync traces support
 // ------------------------------------------------------------------------------------
 
-// Public-RPC fallback per chain. Used when no ENVIO_DRPC_API_KEY is set.
-// Anything production should set the DRPC key — public RPCs rate-limit hard
-// and the masterCopy backfill below can issue ~1 read per orphan Safe.
-const RPC_URLS: Record<number, string> = {
-    1: `https://eth.llamarpc.com`,
-    100: `https://rpc.gnosischain.com`,
-    480: `https://worldchain.drpc.org`,
-};
-
-// DRPC network slug per chain — required because drpc keys on a network
-// name in the URL, not the chain id. Keep in sync with RPC_URLS keys.
+// DRPC network slug per chain — drpc keys on a network name in the URL,
+// not the chain id. Add chains here as they're enabled in config.yaml.
 const DRPC_NETWORKS: Record<number, string> = {
     1: "ethereum",
     100: "gnosis",
     480: "worldchain",
 };
 
-function getRpcUrl(chainId: number): string | undefined {
-    const base = RPC_URLS[chainId];
-    if (!base) return undefined;
-    const apiKey = process.env.ENVIO_DRPC_API_KEY;
-    if (!apiKey) return base;
+// Build a drpc.org URL for the chain. Throws (loudly) when prerequisites
+// aren't met — this is deliberate: RPC-backfill is required for orphan
+// masterCopy resolution and L1 trace fallbacks, and silently degrading to
+// public RPCs would mask the requirement and let stats / coverage drift.
+// Sign up at https://drpc.org/ and export ENVIO_DRPC_API_KEY.
+function getRpcUrl(chainId: number): string {
     const network = DRPC_NETWORKS[chainId];
-    if (!network) return base;
+    if (!network) {
+        throw new Error(
+            `RPC endpoint not configured for chainId=${chainId}. ` +
+            `Add the chain to DRPC_NETWORKS in src/hypersync.ts.`
+        );
+    }
+    const apiKey = process.env.ENVIO_DRPC_API_KEY;
+    if (!apiKey) {
+        throw new Error(
+            `ENVIO_DRPC_API_KEY is required but not set. ` +
+            `Sign up at https://drpc.org/ and export your API key as ` +
+            `ENVIO_DRPC_API_KEY=<your-key>. ` +
+            `Used for orphan-Safe masterCopy backfill (eth_getStorageAt) ` +
+            `and L1 trace fallbacks (trace_transaction).`
+        );
+    }
     return `https://lb.drpc.org/ogrpc?network=${network}&dkey=${apiKey}`;
 }
 
@@ -323,8 +330,8 @@ export const getExecTransactionViaRpcTrace = createEffect(
             );
         }
 
+        // Propagates a clear error if ENVIO_DRPC_API_KEY isn't set.
         const rpcUrl = getRpcUrl(input.chainId);
-        if (!rpcUrl) return null;
 
         const body = JSON.stringify({
             jsonrpc: "2.0",
@@ -456,8 +463,9 @@ export const getSafeMasterCopyViaRpc = createEffect(
     async ({ input }) => {
         if (TEST_MODE) return lookupFixture<string>("getSafeMasterCopyViaRpc", input);
 
+        // Propagates a clear error if ENVIO_DRPC_API_KEY isn't set —
+        // intentional: see getRpcUrl docstring.
         const rpcUrl = getRpcUrl(input.chainId);
-        if (!rpcUrl) return null;
 
         const body = JSON.stringify({
             jsonrpc: "2.0",
