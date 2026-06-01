@@ -1,6 +1,6 @@
 import { indexer, type Entity } from "envio";
 import { addOwner, removeOwner, addSafeToOwner, executionSuccess, executionFailure, incrementSafeCount, incrementTransactionCount, incrementModuleTransactionCount, getOrCreateVersion, ensureSafeStub } from "./helpers";
-import { getSetupTrace, decodeSetupInput, getMasterCopyFromTrace, resolveVersionFromMasterCopy } from "./hypersync";
+import { getSetupTrace, decodeSetupInput, getMasterCopyFromTrace, getSafeMasterCopyViaRpc, resolveVersionFromMasterCopy } from "./hypersync";
 import { LEGACY_V1_0_0_PROXY } from "./consts";
 import type { SafeVersion } from "./consts";
 import { decodeAbiParameters, zeroAddress } from "viem";
@@ -87,6 +87,12 @@ indexer.onEvent({ contract: "GnosisSafeProxyPre1_3_0", event: "ProxyCreation" },
 
   const safeId = `${chainId}-${proxy}`;
 
+  // If a stub already exists (ensureSafeStub or wildcard SafeSetup orphan),
+  // we want ProxyCreation to be the canonical counting event — increment
+  // only on the transition false → true.
+  const existingSafe = await context.Safe.get(safeId);
+  const wasCountedBefore = existingSafe?.counted ?? false;
+
   const safe: Safe = {
     id: safeId,
     version,
@@ -108,12 +114,16 @@ indexer.onEvent({ contract: "GnosisSafeProxyPre1_3_0", event: "ProxyCreation" },
     numberOfFailedExecutions: 0,
     nonce: 0,
     totalGasSpent: 0n,
+    counted: true, // ProxyCreation is the canonical counting event
   };
 
   context.Safe.set(safe);
 
-  // Increment global, network, and version safe counts
-  await incrementSafeCount(chainId, version, context);
+  // Increment exactly once per Safe — skip if a prior ProxyCreation already
+  // counted this one (defensive against re-emitted ProxyCreation events).
+  if (!wasCountedBefore) {
+    await incrementSafeCount(chainId, version, context);
+  }
 
   // Add safe to each Owner entity
   for (const owner of owners) {
@@ -171,6 +181,7 @@ async function handleModernProxyCreation(
 
   // Check if SafeSetup already created this Safe (fires before ProxyCreation in same tx)
   const existingSafe = await context.Safe.get(safeId);
+  const wasCountedBefore = existingSafe?.counted ?? false;
 
   if (existingSafe) {
     // SafeSetup already created the Safe - update version, creation info, masterCopy,
@@ -184,6 +195,7 @@ async function handleModernProxyCreation(
       creationTimestamp: BigInt(block.timestamp),
       blockCreationNum: block.number,
       factoryAddress: factory,
+      counted: true, // ProxyCreation is the canonical counting event
     });
   } else {
     // Create placeholder - SafeSetup will update owners/threshold/fallbackHandler
@@ -208,13 +220,16 @@ async function handleModernProxyCreation(
       numberOfFailedExecutions: 0,
       nonce: 0,
       totalGasSpent: 0n,
+      counted: true, // ProxyCreation is the canonical counting event
     };
 
     context.Safe.set(safe);
   }
 
-  // Increment global, network, and version safe counts
-  await incrementSafeCount(chainId, version, context);
+  // Increment exactly once per Safe — guard against re-emitted ProxyCreation.
+  if (!wasCountedBefore) {
+    await incrementSafeCount(chainId, version, context);
+  }
 }
 
 indexer.onEvent({ contract: "GnosisSafeProxy1_3_0", event: "ProxyCreation" }, async ({ event, context }) => {
@@ -250,8 +265,41 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeSetup", wildcard: true }
   // Get existing safe - might exist if ProxyCreation fired first, or might not exist yet
   let existingSafe = await context.Safe.get(safeId);
 
+  // Backfill masterCopy via RPC ONLY when we'd otherwise leave it null —
+  // either the entity doesn't exist yet (orphan branch will create it) OR it
+  // exists as a stub without masterCopy (e.g., ensureSafeStub from a
+  // pre-SafeSetup state event, or an earlier SafeSetup orphan branch).
+  // Skipping when existingSafe.masterCopy is already set avoids redundant
+  // calls for canonical Safes where ProxyCreation ran first and populated it
+  // via the singleton event param. Effect is cached on (chainId, safeAddress)
+  // so re-hits are free anyway, but the conditional avoids paying even the
+  // cache-lookup cost.
+  //
+  // SafeSetup typically fires BEFORE ProxyCreation in the same tx (the
+  // factory emits ProxyCreation only after returning from setup()), so for
+  // canonical Safes the orphan branch is still hit and the RPC still fires.
+  // ProxyCreation arriving later overwrites masterCopy with the singleton
+  // param — same value, harmless. The redundant call is the tradeoff for not
+  // having to enumerate every 3rd-party factory.
+  let rpcMasterCopy: string | null = null;
+  let resolvedVersion: SafeVersion | null = null;
+  if (!existingSafe || !existingSafe.masterCopy) {
+    rpcMasterCopy = await context.effect(getSafeMasterCopyViaRpc, {
+      chainId,
+      safeAddress: srcAddress,
+    });
+    if (rpcMasterCopy) {
+      resolvedVersion = resolveVersionFromMasterCopy(rpcMasterCopy) ?? null;
+    }
+  }
+
   if (existingSafe) {
-    // Update existing safe with owners and threshold from SafeSetup
+    // Update existing safe with owners and threshold from SafeSetup. If
+    // the existing entity is a stub (masterCopy still null because it was
+    // created by ensureSafeStub or a SafeSetup-orphan that beat ProxyCreation
+    // in order), apply the RPC-resolved masterCopy/version too. If
+    // ProxyCreation already populated them on a previous handler call, leave
+    // them alone — ProxyCreation's singleton param is the canonical source.
     const safe: Safe = {
       ...existingSafe,
       owners: ownersArray,
@@ -259,26 +307,32 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeSetup", wildcard: true }
       initializer,
       creationTxFrom,
       fallbackHandler: fallback,
+      masterCopy: existingSafe.masterCopy ?? rpcMasterCopy ?? undefined,
+      version:
+        existingSafe.version !== "UNKNOWN"
+          ? existingSafe.version
+          : (resolvedVersion ?? "UNKNOWN"),
     };
 
     context.Safe.set(safe);
   } else {
-    // SafeSetup fired before ProxyCreation - create the Safe now
-    // ProxyCreation will update version, creationTxHash, masterCopy, blockCreationNum,
-    // and factoryAddress when it fires. If ProxyCreation never arrives (orphan
-    // SafeSetup), these stay at the SafeSetup-derived defaults.
-    // `version: "UNKNOWN"` is the honest default — we can't infer the version
-    // from SafeSetup alone (no masterCopy / factory in its params). It also
-    // marks the Safe as uncounted, so any later `ChangedMasterCopy` knows to
-    // skip Version-stats reconciliation until `ProxyCreation` blesses it.
+    // SafeSetup fired before ProxyCreation - create the Safe now.
+    // ProxyCreation will update version/creationTxHash/masterCopy/
+    // blockCreationNum/factoryAddress AND set counted=true when it fires.
+    // If ProxyCreation never arrives (true orphan, 3rd-party factory we
+    // don't subscribe to), the RPC-backfilled masterCopy / resolved version
+    // above are the final state and `counted` stays false. That's the
+    // load-bearing invariant: ChangedMasterCopy and other Version-stats-
+    // mutating handlers guard on `safe.counted`, so RPC-backfilled orphans
+    // with a real version don't get phantom-counted / decremented.
     const safe: Safe = {
       id: safeId,
       owners: ownersArray,
       threshold: Number(threshold),
       chainId,
       address: srcAddress,
-      version: "UNKNOWN", // SafeSetup can't infer it; ProxyCreation will resolve
-      masterCopy: undefined, // Will be set by ProxyCreation
+      version: resolvedVersion ?? "UNKNOWN",
+      masterCopy: rpcMasterCopy ?? undefined,
       fallbackHandler: fallback,
       guard: NO_GUARD,
       creationTxHash: hash,
@@ -292,6 +346,8 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeSetup", wildcard: true }
       numberOfFailedExecutions: 0,
       nonce: 0,
       totalGasSpent: 0n,
+      // SafeSetup never counts — ProxyCreation is the canonical counting event.
+      counted: false,
     };
 
     context.Safe.set(safe);
@@ -452,13 +508,15 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "ChangedMasterCopy", wildcard
   });
 
   // Adjust Version stats: decrement old, increment new.
-  // Skip when oldVersion is "UNKNOWN" — that marks an uncounted stub (created
-  // by `ensureSafeStub` or the SafeSetup-only orphan path; `incrementSafeCount`
-  // hasn't fired for this Safe yet). Decrementing UNKNOWN would clamp at 0
-  // (no-op) but incrementing newVersion would phantom-count a Safe that
-  // `ProxyCreation` hasn't blessed yet — when ProxyCreation eventually
-  // arrives it'll increment the resolved version exactly once.
-  if (oldVersion !== newVersion && oldVersion !== "UNKNOWN") {
+  // Skip if the Safe hasn't been counted yet — applies to all stub paths
+  // (ensureSafeStub, SafeSetup-only orphan, RPC-backfilled orphan with a
+  // resolved version). Counting only ever happens on the canonical
+  // ProxyCreation event; until that fires, this Safe never contributed to
+  // numberOfSafes, so decrementing the old version would underflow and
+  // incrementing the new version would phantom-count it. When/if
+  // ProxyCreation eventually arrives it'll increment the resolved version
+  // exactly once.
+  if (safe.counted && oldVersion !== newVersion) {
     const oldVersionEntity = await getOrCreateVersion(oldVersion, context);
     context.Version.set({
       ...oldVersionEntity,

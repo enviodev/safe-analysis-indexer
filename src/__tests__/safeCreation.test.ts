@@ -231,6 +231,98 @@ describe("SafeSetup ↔ ProxyCreation ordering (1.3.0+)", () => {
     expect(safe.owners).toEqual([addr("only-owner")]);
   });
 
+  it("orphan SafeSetup + RPC returns known masterCopy → version and masterCopy backfilled", async () => {
+    // Models 3rd-party-factory deployments: SafeSetup fires (wildcard catches
+    // it) but ProxyCreation never arrives because the factory isn't in our
+    // subscriptions. The RPC backfill reads slot 0 of the proxy's storage
+    // (which holds the singleton address) and resolves the version. ~15K
+    // such Safes observed in the live indexer on Gnosis.
+    const proxy = addr("orphan-rpc-known");
+    setEffectFixtures({
+      getSafeMasterCopyViaRpc: {
+        [JSON.stringify({ chainId: CHAIN_ID, safeAddress: proxy })]:
+          MASTER_COPIES.V1_3_0_L2,
+      },
+    });
+
+    const indexer = createIndexer();
+    await processOnChain(indexer, CHAIN_ID, [
+      simulateSafeSetup({
+        safeAddress: proxy,
+        owners: [addr("orphan-owner")],
+        threshold: 1n,
+      }),
+    ]);
+
+    const safe = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, proxy));
+    expect(safe.version).toBe("V1_3_0");
+    expect(safe.masterCopy).toBe(MASTER_COPIES.V1_3_0_L2);
+    // factoryAddress stays null — RPC reads storage, not the factory.
+    expect(safe.factoryAddress).toBeUndefined();
+  });
+
+  it("orphan SafeSetup + RPC returns unrecognized singleton → masterCopy stored, version stays UNKNOWN", async () => {
+    // The RPC succeeds but the returned singleton isn't in MASTER_COPIES.
+    // Store the masterCopy verbatim (it's still useful info) but leave the
+    // version UNKNOWN so it doesn't get phantom-counted as a known version.
+    const proxy = addr("orphan-rpc-unknown");
+    const exoticSingleton = "0xdeadbeefcafebabedeadbeefcafebabedeadbeef";
+    setEffectFixtures({
+      getSafeMasterCopyViaRpc: {
+        [JSON.stringify({ chainId: CHAIN_ID, safeAddress: proxy })]:
+          exoticSingleton,
+      },
+    });
+
+    const indexer = createIndexer();
+    await processOnChain(indexer, CHAIN_ID, [
+      simulateSafeSetup({
+        safeAddress: proxy,
+        owners: [addr("exotic-owner")],
+        threshold: 1n,
+      }),
+    ]);
+
+    const safe = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, proxy));
+    expect(safe.masterCopy).toBe(exoticSingleton);
+    expect(safe.version).toBe("UNKNOWN");
+  });
+
+  it("ProxyCreation-then-SafeSetup: existing safe with populated masterCopy → RPC skipped, value preserved", async () => {
+    // When ProxyCreation runs before SafeSetup (rare but possible if the
+    // batch arrives that way), the existing safe already has masterCopy.
+    // SafeSetup's RPC short-circuit must skip the call — wire a fixture that
+    // would return a WRONG masterCopy and assert it wasn't applied.
+    const proxy = addr("setup-after-proxy");
+    const wrongSingleton = "0xbaaaaaadbaaaaaadbaaaaaadbaaaaaadbaaaaaad";
+    setEffectFixtures({
+      getSafeMasterCopyViaRpc: {
+        [JSON.stringify({ chainId: CHAIN_ID, safeAddress: proxy })]:
+          wrongSingleton,
+      },
+    });
+
+    const indexer = createIndexer();
+    await processOnChain(indexer, CHAIN_ID, [
+      simulateProxyCreationModern({
+        contract: "GnosisSafeProxy1_3_0",
+        proxy,
+        singleton: MASTER_COPIES.V1_3_0_L2 as `0x${string}`,
+      }),
+      simulateSafeSetup({
+        safeAddress: proxy,
+        owners: [addr("post-proxy-owner")],
+        threshold: 1n,
+      }),
+    ]);
+
+    const safe = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, proxy));
+    // ProxyCreation's singleton param wins — the RPC fixture was wrong but
+    // never consulted because masterCopy was already populated.
+    expect(safe.masterCopy).toBe(MASTER_COPIES.V1_3_0_L2);
+    expect(safe.version).toBe("V1_3_0");
+  });
+
   it("SafeSetup tolerates a readonly owners array (defensive [...owners] copy)", async () => {
     const indexer = createIndexer();
     const proxy = addr("readonly-owners");

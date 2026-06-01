@@ -1,7 +1,16 @@
 import { describe, it, expect } from "vitest";
 import { addr, safeId, MASTER_COPIES } from "./fixtures/addresses";
-import { createIndexer, processOnChain, seedSafe } from "./fixtures/indexer";
-import { simulateChangedMasterCopy } from "./fixtures/events";
+import {
+  createIndexer,
+  processOnChain,
+  seedSafe,
+  setEffectFixtures,
+  clearEffectFixtures,
+} from "./fixtures/indexer";
+import {
+  simulateChangedMasterCopy,
+  simulateSafeSetup,
+} from "./fixtures/events";
 
 const CHAIN_ID = 1;
 
@@ -32,6 +41,72 @@ describe("ChangedMasterCopy", () => {
     expect((await indexer.Version.get("V1_4_1"))?.numberOfSafes ?? 0).toBe(0);
     expect((await indexer.Version.get("UNKNOWN"))?.numberOfSafes ?? 0).toBe(0);
     expect((await indexer.Version.get("V1_3_0"))?.numberOfSafes ?? 0).toBe(0);
+  });
+
+  it("RPC-backfilled orphan + later ChangedMasterCopy does NOT corrupt Version counters", async () => {
+    // Regression for the CodeRabbit-flagged scenario: an RPC-backfilled
+    // orphan has a real `version` (e.g. V1_3_0) but was NEVER counted by
+    // `incrementSafeCount` (only `ProxyCreation` counts, and the whole point
+    // of an orphan is that ProxyCreation never arrives). When a later
+    // `ChangedMasterCopy` fires for this Safe, the handler must NOT
+    // decrement the old version (the Safe never contributed to it) and must
+    // NOT increment the new version (the Safe still hasn't been blessed by
+    // ProxyCreation). The `safe.counted` flag is the load-bearing guard.
+    clearEffectFixtures();
+    const safeAddr = addr("orphan-then-mc");
+    setEffectFixtures({
+      getSafeMasterCopyViaRpc: {
+        [JSON.stringify({ chainId: CHAIN_ID, safeAddress: safeAddr })]:
+          MASTER_COPIES.V1_3_0_L2,
+      },
+    });
+
+    // Seed a different version's counter so we'd notice if it moved.
+    const indexer = createIndexer();
+    (indexer as any).Version.set({
+      id: "V1_3_0",
+      numberOfSafes: 7,
+      numberOfTransactions: 0,
+      numberOfModuleTransactions: 0,
+    });
+    (indexer as any).Version.set({
+      id: "V1_4_1",
+      numberOfSafes: 3,
+      numberOfTransactions: 0,
+      numberOfModuleTransactions: 0,
+    });
+
+    await processOnChain(indexer, CHAIN_ID, [
+      // SafeSetup with no preceding/following ProxyCreation → orphan path,
+      // RPC backfill resolves singleton → version becomes V1_3_0, but
+      // counted stays false.
+      simulateSafeSetup({
+        safeAddress: safeAddr,
+        owners: [addr("orphan-then-mc-owner")],
+        threshold: 1n,
+      }),
+      // Now an explicit master-copy migration to V1_4_1. Without the
+      // `counted` guard, this would do -1 to V1_3_0 and +1 to V1_4_1 —
+      // both wrong, since the Safe was never in those counts to begin with.
+      simulateChangedMasterCopy({
+        safeAddress: safeAddr,
+        singleton: MASTER_COPIES.V1_4_1_L2 as `0x${string}`,
+      }),
+    ]);
+
+    // Safe entity ends up with the post-migration shape:
+    const safe = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, safeAddr));
+    expect(safe.version).toBe("V1_4_1");
+    expect(safe.masterCopy).toBe(MASTER_COPIES.V1_4_1_L2);
+    expect(safe.counted).toBe(false);
+
+    // Counters MUST be unchanged from their pre-seeded values — the
+    // RPC-backfilled orphan never touched them on the SafeSetup path, and
+    // ChangedMasterCopy must short-circuit because counted=false.
+    expect((await indexer.Version.get("V1_3_0"))?.numberOfSafes).toBe(7);
+    expect((await indexer.Version.get("V1_4_1"))?.numberOfSafes).toBe(3);
+
+    clearEffectFixtures();
   });
 
   it("with an unknown singleton: masterCopy updated lowercase, version unchanged, Version counters untouched", async () => {

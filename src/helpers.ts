@@ -59,6 +59,10 @@ export const ensureSafeStub = async (
     numberOfFailedExecutions: 0,
     nonce: 0,
     totalGasSpent: 0n,
+    // Stubs are uncounted by definition — only ProxyCreation flips this to
+    // true. ChangedMasterCopy etc. guard on `counted` to skip Version-stats
+    // reconciliation for uncounted Safes.
+    counted: false,
   };
   context.Safe.set(stub);
   return stub;

@@ -96,6 +96,8 @@ export function seedSafe(
     numberOfFailedExecutions: args.numberOfFailedExecutions ?? 0,
     nonce: args.nonce ?? 0,
     totalGasSpent: args.totalGasSpent ?? 0n,
+    // Seeded Safes are conceptually "post-ProxyCreation" — counted by default.
+    counted: true,
   });
   return id;
 }
