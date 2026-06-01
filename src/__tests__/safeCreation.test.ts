@@ -293,14 +293,15 @@ describe("Safe creation counters", () => {
   });
 });
 
-// Safe.initiator should always be tx.from (the EOA / account that submitted
-// the deployment tx), not the SafeSetup.initiator event param (which is
-// msg.sender of setup() = the factory contract). This matches the Safe
-// Transaction Service `/v1/safes/{addr}/creation/.creator` field.
-describe("Safe.initiator = tx.from (matches Safe Transaction Service `creator`)", () => {
+// Safe.creationTxFrom should always be tx.from (the account that submitted the
+// deployment tx), not the SafeSetup.initiator event param (which is msg.sender
+// of setup() = the factory contract). For directly-submitted deployments this
+// matches Safe TX Service `/v1/safes/{addr}/creation/.creator`; for sponsored
+// deployments (4337 bundlers, relayers) it diverges — see the schema comment.
+describe("Safe.creationTxFrom = tx.from of the creation tx", () => {
   const EOA_CREATOR = "0x9c8a7e1b3d4f5a2c6e8b0d1f3a5c7e9b0d2f4a6c" as `0x${string}`;
 
-  it("modern ProxyCreation records tx.from as initiator (lowercase)", async () => {
+  it("modern ProxyCreation records tx.from as creationTxFrom (lowercase)", async () => {
     const indexer = createIndexer();
     const proxy = addr("init-modern");
     await processOnChain(indexer, CHAIN_ID, [
@@ -312,10 +313,10 @@ describe("Safe.initiator = tx.from (matches Safe Transaction Service `creator`)"
       }),
     ]);
     const safe = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, proxy));
-    expect(safe.initiator).toBe(EOA_CREATOR.toLowerCase());
+    expect(safe.creationTxFrom).toBe(EOA_CREATOR.toLowerCase());
   });
 
-  it("pre-1.3.0 ProxyCreation records tx.from as initiator", async () => {
+  it("pre-1.3.0 ProxyCreation records tx.from as creationTxFrom", async () => {
     const indexer = createIndexer();
     await processOnChain(indexer, CHAIN_ID, [
       simulateProxyCreationPre1_3_0({
@@ -324,7 +325,7 @@ describe("Safe.initiator = tx.from (matches Safe Transaction Service `creator`)"
       }),
     ]);
     const safe = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, LEGACY_V1_0_0_PROXY));
-    expect(safe.initiator).toBe(EOA_CREATOR.toLowerCase());
+    expect(safe.creationTxFrom).toBe(EOA_CREATOR.toLowerCase());
   });
 
   it("SafeSetup-first orphan records tx.from, NOT the SafeSetup.initiator event param", async () => {
@@ -345,8 +346,8 @@ describe("Safe.initiator = tx.from (matches Safe Transaction Service `creator`)"
     ]);
 
     const safe = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, proxy));
-    expect(safe.initiator).toBe(EOA_CREATOR.toLowerCase());
-    expect(safe.initiator).not.toBe(factoryParam.toLowerCase());
+    expect(safe.creationTxFrom).toBe(EOA_CREATOR.toLowerCase());
+    expect(safe.creationTxFrom).not.toBe(factoryParam.toLowerCase());
   });
 
   it("ProxyCreation then SafeSetup: tx.from from BOTH events resolves to the same EOA (same tx)", async () => {
@@ -368,6 +369,6 @@ describe("Safe.initiator = tx.from (matches Safe Transaction Service `creator`)"
     ]);
 
     const safe = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, proxy));
-    expect(safe.initiator).toBe(EOA_CREATOR.toLowerCase());
+    expect(safe.creationTxFrom).toBe(EOA_CREATOR.toLowerCase());
   });
 });

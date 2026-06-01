@@ -67,7 +67,11 @@ export async function compareSafeCreation(
   }
   if (canonical.creator !== indexer.creator) {
     diffs.push({
-      field: "creator/initiator",
+      // Field name retained as `creator/creationTxFrom` so the mismatched-fields
+      // summary table makes the canonical-vs-indexer mapping legible at a glance.
+      // The two sides genuinely diverge for sponsored deployments — see the
+      // `Safe.creationTxFrom` schema comment.
+      field: "creator/creationTxFrom",
       canonical: canonical.creator,
       indexer: indexer.creator,
     });

@@ -109,7 +109,7 @@ const SAFE_CREATION_QUERY = `
       factoryAddress
       masterCopy
       setupData
-      initiator
+      creationTxFrom
     }
   }
 `;
