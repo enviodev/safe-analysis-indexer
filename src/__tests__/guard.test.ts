@@ -61,15 +61,18 @@ describe("Safe.guard defaults to the zero address on every creation path", () =>
 });
 
 describe("ChangedGuard (v1.3.0 non-indexed)", () => {
-  it("is a no-op when the Safe doesn't exist", async () => {
+  it("auto-stubs the Safe when ChangedGuard fires before SafeSetup / ProxyCreation", async () => {
+    // setup()-time delegate-call setGuard inside a multiSend bundle would
+    // emit ChangedGuard before SafeSetup. Wildcard handler stubs the Safe so
+    // the guard state isn't dropped.
     const indexer = createIndexer();
+    const safeAddr = addr("ghost-guard");
+    const newGuard = addr("new-guard-x");
     await processOnChain(indexer, CHAIN_ID, [
-      simulateChangedGuard({
-        safeAddress: addr("ghost-guard"),
-        guard: addr("new-guard-x"),
-      }),
+      simulateChangedGuard({ safeAddress: safeAddr, guard: newGuard }),
     ]);
-    expect(await indexer.Safe.getAll()).toEqual([]);
+    const stub = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, safeAddr));
+    expect(stub.guard).toBe(newGuard);
   });
 
   it("updates Safe.guard in place (lowercase, no other field touched)", async () => {
@@ -132,16 +135,15 @@ describe("ChangedGuardV4 (v1.4.0+ indexed)", () => {
     expect(safe.version).toBe("V1_4_1");
   });
 
-  it("is a no-op when the Safe doesn't exist", async () => {
+  it("auto-stubs the Safe for the V4 variant too when fired before setup", async () => {
     const indexer = createIndexer();
+    const safeAddr = addr("ghost-guard-v4");
+    const newGuard = addr("ghost-guard-val");
     await processOnChain(indexer, CHAIN_ID, [
-      simulateChangedGuard({
-        safeAddress: addr("ghost-guard-v4"),
-        guard: addr("ghost-guard-val"),
-        v4: true,
-      }),
+      simulateChangedGuard({ safeAddress: safeAddr, guard: newGuard, v4: true }),
     ]);
-    expect(await indexer.Safe.getAll()).toEqual([]);
+    const stub = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, safeAddr));
+    expect(stub.guard).toBe(newGuard);
   });
 });
 

@@ -10,16 +10,25 @@ describe("smoke", () => {
     expect(await indexer.Safe.getAll()).toEqual([]);
   });
 
-  it("processes an event against an unknown safe without throwing or mutating state", async () => {
+  it("a wildcard state event against an unknown safe creates a stub Safe entity", async () => {
+    // The setup()-time delegate-call pattern (Safe's 4337 module installer,
+    // multiSend payloads, etc.) emits state-mutation events on the Safe
+    // address BEFORE the factory's ProxyCreation registers it. The wildcard
+    // handlers auto-stub the Safe so the state isn't dropped; a later
+    // SafeSetup / ProxyCreation enriches the stub on its existing-safe path.
     const indexer = createIndexer();
+    const safeAddr = addr("ghost-safe");
+    const ownerAddr = addr("alice");
     await processOnChain(indexer, 1, [
       simulateAddedOwner({
         contract: "GnosisSafeL2",
-        safeAddress: addr("ghost-safe"),
-        owner: addr("alice"),
+        safeAddress: safeAddr,
+        owner: ownerAddr,
       }),
     ]);
-    expect(await indexer.Safe.getAll()).toEqual([]);
-    expect(await indexer.Owner.getAll()).toEqual([]);
+    const safes = await indexer.Safe.getAll();
+    expect(safes).toHaveLength(1);
+    expect(safes[0]?.address).toBe(safeAddr);
+    expect(safes[0]?.owners).toEqual([ownerAddr]);
   });
 });
