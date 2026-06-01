@@ -91,7 +91,7 @@ export function seedSafe(
     factoryAddress: args.factoryAddress,
     setupData: args.setupData,
     initializer: "",
-    initiator: "",
+    creationTxFrom: "",
     numberOfSuccessfulExecutions: args.numberOfSuccessfulExecutions ?? 0,
     numberOfFailedExecutions: args.numberOfFailedExecutions ?? 0,
     nonce: args.nonce ?? 0,

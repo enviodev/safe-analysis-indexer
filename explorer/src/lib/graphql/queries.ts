@@ -14,7 +14,7 @@ export interface Safe {
   threshold: number;
   version: SafeVersion;
   initializer: string;
-  initiator: string;
+  creationTxFrom: string;
   numberOfSuccessfulExecutions: number;
   numberOfFailedExecutions: number;
   totalGasSpent: string;
@@ -76,7 +76,7 @@ const SAFE_FRAGMENT = gql`
     threshold
     version
     initializer
-    initiator
+    creationTxFrom
     numberOfSuccessfulExecutions
     numberOfFailedExecutions
     totalGasSpent

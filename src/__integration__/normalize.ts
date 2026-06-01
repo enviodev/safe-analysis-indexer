@@ -164,7 +164,7 @@ export interface IndexerSafeCreation {
   factoryAddress: string | null;
   masterCopy: string | null;
   setupData: string | null;
-  initiator: string;
+  creationTxFrom: string;
 }
 
 export function normaliseCreationFromIndexer(raw: IndexerSafeCreation): NormalisedSafeCreation {
@@ -175,7 +175,7 @@ export function normaliseCreationFromIndexer(raw: IndexerSafeCreation): Normalis
     factoryAddress: lower(raw.factoryAddress),
     masterCopy: lower(raw.masterCopy),
     setupData: lower(raw.setupData),
-    creator: raw.initiator.toLowerCase(),
+    creator: raw.creationTxFrom.toLowerCase(),
   };
 }
 

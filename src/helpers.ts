@@ -12,7 +12,7 @@ const GLOBAL_STATS_ID = "global";
 // the Safe entity hasn't been created yet by `SafeSetup` or `ProxyCreation`.
 //
 // Subsequent `SafeSetup` (wildcard) overwrites owners/threshold/initializer/
-// initiator/fallbackHandler on its `existingSafe` branch. Subsequent
+// creationTxFrom/fallbackHandler on its `existingSafe` branch. Subsequent
 // `ProxyCreation` overwrites version/masterCopy/creationTxHash/blockCreationNum/
 // factoryAddress and bumps the safe count.
 //
@@ -54,7 +54,7 @@ export const ensureSafeStub = async (
     factoryAddress: undefined,
     setupData: undefined,
     initializer: zeroAddress, // sentinel — overwritten by SafeSetup
-    initiator: (event.transaction.from ?? zeroAddress).toLowerCase(),
+    creationTxFrom: (event.transaction.from ?? zeroAddress).toLowerCase(),
     numberOfSuccessfulExecutions: 0,
     numberOfFailedExecutions: 0,
     nonce: 0,

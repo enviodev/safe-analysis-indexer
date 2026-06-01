@@ -62,7 +62,7 @@ type Safe {
   numberOfFailedExecutions: Int!
   nonce: Int!
   totalGasSpent: BigInt!
-  initiator: String! @index # tx.from of the deployment transaction — the EOA / account that submitted the creation. Matches the Safe Transaction Service `creator` field. Lowercase. Distinct from SafeSetup.initiator event param (which is msg.sender of setup() = factory address); we deliberately store tx.from instead since it's the canonically useful identity. Indexed so "Safes created by EOA X" is a fast lookup.
+  creationTxFrom: String! @index # `tx.from` of the deployment transaction. For directly-submitted deployments this IS the user who created the Safe — matches Safe Transaction Service `creator`. For sponsored deployments (ERC-4337 bundlers via EntryPoint, Gelato/Pimlico relayers, Safe Relay, …) this is the bundler/relayer EOA paying gas, NOT the end user — Safe TX Service derives `creator` from the UserOp sender or inner call frame in those cases and will diverge from this field. Renamed from `initiator` to reflect the honest semantic; consumers wanting the canonical creator should fetch from Safe TX Service for sponsored deployments. Lowercase. Indexed so "Safes created by tx-sender X" is a fast lookup.
 }
 
 type Owner {
