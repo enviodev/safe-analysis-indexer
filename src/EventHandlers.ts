@@ -265,13 +265,17 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeSetup", wildcard: true }
     // ProxyCreation will update version, creationTxHash, masterCopy, blockCreationNum,
     // and factoryAddress when it fires. If ProxyCreation never arrives (orphan
     // SafeSetup), these stay at the SafeSetup-derived defaults.
+    // `version: "UNKNOWN"` is the honest default — we can't infer the version
+    // from SafeSetup alone (no masterCopy / factory in its params). It also
+    // marks the Safe as uncounted, so any later `ChangedMasterCopy` knows to
+    // skip Version-stats reconciliation until `ProxyCreation` blesses it.
     const safe: Safe = {
       id: safeId,
       owners: ownersArray,
       threshold: Number(threshold),
       chainId,
       address: srcAddress,
-      version: "V1_3_0", // Default, will be updated by ProxyCreation
+      version: "UNKNOWN", // SafeSetup can't infer it; ProxyCreation will resolve
       masterCopy: undefined, // Will be set by ProxyCreation
       fallbackHandler: fallback,
       guard: NO_GUARD,
@@ -445,8 +449,14 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "ChangedMasterCopy", wildcard
     version: newVersion,
   });
 
-  // Adjust Version stats: decrement old, increment new
-  if (oldVersion !== newVersion) {
+  // Adjust Version stats: decrement old, increment new.
+  // Skip when oldVersion is "UNKNOWN" — that marks an uncounted stub (created
+  // by `ensureSafeStub` or the SafeSetup-only orphan path; `incrementSafeCount`
+  // hasn't fired for this Safe yet). Decrementing UNKNOWN would clamp at 0
+  // (no-op) but incrementing newVersion would phantom-count a Safe that
+  // `ProxyCreation` hasn't blessed yet — when ProxyCreation eventually
+  // arrives it'll increment the resolved version exactly once.
+  if (oldVersion !== newVersion && oldVersion !== "UNKNOWN") {
     const oldVersionEntity = await getOrCreateVersion(oldVersion, context);
     context.Version.set({
       ...oldVersionEntity,

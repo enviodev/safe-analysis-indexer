@@ -9,7 +9,14 @@ describe("ChangedMasterCopy", () => {
   it("auto-stubs the Safe when ChangedMasterCopy fires before SafeSetup / ProxyCreation", async () => {
     // setup()-time delegate-call setSingleton inside a multiSend bundle would
     // emit ChangedMasterCopy ahead of SafeSetup. Wildcard handler stubs the
-    // Safe and resolves the version from the singleton if it's known.
+    // Safe with version=UNKNOWN, then resolves the version from the singleton.
+    //
+    // Critically, the Version-stats reconciliation must be SKIPPED on this
+    // path: the stub was never counted in numberOfSafes (incrementSafeCount
+    // fires from ProxyCreation), so decrementing the old version or
+    // incrementing the new would phantom-count a Safe that ProxyCreation
+    // hasn't yet blessed. ProxyCreation will increment the resolved version
+    // exactly once when it arrives.
     const indexer = createIndexer();
     const safeAddr = addr("ghost-mc");
     const singleton = MASTER_COPIES.V1_4_1_L2 as `0x${string}`;
@@ -19,6 +26,12 @@ describe("ChangedMasterCopy", () => {
     const stub = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, safeAddr));
     expect(stub.masterCopy).toBe(singleton.toLowerCase());
     expect(stub.version).toBe("V1_4_1");
+
+    // No Version entity should have been touched: not the resolved V1_4_1
+    // (the stub is uncounted) and not the stub's prior UNKNOWN version.
+    expect((await indexer.Version.get("V1_4_1"))?.numberOfSafes ?? 0).toBe(0);
+    expect((await indexer.Version.get("UNKNOWN"))?.numberOfSafes ?? 0).toBe(0);
+    expect((await indexer.Version.get("V1_3_0"))?.numberOfSafes ?? 0).toBe(0);
   });
 
   it("with an unknown singleton: masterCopy updated lowercase, version unchanged, Version counters untouched", async () => {

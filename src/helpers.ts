@@ -17,10 +17,14 @@ const GLOBAL_STATS_ID = "global";
 // factoryAddress and bumps the safe count.
 //
 // If neither follows (truly orphan emission, or topic0 collision from a non-
-// Safe contract), we end up with a Safe entity that has empty owners,
-// threshold=0, and no factory — same shape as the existing SafeSetup-only
-// orphan path. Stats counts are NOT incremented here; that stays on the
-// canonical `ProxyCreation` path so it doesn't double-count.
+// Safe contract), we end up with a Safe entity with `version: "UNKNOWN"`,
+// empty owners, threshold=0, and no factory — same shape as the existing
+// SafeSetup-only orphan path. Stats counts are NOT incremented here; that
+// stays on the canonical `ProxyCreation` path so it doesn't double-count.
+//
+// `version: "UNKNOWN"` is deliberate (not `V1_3_0`): we genuinely don't know
+// the version yet, and it serves as a marker downstream (`ChangedMasterCopy`)
+// for "uncounted stub — skip Version-stats reconciliation."
 export const ensureSafeStub = async (
   event: {
     srcAddress: string;
@@ -40,7 +44,7 @@ export const ensureSafeStub = async (
     address: event.srcAddress,
     owners: [] as string[],
     threshold: 0,
-    version: "V1_3_0", // default; ProxyCreation overrides with the real version
+    version: "UNKNOWN", // we don't know yet; ProxyCreation will resolve it
     masterCopy: undefined,
     fallbackHandler: undefined,
     guard: zeroAddress,
@@ -49,7 +53,7 @@ export const ensureSafeStub = async (
     blockCreationNum: event.block.number,
     factoryAddress: undefined,
     setupData: undefined,
-    initializer: "",
+    initializer: zeroAddress, // sentinel — overwritten by SafeSetup
     initiator: (event.transaction.from ?? zeroAddress).toLowerCase(),
     numberOfSuccessfulExecutions: 0,
     numberOfFailedExecutions: 0,

@@ -210,7 +210,11 @@ describe("SafeSetup ↔ ProxyCreation ordering (1.3.0+)", () => {
     expect(safe.version).toBe("V1_3_0");
   });
 
-  it("SafeSetup alone creates a placeholder Safe with default version V1_3_0", async () => {
+  it("SafeSetup alone creates a placeholder Safe with version UNKNOWN until ProxyCreation arrives", async () => {
+    // SafeSetup carries no masterCopy / factory in its params, so the version
+    // is genuinely unknown until ProxyCreation fires. UNKNOWN also marks the
+    // Safe as uncounted so subsequent ChangedMasterCopy can short-circuit its
+    // Version-stats reconciliation.
     const indexer = createIndexer();
     const proxy = addr("setup-only");
     await processOnChain(indexer, CHAIN_ID, [
@@ -222,7 +226,7 @@ describe("SafeSetup ↔ ProxyCreation ordering (1.3.0+)", () => {
     ]);
 
     const safe = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, proxy));
-    expect(safe.version).toBe("V1_3_0");
+    expect(safe.version).toBe("UNKNOWN");
     expect(safe.masterCopy).toBeUndefined();
     expect(safe.owners).toEqual([addr("only-owner")]);
   });
