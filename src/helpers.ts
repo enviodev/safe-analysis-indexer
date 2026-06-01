@@ -1,7 +1,64 @@
+import { zeroAddress } from "viem";
 import { isL1Safe } from "./consts";
 import { decodeExecTransaction, getExecTransactionViaRpcTrace } from "./hypersync";
 
 const GLOBAL_STATS_ID = "global";
+
+// Create a minimal Safe entity stub when a state-mutation event fires for a
+// Safe we haven't seen yet. The canonical case: bundled setup deploys (e.g.
+// Safe's 4337 module installer) use a delegate-call inside setup() that emits
+// `EnabledModule` / `AddedOwner` / `ChangedFallbackHandler` etc. BEFORE the
+// factory's `ProxyCreation` event. Those events fire on the Safe address, but
+// the Safe entity hasn't been created yet by `SafeSetup` or `ProxyCreation`.
+//
+// Subsequent `SafeSetup` (wildcard) overwrites owners/threshold/initializer/
+// initiator/fallbackHandler on its `existingSafe` branch. Subsequent
+// `ProxyCreation` overwrites version/masterCopy/creationTxHash/blockCreationNum/
+// factoryAddress and bumps the safe count.
+//
+// If neither follows (truly orphan emission, or topic0 collision from a non-
+// Safe contract), we end up with a Safe entity that has empty owners,
+// threshold=0, and no factory — same shape as the existing SafeSetup-only
+// orphan path. Stats counts are NOT incremented here; that stays on the
+// canonical `ProxyCreation` path so it doesn't double-count.
+export const ensureSafeStub = async (
+  event: {
+    srcAddress: string;
+    chainId: number;
+    block: { number: number; timestamp: number };
+    transaction: { hash: string; from?: string };
+  },
+  context: any,
+) => {
+  const safeId = `${event.chainId}-${event.srcAddress}`;
+  const existing = await context.Safe.get(safeId);
+  if (existing) return existing;
+
+  const stub = {
+    id: safeId,
+    chainId: event.chainId,
+    address: event.srcAddress,
+    owners: [] as string[],
+    threshold: 0,
+    version: "V1_3_0", // default; ProxyCreation overrides with the real version
+    masterCopy: undefined,
+    fallbackHandler: undefined,
+    guard: zeroAddress,
+    creationTxHash: event.transaction.hash,
+    creationTimestamp: BigInt(event.block.timestamp),
+    blockCreationNum: event.block.number,
+    factoryAddress: undefined,
+    setupData: undefined,
+    initializer: "",
+    initiator: (event.transaction.from ?? zeroAddress).toLowerCase(),
+    numberOfSuccessfulExecutions: 0,
+    numberOfFailedExecutions: 0,
+    nonce: 0,
+    totalGasSpent: 0n,
+  };
+  context.Safe.set(stub);
+  return stub;
+};
 
 // Get or create GlobalStats entity
 export const getOrCreateGlobalStats = async (context: any) => {
@@ -157,12 +214,9 @@ export const addOwner = async (event: any, context: any) => {
   const { srcAddress, chainId } = event;
   const safeId = chainId + "-" + srcAddress;
 
-  const safe = await context.Safe.get(safeId);
-
-  if (!safe) {
-    // not a safe
-    return;
-  }
+  // Create stub if missing — handles the setup()-time delegate-call case where
+  // AddedOwner can fire before SafeSetup / ProxyCreation in the same tx.
+  const safe = await ensureSafeStub(event, context);
 
   // Deduplicate: both AddedOwner and AddedOwnerV4 can fire for the same event
   if (safe.owners.includes(owner)) return;
@@ -183,10 +237,10 @@ export const removeOwner = async (event: any, context: any) => {
 
   const safe = await context.Safe.get(safeId);
 
-  if (!safe) {
-    // not a safe
-    return;
-  }
+  // RemovedOwner on a never-seen Safe: nothing to remove. Don't stub here —
+  // stubs are for state we want to preserve, and an unknown owner removal
+  // produces no state worth preserving.
+  if (!safe) return;
 
   // Deduplicate: both RemovedOwner and RemovedOwnerV4 can fire for the same event
   if (!safe.owners.includes(owner)) return;

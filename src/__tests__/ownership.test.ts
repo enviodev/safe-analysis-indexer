@@ -13,18 +13,27 @@ import { expectOwnerMembership } from "./fixtures/assertions";
 const CHAIN_ID = 1;
 
 describe("AddedOwner", () => {
-  it("is a no-op when the Safe doesn't exist", async () => {
+  it("auto-stubs the Safe when AddedOwner fires before SafeSetup / ProxyCreation", async () => {
+    // Models the setup()-time delegate-call sequence: an inner multiSend
+    // emits AddedOwner on the (future) Safe address before SafeSetup or
+    // ProxyCreation register it. The wildcard handler creates a stub so the
+    // owner isn't dropped; later SafeSetup overwrites the stub's owners with
+    // its full owner set if it arrives.
     resetBlockCounter();
     const indexer = createIndexer();
+    const safeAddr = addr("ghost");
+    const ownerAddr = addr("alice");
     await processOnChain(indexer, CHAIN_ID, [
       simulateAddedOwner({
         contract: "GnosisSafeL2",
-        safeAddress: addr("ghost"),
-        owner: addr("alice"),
+        safeAddress: safeAddr,
+        owner: ownerAddr,
       }),
     ]);
-    expect(await indexer.Owner.getAll()).toEqual([]);
-    expect(await indexer.SafeOwner.getAll()).toEqual([]);
+    const stub = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, safeAddr));
+    expect(stub.owners).toEqual([ownerAddr]);
+    const owners = await indexer.Owner.getAll();
+    expect(owners.map((o) => o.id)).toEqual([ownerAddr]);
   });
 
   it("appends the owner, mirrors to Owner.safes, and creates the SafeOwner join", async () => {
@@ -66,7 +75,7 @@ describe("AddedOwner", () => {
     ]);
 
     const safe = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, proxy));
-    expect(safe.owners.sort()).toEqual([ownerA, ownerB].sort());
+    expect([...safe.owners].sort()).toEqual([ownerA, ownerB].sort());
   });
 
   it("dedups AddedOwner + AddedOwnerV4 fired at the same event (owners array length 1)", async () => {

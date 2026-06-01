@@ -6,15 +6,19 @@ import { simulateChangedMasterCopy } from "./fixtures/events";
 const CHAIN_ID = 1;
 
 describe("ChangedMasterCopy", () => {
-  it("is a no-op when the Safe doesn't exist", async () => {
+  it("auto-stubs the Safe when ChangedMasterCopy fires before SafeSetup / ProxyCreation", async () => {
+    // setup()-time delegate-call setSingleton inside a multiSend bundle would
+    // emit ChangedMasterCopy ahead of SafeSetup. Wildcard handler stubs the
+    // Safe and resolves the version from the singleton if it's known.
     const indexer = createIndexer();
+    const safeAddr = addr("ghost-mc");
+    const singleton = MASTER_COPIES.V1_4_1_L2 as `0x${string}`;
     await processOnChain(indexer, CHAIN_ID, [
-      simulateChangedMasterCopy({
-        safeAddress: addr("ghost-mc"),
-        singleton: MASTER_COPIES.V1_4_1_L2 as `0x${string}`,
-      }),
+      simulateChangedMasterCopy({ safeAddress: safeAddr, singleton }),
     ]);
-    expect(await indexer.Safe.getAll()).toEqual([]);
+    const stub = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, safeAddr));
+    expect(stub.masterCopy).toBe(singleton.toLowerCase());
+    expect(stub.version).toBe("V1_4_1");
   });
 
   it("with an unknown singleton: masterCopy updated lowercase, version unchanged, Version counters untouched", async () => {

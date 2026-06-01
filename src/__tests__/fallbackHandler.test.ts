@@ -172,15 +172,17 @@ describe("Pre-1.3.0 ProxyCreation derives fallbackHandler from initializer", () 
 });
 
 describe("ChangedFallbackHandler", () => {
-  it("is a no-op when the Safe doesn't exist", async () => {
+  it("auto-stubs the Safe when ChangedFallbackHandler fires before SafeSetup / ProxyCreation", async () => {
+    // Same pre-setup wildcard pattern as EnabledModule — a setup()-time
+    // delegate-call could emit ChangedFallbackHandler ahead of SafeSetup.
     const indexer = createIndexer();
+    const safeAddr = addr("ghost-fh");
+    const newHandler = addr("new-handler-x");
     await processOnChain(indexer, CHAIN_ID, [
-      simulateChangedFallbackHandler({
-        safeAddress: addr("ghost-fh"),
-        handler: addr("new-handler-x"),
-      }),
+      simulateChangedFallbackHandler({ safeAddress: safeAddr, handler: newHandler }),
     ]);
-    expect(await indexer.Safe.getAll()).toEqual([]);
+    const stub = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, safeAddr));
+    expect(stub.fallbackHandler).toBe(newHandler);
   });
 
   it("updates Safe.fallbackHandler in-place (lowercase, no other field touched)", async () => {

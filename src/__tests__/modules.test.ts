@@ -8,20 +8,31 @@ import {
 import {
   simulateEnabledModule,
   simulateDisabledModule,
+  simulateSafeSetup,
+  simulateProxyCreationModern,
 } from "./fixtures/events";
 
 const CHAIN_ID = 1;
 
 describe("EnabledModule (pre-1.4.0, non-indexed)", () => {
-  it("is a no-op when the Safe doesn't exist", async () => {
+  it("auto-stubs the Safe and records the SafeModule when EnabledModule fires before SafeSetup / ProxyCreation", async () => {
+    // The canonical setup()-time delegate-call sequence: an inner multiSend
+    // emits EnabledModule on the (future) Safe address ahead of SafeSetup and
+    // ProxyCreation. The wildcard handler creates a stub Safe so the
+    // SafeModule row has a valid FK; later SafeSetup / ProxyCreation enrich
+    // the stub. This is the bug Safe's 4337 module installer surfaces.
     const indexer = createIndexer();
+    const safeAddr = addr("ghost-mod-safe");
+    const moduleAddr = addr("ghost-mod");
     await processOnChain(indexer, CHAIN_ID, [
-      simulateEnabledModule({
-        safeAddress: addr("ghost-mod-safe"),
-        module: addr("ghost-mod"),
-      }),
+      simulateEnabledModule({ safeAddress: safeAddr, module: moduleAddr }),
     ]);
-    expect(await indexer.SafeModule.getAll()).toEqual([]);
+    const id = safeId(CHAIN_ID, safeAddr);
+    const row = await indexer.SafeModule.getOrThrow(`${id}-${moduleAddr}`);
+    expect(row.safe_id).toBe(id);
+    expect(row.module).toBe(moduleAddr);
+    const stub = await indexer.Safe.getOrThrow(id);
+    expect(stub.address).toBe(safeAddr);
   });
 
   it("creates a SafeModule row on a known Safe", async () => {
@@ -212,6 +223,70 @@ describe("EnabledModuleV4 / DisabledModuleV4 (v1.4.0+, indexed)", () => {
 
     const row = await indexer.SafeModule.get(`${id}-${moduleAddr}`);
     expect(row).toBeUndefined();
+  });
+});
+
+describe("Pre-creation delegate-call emissions (Safe 4337 module installer pattern)", () => {
+  it("EnabledModule → SafeSetup → ProxyCreation in one batch yields the canonical Safe + module", async () => {
+    // This mirrors the exact production tx layout observed on Gnosis Safe
+    // 0xb9881a… (creation tx 0x4ab99adf…): the Safe-4337 module is enabled
+    // via a multiSend delegate-call inside setup(), so EnabledModule fires
+    // BEFORE SafeSetup, which fires BEFORE the factory's ProxyCreation.
+    // Pre-fix this dropped the module silently (the wildcard handler bailed
+    // because the Safe entity didn't exist yet at log[0]).
+    const indexer = createIndexer();
+    const proxy = addr("setup-bundle-safe");
+    const owner = addr("setup-bundle-owner");
+    const module = addr("setup-bundle-module");
+
+    await processOnChain(indexer, CHAIN_ID, [
+      simulateEnabledModule({ safeAddress: proxy, module, v4: true }),
+      simulateSafeSetup({ safeAddress: proxy, owners: [owner], threshold: 1n }),
+      simulateProxyCreationModern({
+        contract: "GnosisSafeProxy1_4_1",
+        proxy,
+        singleton: MASTER_COPIES.V1_4_1_L2 as `0x${string}`,
+      }),
+    ]);
+
+    const id = safeId(CHAIN_ID, proxy);
+    const safe = await indexer.Safe.getOrThrow(id);
+    expect(safe.owners).toEqual([owner]);
+    expect(safe.threshold).toBe(1);
+    expect(safe.version).toBe("V1_4_1");
+    expect(safe.masterCopy).toBe(MASTER_COPIES.V1_4_1_L2);
+    const row = await indexer.SafeModule.getOrThrow(`${id}-${module}`);
+    expect(row.module).toBe(module);
+  });
+
+  it("two EnabledModule pre-creation + one post-creation: all three modules captured", async () => {
+    // The other observed pattern on Gnosis Safe 0xb9881a…: three modules
+    // enabled in the creation tx — one inside setup() (pre-ProxyCreation),
+    // two after via post-setup execs in the same tx (post-ProxyCreation).
+    // Verifies stub → enrich → continue works for all three.
+    const indexer = createIndexer();
+    const proxy = addr("triple-mod-safe");
+    const owner = addr("triple-mod-owner");
+    const modA = addr("mod-pre-setup");
+    const modB = addr("mod-post-setup-1");
+    const modC = addr("mod-post-setup-2");
+
+    await processOnChain(indexer, CHAIN_ID, [
+      simulateEnabledModule({ safeAddress: proxy, module: modA, v4: true }),
+      simulateSafeSetup({ safeAddress: proxy, owners: [owner], threshold: 1n }),
+      simulateProxyCreationModern({
+        contract: "GnosisSafeProxy1_4_1",
+        proxy,
+        singleton: MASTER_COPIES.V1_4_1_L2 as `0x${string}`,
+      }),
+      simulateEnabledModule({ safeAddress: proxy, module: modB, v4: true }),
+      simulateEnabledModule({ safeAddress: proxy, module: modC, v4: true }),
+    ]);
+
+    const id = safeId(CHAIN_ID, proxy);
+    const all = await indexer.SafeModule.getAll();
+    const forSafe = all.filter((m) => m.safe_id === id).map((m) => m.module).sort();
+    expect(forSafe).toEqual([modA, modB, modC].sort());
   });
 });
 

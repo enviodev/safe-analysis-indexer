@@ -1,5 +1,5 @@
 import { indexer, type Entity } from "envio";
-import { addOwner, removeOwner, addSafeToOwner, executionSuccess, executionFailure, incrementSafeCount, incrementTransactionCount, incrementModuleTransactionCount, getOrCreateVersion } from "./helpers";
+import { addOwner, removeOwner, addSafeToOwner, executionSuccess, executionFailure, incrementSafeCount, incrementTransactionCount, incrementModuleTransactionCount, getOrCreateVersion, ensureSafeStub } from "./helpers";
 import { getSetupTrace, decodeSetupInput, getMasterCopyFromTrace, resolveVersionFromMasterCopy } from "./hypersync";
 import { LEGACY_V1_0_0_PROXY } from "./consts";
 import type { SafeVersion } from "./consts";
@@ -421,11 +421,12 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "ExecutionFailureV4", wildcar
 
 indexer.onEvent({ contract: "GnosisSafeL2", event: "ChangedMasterCopy", wildcard: true }, async ({ event, context }) => {
   const { singleton } = event.params;
-  const { srcAddress, chainId } = event;
-  const safeId = `${chainId}-${srcAddress}`;
+  const { chainId } = event;
+  const safeId = `${chainId}-${event.srcAddress}`;
 
-  const safe = await context.Safe.get(safeId);
-  if (!safe) return;
+  // Stub if missing — possible if ChangedMasterCopy fires inside a
+  // setup()-time delegate-call ahead of SafeSetup / ProxyCreation.
+  const safe = await ensureSafeStub(event, context);
 
   const newMasterCopy = singleton.toLowerCase();
   const newVersion = resolveVersionFromMasterCopy(newMasterCopy);
@@ -462,11 +463,9 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "ChangedMasterCopy", wildcard
 
 indexer.onEvent({ contract: "GnosisSafeL2", event: "ChangedFallbackHandler", wildcard: true }, async ({ event, context }) => {
   const { handler } = event.params;
-  const { srcAddress, chainId } = event;
-  const safeId = `${chainId}-${srcAddress}`;
 
-  const safe = await context.Safe.get(safeId);
-  if (!safe) return;
+  // Stub if missing — handles setup()-time delegate-call emission.
+  const safe = await ensureSafeStub(event, context);
 
   context.Safe.set({ ...safe, fallbackHandler: handler.toLowerCase() });
 });
@@ -477,11 +476,19 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "ChangedFallbackHandler", wil
 // In production a given Safe only emits the variant matching its version, so
 // the two handlers never fire for the same on-chain event. Both delegate to
 // the same idempotent in-place update.
-async function applyGuardChange(event: { params: { guard: string }; srcAddress: string; chainId: number }, context: any) {
+async function applyGuardChange(
+  event: {
+    params: { guard: string };
+    srcAddress: string;
+    chainId: number;
+    block: { number: number; timestamp: number };
+    transaction: { hash: string; from?: string };
+  },
+  context: any,
+) {
   const { guard } = event.params;
-  const safeId = `${event.chainId}-${event.srcAddress}`;
-  const safe = await context.Safe.get(safeId);
-  if (!safe) return;
+  // Stub if missing — handles setup()-time delegate-call emission.
+  const safe = await ensureSafeStub(event, context);
   context.Safe.set({ ...safe, guard: guard.toLowerCase() });
 }
 
@@ -509,14 +516,18 @@ async function applyEnableModule(
     srcAddress: string;
     chainId: number;
     block: { number: number; timestamp: number };
-    transaction: { hash: string };
+    transaction: { hash: string; from?: string };
   },
   context: any,
 ) {
   const { module } = event.params;
   const safeId = `${event.chainId}-${event.srcAddress}`;
-  const safe = await context.Safe.get(safeId);
-  if (!safe) return;
+
+  // Stub if missing — this is the primary motivator for the stub pattern.
+  // Bundled setup deploys (Safe's 4337 module installer is the canonical
+  // example) emit EnabledModule via multiSend delegate-call inside setup(),
+  // which lands BEFORE SafeSetup / ProxyCreation in the same tx.
+  await ensureSafeStub(event, context);
 
   const moduleAddr = module.toLowerCase();
   context.SafeModule.set({
@@ -536,9 +547,9 @@ async function applyDisableModule(
 ) {
   const { module } = event.params;
   const safeId = `${event.chainId}-${event.srcAddress}`;
-  const safe = await context.Safe.get(safeId);
-  if (!safe) return;
 
+  // DisableModule on a never-seen Safe: nothing to delete. Don't stub — a
+  // stub with no modules is just orphan noise.
   const rowId = `${safeId}-${module.toLowerCase()}`;
   const existing = await context.SafeModule.get(rowId);
   if (!existing) return;
