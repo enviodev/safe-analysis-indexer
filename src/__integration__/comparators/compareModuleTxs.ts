@@ -90,28 +90,68 @@ export async function compareModuleTxs(
     diffs.push({ field: "count", canonical: canonicalCount, indexer: indexerCount });
   }
 
-  // Match on (txHash, module) since one tx can host multiple module-tx rows
-  // (one per module call).
-  const indexerKey = (txHash: string, module: string) => `${txHash}:${module}`;
-  const indexerByKey = new Map<string, NormalisedModuleTx>();
-  for (const tx of indexerResult.txs) {
-    const n = normaliseModuleFromIndexer(tx);
-    indexerByKey.set(indexerKey(n.txHash, n.module), n);
+  // Rows are grouped by (txHash, module) — one tx can host multiple module-tx
+  // rows when a module calls multiple sub-targets in a single execution
+  // (e.g. a module orchestrating a MultiSend bundle). Safe TX Service
+  // doesn't expose a logIndex, and canonical pages at
+  // `DEFAULT_TOP_N_TX_COMPARE` while we fetch up to 1000 from the indexer,
+  // so position-based pairing within a group is unreliable (canonical's
+  // dropped rows would knock all subsequent positions out of alignment).
+  //
+  // Instead, for each canonical row we look up an indexer row that matches
+  // exactly on content (to, value, data, operation) and consume it. Indexer
+  // rows that find no canonical counterpart are tolerated — canonical may
+  // have paginated them out. Real divergence surfaces as a "no match" diff
+  // per canonical row. Total-count divergence is already flagged separately
+  // above.
+  const groupKey = (txHash: string, module: string) => `${txHash}:${module}`;
+  const contentKey = (r: NormalisedModuleTx) =>
+    `${r.to}|${r.value}|${r.data}|${r.operation}`;
+
+  function groupRows(
+    rows: NormalisedModuleTx[],
+  ): Map<string, NormalisedModuleTx[]> {
+    const out = new Map<string, NormalisedModuleTx[]>();
+    for (const r of rows) {
+      const k = groupKey(r.txHash, r.module);
+      const arr = out.get(k);
+      if (arr) arr.push(r);
+      else out.set(k, [r]);
+    }
+    return out;
   }
 
-  for (const raw of canonicalPage.txs) {
-    const canonical = normaliseModuleFromApi(chainId, raw);
-    const key = indexerKey(canonical.txHash, canonical.module);
-    const indexer = indexerByKey.get(key);
-    if (!indexer) {
-      diffs.push({
-        field: `moduleTx[${key}]`,
-        canonical: "present",
-        indexer: "missing",
-      });
-      continue;
+  const canonicalGroups = groupRows(
+    canonicalPage.txs.map((raw) => normaliseModuleFromApi(chainId, raw)),
+  );
+  const indexerGroups = groupRows(
+    indexerResult.txs.map((tx) => normaliseModuleFromIndexer(tx)),
+  );
+
+  for (const [k, canonRows] of canonicalGroups) {
+    // Mutable copy — we splice matched rows out so duplicates (same content,
+    // multiple rows) get paired one-for-one.
+    const indexerRows = (indexerGroups.get(k) ?? []).slice();
+    for (const c of canonRows) {
+      const target = contentKey(c);
+      const matchIdx = indexerRows.findIndex(
+        (i) => contentKey(i) === target,
+      );
+      if (matchIdx === -1) {
+        // Surface the canonical row's key fields so the diff is greppable
+        // without the indexer-side noise of the dropped position counter.
+        diffs.push({
+          field: `moduleTx[${k}:to=${c.to}]`,
+          canonical: contentKey(c),
+          indexer: "no content match in indexer",
+        });
+        continue;
+      }
+      const i = indexerRows.splice(matchIdx, 1)[0]!;
+      // Content already matches; compareOne only finds diffs on
+      // blockNumber / executionTimestamp at this point.
+      compareOne(diffs, c, i);
     }
-    compareOne(diffs, canonical, indexer);
   }
 
   return diffs.length === 0 ? { kind: "passed" } : { kind: "mismatched", diffs };
