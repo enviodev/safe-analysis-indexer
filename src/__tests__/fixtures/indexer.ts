@@ -92,6 +92,10 @@ export function seedSafe(
     setupData: args.setupData,
     initializer: "",
     creationTxFrom: "",
+    // Seeded Safes are post-ProxyCreation by convention; default `creator` to
+    // a sentinel zero so consumers can override without bookkeeping the
+    // trace-walk semantic. Same shape as `creationTxFrom`.
+    creator: "",
     numberOfSuccessfulExecutions: args.numberOfSuccessfulExecutions ?? 0,
     numberOfFailedExecutions: args.numberOfFailedExecutions ?? 0,
     nonce: args.nonce ?? 0,

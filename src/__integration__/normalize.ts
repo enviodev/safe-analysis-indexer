@@ -164,6 +164,7 @@ export interface IndexerSafeCreation {
   factoryAddress: string | null;
   masterCopy: string | null;
   setupData: string | null;
+  creator: string;
   creationTxFrom: string;
 }
 
@@ -175,7 +176,12 @@ export function normaliseCreationFromIndexer(raw: IndexerSafeCreation): Normalis
     factoryAddress: lower(raw.factoryAddress),
     masterCopy: lower(raw.masterCopy),
     setupData: lower(raw.setupData),
-    creator: raw.creationTxFrom.toLowerCase(),
+    // Compare canonical `creator` against our new trace-walked `creator`
+    // field (Safe-TX-Service-compatible). For chains where we don't run the
+    // trace walk yet (anything other than Ethereum mainnet) the indexer
+    // returns `creator === creationTxFrom`, which matches Safe TX Service's
+    // own L2 fallback.
+    creator: raw.creator.toLowerCase(),
   };
 }
 

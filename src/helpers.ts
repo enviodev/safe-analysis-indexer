@@ -55,6 +55,11 @@ export const ensureSafeStub = async (
     setupData: undefined,
     initializer: zeroAddress, // sentinel — overwritten by SafeSetup
     creationTxFrom: (event.transaction.from ?? zeroAddress).toLowerCase(),
+    // `creator` matches `creationTxFrom` at stub time — we don't fire the
+    // trace_transaction effect from this hot path (it's called for every
+    // pre-SafeSetup wildcard state event). Real `creator` resolution runs in
+    // ProxyCreation and SafeSetup handlers; whichever lands first wins.
+    creator: (event.transaction.from ?? zeroAddress).toLowerCase(),
     numberOfSuccessfulExecutions: 0,
     numberOfFailedExecutions: 0,
     nonce: 0,

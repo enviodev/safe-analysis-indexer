@@ -15,6 +15,8 @@ import {
   decodeSetupInput,
   decodeExecTransaction,
   decodeCreateProxyWithNonceInitializer,
+  findCreatorFromTraceList,
+  type TraceTransactionItem,
 } from "../hypersync";
 import { addr, MASTER_COPIES } from "./fixtures/addresses";
 
@@ -288,5 +290,108 @@ describe("decodeCreateProxyWithNonceInitializer", () => {
     expect(
       decodeCreateProxyWithNonceInitializer(calldata.toUpperCase().replace("0X", "0x")),
     ).toBe(initializer);
+  });
+});
+
+describe("findCreatorFromTraceList", () => {
+  // Helpers to keep test cases declarative — Parity/OpenEthereum trace shape.
+  const safe = "0xaaaa00000000000000000000000000000000aaaa";
+  const factory = "0xfff100000000000000000000000000000000fff1";
+  const userEOA = "0x1111111111111111111111111111111111111111";
+  const senderCreator = "0xefc2c1444ebcc4db75e7613d20c6a62ff67a167c";
+  const entryPoint = "0x0000000071727de22e5e9d8baf0edac6f37da032";
+
+  function callTrace(
+    from: string,
+    to: string,
+    traceAddress: number[],
+  ): TraceTransactionItem {
+    return {
+      action: { from, to, callType: "call" },
+      traceAddress,
+      type: "call",
+    };
+  }
+
+  function createTrace(
+    from: string,
+    createdAddress: string,
+    traceAddress: number[],
+  ): TraceTransactionItem {
+    return {
+      action: { from },
+      result: { address: createdAddress },
+      traceAddress,
+      type: "create",
+    };
+  }
+
+  it("direct factory call: parent of CREATE is the top-level tx, returns user EOA", async () => {
+    // Tx: user → factory.createProxyWithNonce → CREATE2 safe
+    // CREATE traceAddress = [0]; parent traceAddress = [] (top-level call).
+    const traces: TraceTransactionItem[] = [
+      callTrace(userEOA, factory, []), // top-level call to factory
+      createTrace(factory, safe, [0]), // factory's CREATE
+    ];
+    expect(findCreatorFromTraceList(traces, safe)).toBe(userEOA);
+  });
+
+  it("4337 EntryPoint deployment: parent of CREATE is SenderCreator, matches Safe TX Service `creator`", async () => {
+    // Tx: bundler → EntryPoint → SenderCreator → factory.createProxyWithNonce → CREATE2 safe
+    // CREATE traceAddress = [0, 0, 0]; parent = [0, 0] (the SenderCreator→factory call).
+    const bundler = "0x4337999999999999999999999999999999994337";
+    const traces: TraceTransactionItem[] = [
+      callTrace(bundler, entryPoint, []), // top-level: bundler → EntryPoint
+      callTrace(entryPoint, senderCreator, [0]), // EntryPoint → SenderCreator
+      callTrace(senderCreator, factory, [0, 0]), // SenderCreator → factory
+      createTrace(factory, safe, [0, 0, 0]), // factory's CREATE
+    ];
+    expect(findCreatorFromTraceList(traces, safe)).toBe(senderCreator);
+  });
+
+  it("CREATE2 type is treated identically to CREATE", async () => {
+    const traces: TraceTransactionItem[] = [
+      callTrace(userEOA, factory, []),
+      { ...createTrace(factory, safe, [0]), type: "create2" },
+    ];
+    expect(findCreatorFromTraceList(traces, safe)).toBe(userEOA);
+  });
+
+  it("returns null when no CREATE frame for the safe is present (defensive: caller falls back to tx.from)", async () => {
+    const traces: TraceTransactionItem[] = [
+      callTrace(userEOA, factory, []),
+      createTrace(factory, "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef", [0]),
+    ];
+    expect(findCreatorFromTraceList(traces, safe)).toBeNull();
+  });
+
+  it("returns null when CREATE is the root frame (no parent — caller falls back to tx.from)", async () => {
+    // Unusual but possible: tx data == raw contract init code, CREATE is the
+    // top-level frame. No parent to read `from` from.
+    const traces: TraceTransactionItem[] = [
+      createTrace(userEOA, safe, []),
+    ];
+    expect(findCreatorFromTraceList(traces, safe)).toBeNull();
+  });
+
+  it("multiple CREATEs in same tx (MultiSend deploying many Safes): returns the parent of the matching one", async () => {
+    const otherSafe = "0xbbbb00000000000000000000000000000000bbbb";
+    const multiSend = "0xcccc00000000000000000000000000000000cccc";
+    const traces: TraceTransactionItem[] = [
+      callTrace(userEOA, multiSend, []),
+      callTrace(multiSend, factory, [0]),
+      createTrace(factory, otherSafe, [0, 0]),
+      callTrace(multiSend, factory, [1]),
+      createTrace(factory, safe, [1, 0]), // the one we want
+    ];
+    expect(findCreatorFromTraceList(traces, safe)).toBe(multiSend);
+  });
+
+  it("address comparison is case-insensitive", async () => {
+    const traces: TraceTransactionItem[] = [
+      callTrace(userEOA, factory, []),
+      createTrace(factory, safe.toUpperCase().replace("0X", "0x"), [0]),
+    ];
+    expect(findCreatorFromTraceList(traces, safe)).toBe(userEOA);
   });
 });

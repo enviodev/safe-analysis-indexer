@@ -550,4 +550,150 @@ export const getSafeMasterCopyViaRpc = createEffect(
     }
 );
 
+// ------------------------------------------------------------------------------------
+// `creator` resolution via trace_transaction — matches Safe Transaction Service
+// `safe_service.py:132`: `creator = (parent_internal_tx or creation_ethereum_tx)._from`.
+//
+// Walk the deployment tx's trace tree to find the CREATE / CREATE2 frame for
+// the safe address, then return its parent frame's `from`. For direct
+// deployments this is the user EOA (== `tx.from`). For wrapped deployments
+// (4337 EntryPoint, Gelato Relay, MultiSend, …) it's the contract that
+// directly called the factory — e.g. SenderCreator for 4337 v0.7.
+//
+// Gated to chains with real trace support (Ethereum mainnet + Gnosis) in
+// the calling handler. Other chains fall back to `creationTxFrom` — same
+// fallback Safe TX Service uses on chains where they treat traces as
+// simulated.
+// ------------------------------------------------------------------------------------
+
+// Parity/OpenEthereum-style trace shape returned by `trace_transaction`.
+// CREATE/CREATE2 frames carry the new address in `result.address`; CALL
+// frames carry the target in `action.to`. The `traceAddress` path lets us
+// reconstruct parent/child relationships without re-walking the tree.
+export type TraceTransactionItem = {
+    action?: { from?: string; to?: string; callType?: string };
+    result?: { address?: string } | null;
+    traceAddress?: number[];
+    type?: string; // "call" | "create" | "suicide" | "reward"
+};
+
+// Pure helper — given a flat `trace_transaction` result, find the CREATE
+// frame for `safeAddress` and return the immediate parent frame's `from`.
+// Returns null if no CREATE found or no parent (CREATE was the root frame).
+//
+// Exposed for unit testing — the runtime effect just wires this up to RPC.
+export function findCreatorFromTraceList(
+    traces: TraceTransactionItem[],
+    safeAddress: string,
+): string | null {
+    const safeAddr = safeAddress.toLowerCase();
+
+    // Find the CREATE/CREATE2 frame whose result.address is our safe.
+    let createFrame: TraceTransactionItem | undefined;
+    for (const t of traces) {
+        if (t.type !== "create" && t.type !== "create2") continue;
+        const created = t.result?.address?.toLowerCase();
+        if (created === safeAddr) {
+            createFrame = t;
+            break;
+        }
+    }
+    if (!createFrame || !createFrame.traceAddress) return null;
+
+    // CREATE is the root frame — no parent. Caller falls back to tx.from.
+    if (createFrame.traceAddress.length === 0) return null;
+
+    // Parent's traceAddress is the CREATE's path with the last index dropped.
+    const parentPath = createFrame.traceAddress.slice(0, -1);
+    for (const t of traces) {
+        if (!t.traceAddress) continue;
+        if (t.traceAddress.length !== parentPath.length) continue;
+        let match = true;
+        for (let i = 0; i < parentPath.length; i++) {
+            if (t.traceAddress[i] !== parentPath[i]) {
+                match = false;
+                break;
+            }
+        }
+        if (match) {
+            return t.action?.from?.toLowerCase() ?? null;
+        }
+    }
+    return null;
+}
+
+export const getSafeCreatorViaTraceTransaction = createEffect(
+    {
+        name: "getSafeCreatorViaTraceTransaction",
+        input: S.schema({
+            chainId: S.number,
+            txHash: S.string,
+            safeAddress: S.string,
+        }),
+        output: S.nullable(S.string),
+        rateLimit: false,
+        cache: true,
+    },
+    async ({ input }) => {
+        if (TEST_MODE) return lookupFixture<string>("getSafeCreatorViaTraceTransaction", input);
+
+        // Propagates a clear error if ENVIO_DRPC_API_KEY isn't set —
+        // intentional: see getRpcUrl docstring.
+        const rpcUrl = getRpcUrl(input.chainId);
+
+        const body = JSON.stringify({
+            jsonrpc: "2.0",
+            id: 1,
+            method: "trace_transaction",
+            params: [input.txHash],
+        });
+
+        let res: Response;
+        try {
+            res = await fetch(rpcUrl, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body,
+            });
+        } catch (e) {
+            console.log(
+                `[RPC CREATOR-TRACE] fetch error for tx=${input.txHash} chain=${input.chainId}:`,
+                e,
+            );
+            return null;
+        }
+
+        if (!res.ok) {
+            console.log(
+                `[RPC CREATOR-TRACE] HTTP ${res.status} for tx=${input.txHash} chain=${input.chainId}`,
+            );
+            return null;
+        }
+
+        const json = (await res.json()) as {
+            result?: TraceTransactionItem[];
+            error?: { message?: string };
+        };
+        if (json.error) {
+            console.log(
+                `[RPC CREATOR-TRACE] RPC error for tx=${input.txHash} chain=${input.chainId}: ${json.error.message}`,
+            );
+            return null;
+        }
+        if (!json.result) return null;
+
+        return findCreatorFromTraceList(json.result, input.safeAddress);
+    }
+);
+
+// Chains where we run the trace-walk for `creator` resolution. Other chains
+// fall back to `creationTxFrom` (= tx.from). Matches Safe TX Service's
+// per-chain trace support: they use real traces on Ethereum mainnet and
+// Gnosis (Erigon / Nethermind both expose trace_transaction on Gnosis), and
+// simulated traces (= tx.from fallback) elsewhere. Extend per chain as
+// new networks are enabled and trace support is validated.
+export const CREATOR_TRACE_CHAINS = new Set<number>([
+    1,   // Ethereum mainnet
+    100, // Gnosis
+]);
 

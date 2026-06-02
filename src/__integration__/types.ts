@@ -43,7 +43,7 @@ export interface NormalisedSafeCreation {
   factoryAddress: string | null; // lowercase or null (orphan SafeSetup case)
   masterCopy: string | null; // lowercase or null
   setupData: string | null; // lowercase hex or null
-  creator: string; // lowercase — Safe TX Service `creator`; on the indexer side this maps to `creationTxFrom` (which is `tx.from` and will diverge for sponsored deployments)
+  creator: string; // lowercase — Safe TX Service `creator`; matches the indexer-side `creator` field (trace-walked on Ethereum mainnet, tx.from fallback elsewhere — same chain-dependent behavior as Safe TX Service itself)
 }
 
 export interface NormalisedMultisigTx {
