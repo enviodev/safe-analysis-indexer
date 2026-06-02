@@ -11,7 +11,11 @@ import {
   EXEC_TRANSACTION_ABI,
 } from "../consts";
 import type { SafeVersion } from "../consts";
-import { decodeSetupInput, decodeExecTransaction } from "../hypersync";
+import {
+  decodeSetupInput,
+  decodeExecTransaction,
+  decodeCreateProxyWithNonceInitializer,
+} from "../hypersync";
 import { addr, MASTER_COPIES } from "./fixtures/addresses";
 
 describe("resolveVersionFromMasterCopy", () => {
@@ -224,5 +228,65 @@ describe("decodeExecTransaction", () => {
   it("sets msgSender from the `from` parameter, not from calldata", () => {
     const decoded = decodeExecTransaction(encodeExec(), safeFrom);
     expect(decoded!.msgSender).toBe(safeFrom);
+  });
+});
+
+describe("decodeCreateProxyWithNonceInitializer", () => {
+  const factoryAbi = [
+    "function createProxyWithNonce(address _mastercopy, bytes memory initializer, uint256 saltNonce) returns (address proxy)",
+  ];
+  const factoryIface = new ethers.Interface(factoryAbi);
+
+  function encodeFactoryCall(initializer: string, saltNonce: bigint = 0n): string {
+    return factoryIface.encodeFunctionData("createProxyWithNonce", [
+      MASTER_COPIES.V1_4_1_L2,
+      initializer,
+      saltNonce,
+    ]);
+  }
+
+  it("decodes a real createProxyWithNonce calldata and returns the initializer bytes", () => {
+    // A non-trivial initializer — exact bytes don't matter as long as the
+    // decoder returns them verbatim.
+    const initializer = "0xb63e800d" + "00".repeat(32 * 8);
+    const calldata = encodeFactoryCall(initializer, 42n);
+    expect(decodeCreateProxyWithNonceInitializer(calldata)).toBe(initializer);
+  });
+
+  it("returns undefined for empty/missing input", () => {
+    expect(decodeCreateProxyWithNonceInitializer(undefined)).toBeUndefined();
+    expect(decodeCreateProxyWithNonceInitializer("")).toBeUndefined();
+    expect(decodeCreateProxyWithNonceInitializer("0x")).toBeUndefined();
+  });
+
+  it("returns undefined when the selector isn't createProxyWithNonce (wrapped call: handleOps/MultiSend/Gelato/etc.)", () => {
+    // Some other 4-byte selector with otherwise-plausible ABI-encoded data —
+    // e.g. an ERC-4337 EntryPoint handleOps call. The decoder must not try
+    // to interpret it as a factory call.
+    const handleOpsSelector = "0x765e827f"; // EntryPoint v0.6 handleOps
+    const calldata = handleOpsSelector + "00".repeat(64);
+    expect(decodeCreateProxyWithNonceInitializer(calldata)).toBeUndefined();
+  });
+
+  it("returns undefined when initializer is the empty bytes sentinel (`0x`)", () => {
+    // A deploy that skipped setup() — Safe TX Service reports setupData=null
+    // for these too; matching that lets the integration comparator skip them.
+    const calldata = encodeFactoryCall("0x", 0n);
+    expect(decodeCreateProxyWithNonceInitializer(calldata)).toBeUndefined();
+  });
+
+  it("returns undefined for malformed calldata that has the right selector but bad payload", () => {
+    // Right selector, truncated payload.
+    const malformed = "0x1688f0b9" + "00".repeat(20);
+    expect(decodeCreateProxyWithNonceInitializer(malformed)).toBeUndefined();
+  });
+
+  it("is case-insensitive on the selector hex", () => {
+    const initializer = "0xdeadbeef";
+    const calldata = encodeFactoryCall(initializer, 1n);
+    // Upper-case the whole thing.
+    expect(
+      decodeCreateProxyWithNonceInitializer(calldata.toUpperCase().replace("0X", "0x")),
+    ).toBe(initializer);
   });
 });

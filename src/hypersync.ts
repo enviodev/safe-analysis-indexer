@@ -101,6 +101,42 @@ const versionConfig = {
     },
 } as const;
 
+// Decode a SafeProxyFactory `createProxyWithNonce(address,bytes,uint256)`
+// call from the deployment transaction's calldata. Returns the `initializer`
+// param (i.e. setupData) when `data` is a direct factory call. Returns null
+// for any other shape — wrapped patterns (MultiSend, Gelato Relay, ERC-4337
+// handleOps, etc.) are explicitly out of scope here; those land as null and
+// can be added incrementally per wrapper.
+//
+// Same selector across v1.3.0 / v1.4.1 / v1.5.0 — the function signature
+// (`createProxyWithNonce(address,bytes,uint256)`) didn't change, only the
+// emitted ProxyCreation event shape did, so one decoder covers all three.
+const CREATE_PROXY_WITH_NONCE_SELECTOR = factoryInterface
+    .getFunction("createProxyWithNonce")!.selector;
+
+export function decodeCreateProxyWithNonceInitializer(
+    inputData: string | undefined,
+): string | undefined {
+    if (!inputData || inputData.length < 10) return undefined;
+    const selector = inputData.slice(0, 10).toLowerCase();
+    if (selector !== CREATE_PROXY_WITH_NONCE_SELECTOR.toLowerCase()) return undefined;
+    try {
+        const decoded = factoryInterface.decodeFunctionData(
+            "createProxyWithNonce",
+            inputData,
+        );
+        // (mastercopy, initializer, saltNonce) — index 1 is the bytes blob.
+        const initializer = decoded[1] as string | undefined;
+        // Empty initializer means the deployer skipped setup() — record as
+        // null rather than the bare "0x" so it round-trips cleanly with Safe
+        // TX Service's `setupData: null` representation.
+        if (!initializer || initializer === "0x") return undefined;
+        return initializer;
+    } catch {
+        return undefined;
+    }
+}
+
 // Decode the setup function input data for a specific version. The v1.1.1+
 // ABI exposes a fallbackHandler at index 4; the v1.0.0 ABI doesn't have it
 // (returned as null — "legacy, unknown").

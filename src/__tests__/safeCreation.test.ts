@@ -163,6 +163,129 @@ describe("ProxyCreation — modern (1.3.0 / 1.4.1 / 1.5.0)", () => {
   });
 });
 
+describe("ProxyCreation — setupData backfill from tx.input", () => {
+  // Selector for createProxyWithNonce(address,bytes,uint256). Same across
+  // v1.3.0 / v1.4.1 / v1.5.0 (the event shape changed, not the factory fn).
+  const factoryAbi = [
+    "function createProxyWithNonce(address _mastercopy, bytes memory initializer, uint256 saltNonce) returns (address proxy)",
+  ];
+  // Imported lazily inside `it` to avoid hoisting top-of-file deps.
+  function encodeFactoryCall(initializer: string, singleton: string): string {
+    // Inline ethers Interface use — pureFns.test.ts already exercises the
+    // happy-path decode against the same encoder, this just wires it into
+    // the handler path.
+    const { Interface } = require("ethers");
+    return new Interface(factoryAbi).encodeFunctionData("createProxyWithNonce", [
+      singleton,
+      initializer,
+      0n,
+    ]);
+  }
+
+  it("v1.4.1 ProxyCreation with a real createProxyWithNonce calldata → setupData populated", async () => {
+    const indexer = createIndexer();
+    const proxy = addr("setupdata-direct");
+    const initializer = "0xb63e800d" + "00".repeat(32 * 8); // arbitrary plausible setup() blob
+    const txInput = encodeFactoryCall(initializer, MASTER_COPIES.V1_4_1_L2);
+
+    await processOnChain(indexer, CHAIN_ID, [
+      simulateProxyCreationModern({
+        contract: "GnosisSafeProxy1_4_1",
+        proxy,
+        singleton: MASTER_COPIES.V1_4_1_L2 as `0x${string}`,
+        tx: { input: txInput },
+      }),
+    ]);
+
+    const safe = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, proxy));
+    expect(safe.setupData).toBe(initializer);
+  });
+
+  it("v1.3.0 direct factory call: setupData populated identically (one decoder covers all modern versions)", async () => {
+    const indexer = createIndexer();
+    const proxy = addr("setupdata-v13");
+    const initializer = "0xdeadbeef";
+    const txInput = encodeFactoryCall(initializer, MASTER_COPIES.V1_3_0_L2);
+
+    await processOnChain(indexer, CHAIN_ID, [
+      simulateProxyCreationModern({
+        contract: "GnosisSafeProxy1_3_0",
+        proxy,
+        singleton: MASTER_COPIES.V1_3_0_L2 as `0x${string}`,
+        tx: { input: txInput },
+      }),
+    ]);
+
+    const safe = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, proxy));
+    expect(safe.setupData).toBe(initializer);
+  });
+
+  it("wrapped tx.input (e.g. 4337 handleOps): setupData stays undefined — incremental wrapper support is future work", async () => {
+    const indexer = createIndexer();
+    const proxy = addr("setupdata-wrapped");
+    // Not a createProxyWithNonce selector — could be handleOps, MultiSend,
+    // Gelato sponsoredCall, etc. The decoder must not invent bytes for
+    // these; consumers can fall back to Safe TX Service.
+    const wrappedInput = "0x765e827f" + "00".repeat(128);
+
+    await processOnChain(indexer, CHAIN_ID, [
+      simulateProxyCreationModern({
+        contract: "GnosisSafeProxy1_4_1",
+        proxy,
+        singleton: MASTER_COPIES.V1_4_1_L2 as `0x${string}`,
+        tx: { input: wrappedInput },
+      }),
+    ]);
+
+    const safe = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, proxy));
+    expect(safe.setupData).toBeUndefined();
+  });
+
+  it("missing tx.input (no transaction_fields wired): setupData stays undefined, no crash", async () => {
+    const indexer = createIndexer();
+    const proxy = addr("setupdata-missing-input");
+
+    await processOnChain(indexer, CHAIN_ID, [
+      simulateProxyCreationModern({
+        contract: "GnosisSafeProxy1_4_1",
+        proxy,
+        singleton: MASTER_COPIES.V1_4_1_L2 as `0x${string}`,
+        // No tx.input override — the simulate builder defaults to "0x".
+      }),
+    ]);
+
+    const safe = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, proxy));
+    expect(safe.setupData).toBeUndefined();
+  });
+
+  it("SafeSetup-then-ProxyCreation: ProxyCreation's tx.input is decoded and stored, even though the entity existed first", async () => {
+    // Models the canonical log order (SafeSetup at log[N], ProxyCreation at
+    // log[N+M]) — we want setupData on the entity by the time the dust
+    // settles, regardless of which event got there first.
+    const indexer = createIndexer();
+    const proxy = addr("setupdata-after-setup");
+    const initializer = "0xb63e800d" + "ab".repeat(64);
+    const txInput = encodeFactoryCall(initializer, MASTER_COPIES.V1_3_0_L2);
+
+    await processOnChain(indexer, CHAIN_ID, [
+      simulateSafeSetup({
+        safeAddress: proxy,
+        owners: [addr("setupdata-owner")],
+        threshold: 1n,
+      }),
+      simulateProxyCreationModern({
+        contract: "GnosisSafeProxy1_3_0",
+        proxy,
+        singleton: MASTER_COPIES.V1_3_0_L2 as `0x${string}`,
+        tx: { input: txInput },
+      }),
+    ]);
+
+    const safe = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, proxy));
+    expect(safe.setupData).toBe(initializer);
+  });
+});
+
 describe("SafeSetup ↔ ProxyCreation ordering (1.3.0+)", () => {
   it("SafeSetup-then-ProxyCreation: final Safe merges owners/threshold from SafeSetup + version/masterCopy/creationTxHash from ProxyCreation", async () => {
     const indexer = createIndexer();

@@ -1,6 +1,6 @@
 import { indexer, type Entity } from "envio";
 import { addOwner, removeOwner, addSafeToOwner, executionSuccess, executionFailure, incrementSafeCount, incrementTransactionCount, incrementModuleTransactionCount, getOrCreateVersion, ensureSafeStub } from "./helpers";
-import { getSetupTrace, decodeSetupInput, getMasterCopyFromTrace, getSafeMasterCopyViaRpc, resolveVersionFromMasterCopy } from "./hypersync";
+import { getSetupTrace, decodeSetupInput, getMasterCopyFromTrace, getSafeMasterCopyViaRpc, resolveVersionFromMasterCopy, decodeCreateProxyWithNonceInitializer } from "./hypersync";
 import { LEGACY_V1_0_0_PROXY } from "./consts";
 import type { SafeVersion } from "./consts";
 import { decodeAbiParameters, zeroAddress } from "viem";
@@ -162,12 +162,12 @@ indexer.onEvent({ contract: "SafePre1_3_0", event: "ChangedThreshold" }, async (
 // Shared handler for v1.3.0+ ProxyCreation events.
 // Resolves version from singleton address, falling back to factory-implied version.
 async function handleModernProxyCreation(
-  event: { params: { proxy: string; singleton?: string }; transaction: { hash: string; from?: string }; srcAddress: string; chainId: number; block: { number: number; timestamp: number } },
+  event: { params: { proxy: string; singleton?: string }; transaction: { hash: string; from?: string; input?: string }; srcAddress: string; chainId: number; block: { number: number; timestamp: number } },
   context: any,
   factoryImpliedVersion: SafeVersion
 ) {
   const { proxy, singleton } = event.params;
-  const { hash, from: txFrom } = event.transaction;
+  const { hash, from: txFrom, input: txInput } = event.transaction;
   const creationTxFrom = (txFrom ?? zeroAddress).toLowerCase();
   const { chainId, block, srcAddress: factoryAddress } = event;
   const masterCopy = singleton?.toLowerCase();
@@ -176,6 +176,14 @@ async function handleModernProxyCreation(
   // Resolve version from singleton address; fall back to factory-implied version
   const resolvedVersion = masterCopy ? resolveVersionFromMasterCopy(masterCopy) : undefined;
   const version = resolvedVersion ?? factoryImpliedVersion;
+
+  // Backfill setupData by decoding `createProxyWithNonce(address,bytes,uint256)`
+  // from the deployment tx's calldata. Works for direct factory calls (the
+  // most common pattern); returns undefined for wrapped deployments
+  // (MultiSend, Gelato Relay, ERC-4337 handleOps) — those land null and can
+  // be added incrementally. Matches the Safe TX Service approach
+  // (`safe_service.py` → `_decode_proxy_factory`) without needing traces.
+  const setupData = decodeCreateProxyWithNonceInitializer(txInput);
 
   const safeId = `${chainId}-${proxy}`;
 
@@ -187,6 +195,8 @@ async function handleModernProxyCreation(
     // SafeSetup already created the Safe - update version, creation info, masterCopy,
     // and creation-context fields (SafeSetup-first only knew its own block; ProxyCreation
     // is the authoritative creation point, and only it knows the factory).
+    // setupData: ProxyCreation is the canonical source — overwrite even if
+    // the stub had something else (which it shouldn't, on this path).
     context.Safe.set({
       ...existingSafe,
       version,
@@ -195,6 +205,7 @@ async function handleModernProxyCreation(
       creationTimestamp: BigInt(block.timestamp),
       blockCreationNum: block.number,
       factoryAddress: factory,
+      setupData: setupData ?? existingSafe.setupData,
       counted: true, // ProxyCreation is the canonical counting event
     });
   } else {
@@ -211,7 +222,7 @@ async function handleModernProxyCreation(
       creationTimestamp: BigInt(block.timestamp),
       blockCreationNum: block.number,
       factoryAddress: factory,
-      setupData: undefined, // Modern path: not extracted (see schema comment)
+      setupData,
       threshold: 0,
       address: proxy,
       initializer: "",
