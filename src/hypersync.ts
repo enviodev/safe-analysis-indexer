@@ -560,9 +560,10 @@ export const getSafeMasterCopyViaRpc = createEffect(
 // (4337 EntryPoint, Gelato Relay, MultiSend, …) it's the contract that
 // directly called the factory — e.g. SenderCreator for 4337 v0.7.
 //
-// Gated to Ethereum mainnet (chain 1) in the calling handler. Other chains
-// fall back to `creationTxFrom` — same fallback Safe TX Service uses on
-// chains where they treat traces as simulated.
+// Gated to chains with real trace support (Ethereum mainnet + Gnosis) in
+// the calling handler. Other chains fall back to `creationTxFrom` — same
+// fallback Safe TX Service uses on chains where they treat traces as
+// simulated.
 // ------------------------------------------------------------------------------------
 
 // Parity/OpenEthereum-style trace shape returned by `trace_transaction`.
@@ -688,8 +689,11 @@ export const getSafeCreatorViaTraceTransaction = createEffect(
 // Chains where we run the trace-walk for `creator` resolution. Other chains
 // fall back to `creationTxFrom` (= tx.from). Matches Safe TX Service's
 // per-chain trace support: they use real traces on Ethereum mainnet and
-// Gnosis, and simulated traces (= tx.from fallback) elsewhere. We start
-// with Ethereum only and can extend per chain as the cost/value tradeoff
-// is validated.
-export const CREATOR_TRACE_CHAINS = new Set<number>([1]);
+// Gnosis (Erigon / Nethermind both expose trace_transaction on Gnosis), and
+// simulated traces (= tx.from fallback) elsewhere. Extend per chain as
+// new networks are enabled and trace support is validated.
+export const CREATOR_TRACE_CHAINS = new Set<number>([
+    1,   // Ethereum mainnet
+    100, // Gnosis
+]);
 

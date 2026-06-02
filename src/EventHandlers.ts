@@ -14,9 +14,10 @@ const NO_GUARD = zeroAddress;
 
 // Resolve `creator` (Safe-TX-Service-compatible: the address that directly
 // called the factory's `createProxyWithNonce`). On chains with trace support
-// (currently Ethereum mainnet only) we walk the deployment tx's trace tree;
-// elsewhere we fall back to `tx.from` — matches Safe TX Service's behavior
-// on chains they treat as L2 (simulated traces).
+// (`CREATOR_TRACE_CHAINS` — currently Ethereum mainnet and Gnosis) we walk
+// the deployment tx's trace tree; elsewhere we fall back to `tx.from` —
+// matches Safe TX Service's behavior on chains they treat as L2 (simulated
+// traces).
 async function resolveCreator(
   chainId: number,
   txHash: string,

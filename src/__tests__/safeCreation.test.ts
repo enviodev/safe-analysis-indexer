@@ -286,9 +286,10 @@ describe("ProxyCreation — setupData backfill from tx.input", () => {
   });
 });
 
-describe("ProxyCreation — `creator` trace-walk (Ethereum mainnet only)", () => {
-  // Chain 1 = Ethereum mainnet = the only chain in CREATOR_TRACE_CHAINS today.
+describe("ProxyCreation — `creator` trace-walk (CREATOR_TRACE_CHAINS)", () => {
+  // CREATOR_TRACE_CHAINS = { 1: Ethereum mainnet, 100: Gnosis }.
   const ETH_MAINNET = 1;
+  const GNOSIS = 100;
 
   it("chain=1 with a trace fixture: creator resolves to the trace-walked address (NOT tx.from)", async () => {
     // Models a 4337 deployment on Ethereum: bundler is tx.from, but the
@@ -346,15 +347,15 @@ describe("ProxyCreation — `creator` trace-walk (Ethereum mainnet only)", () =>
     expect(safe.creator).toBe(txFrom);
   });
 
-  it("chain=100 (Gnosis): trace walk is gated off, creator equals creationTxFrom regardless of fixture", async () => {
-    // Wire a trace fixture that WOULD return SenderCreator if the effect
-    // were called — and assert it's ignored. This proves the chain gate
-    // works; we deliberately don't run the trace walk on non-CREATOR_TRACE_CHAINS.
-    const GNOSIS = 100;
-    const proxy = addr("creator-no-trace-gno");
-    const txFrom = addr("creator-gno-from");
-    const creationTxHash = "0xcafe000000000000000000000000000000000000000000000000000000000064";
+  it("chain=100 (Gnosis): trace walk fires too — creator resolves to the trace-walked address", async () => {
+    // Gnosis has full trace_transaction support (Erigon / Nethermind), so we
+    // run the same trace walk as on Ethereum mainnet. This is the integration
+    // bucket that matters most in practice — every test run sees ~8 chain-100
+    // 4337 deploys that need this to match Safe TX Service.
+    const proxy = addr("creator-trace-gno");
+    const bundler = addr("creator-gno-bundler");
     const senderCreator = "0xefc2c1444ebcc4db75e7613d20c6a62ff67a167c";
+    const creationTxHash = "0xcafe000000000000000000000000000000000000000000000000000000000064";
 
     setEffectFixtures({
       getSafeCreatorViaTraceTransaction: {
@@ -362,7 +363,7 @@ describe("ProxyCreation — `creator` trace-walk (Ethereum mainnet only)", () =>
           chainId: GNOSIS,
           txHash: creationTxHash,
           safeAddress: proxy,
-        })]: senderCreator, // would be returned if the effect were called
+        })]: senderCreator,
       },
     });
 
@@ -372,14 +373,21 @@ describe("ProxyCreation — `creator` trace-walk (Ethereum mainnet only)", () =>
         contract: "GnosisSafeProxy1_4_1",
         proxy,
         singleton: MASTER_COPIES.V1_4_1_L2 as `0x${string}`,
-        tx: { from: txFrom, hash: creationTxHash },
+        tx: { from: bundler, hash: creationTxHash },
       }),
     ]);
 
     const safe = await indexer.Safe.getOrThrow(safeId(GNOSIS, proxy));
-    expect(safe.creator).toBe(txFrom);
-    expect(safe.creator).not.toBe(senderCreator); // gate is doing its job
+    expect(safe.creator).toBe(senderCreator);
+    expect(safe.creationTxFrom).toBe(bundler); // raw tx.from preserved
   });
+
+  // Gate-off coverage (chain NOT in CREATOR_TRACE_CHAINS → fallback) isn't
+  // exercised here because both currently-configured chains (1, 100) are
+  // in the set. The gate is a one-line set membership check in
+  // `resolveCreator`; once a new chain is added to config without being
+  // added to CREATOR_TRACE_CHAINS, the existing fallback tests for
+  // missing/null fixtures will exercise the same code path.
 
   it("SafeSetup orphan (no ProxyCreation): trace walk fires from the SafeSetup handler on chain=1", async () => {
     // Models a 3rd-party-factory deployment on Ethereum where ProxyCreation
