@@ -551,6 +551,28 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "ChangedFallbackHandler", wil
   context.Safe.set({ ...safe, fallbackHandler: handler.toLowerCase() });
 });
 
+// ChangedThreshold — modern Safes (v1.3.0+) emit this on
+// `changeThreshold(uint256)`. The signature has been unchanged across
+// v1.3.0 / v1.4.1 / v1.5.0 (single non-indexed `threshold` arg), so a
+// single non-V4 wildcard handler covers all modern versions. The
+// SafePre1_3_0 contract-registered handler above keeps the legacy path.
+//
+// Surfaced by integration testing with sample=100 — one chain-1 Safe
+// reported threshold=4 canonically but 1 on our side, because nothing
+// updated threshold after the initial SafeSetup wrote it.
+indexer.onEvent({ contract: "GnosisSafeL2", event: "ChangedThreshold", wildcard: true }, async ({ event, context }) => {
+  // Stub if missing — same setup()-time delegate-call concern as the
+  // other GnosisSafeL2 wildcards (a multiSend bundle could call
+  // changeThreshold inside setup(), emitting ChangedThreshold before
+  // SafeSetup / ProxyCreation).
+  const safe = await ensureSafeStub(event, context);
+
+  context.Safe.set({
+    ...safe,
+    threshold: Number(event.params.threshold),
+  });
+});
+
 // ChangedGuard — two ABI variants share the same topic0:
 //   v1.3.0:  ChangedGuard(address guard)             -- non-indexed
 //   v1.4.0+: ChangedGuard(address indexed guard)     -- indexed (named V4 in config)

@@ -219,3 +219,75 @@ describe("ChangedThreshold", () => {
     expect(safe.threshold).toBe(5);
   });
 });
+
+describe("ChangedThreshold (GnosisSafeL2 wildcard — modern Safes v1.3.0+)", () => {
+  it("updates Safe.threshold for a seeded modern Safe", async () => {
+    // The bug we fixed: integration test (sample=100) found Safe
+    // 0x49239b… on chain 1 with canonical threshold=4 but ours=1, because
+    // we didn't subscribe to ChangedThreshold on GnosisSafeL2.
+    resetBlockCounter();
+    const indexer = createIndexer();
+    const safeAddr = addr("modern-safe-thr");
+    const id = seedSafe(indexer, {
+      chainId: CHAIN_ID,
+      address: safeAddr,
+      version: "V1_4_1",
+      threshold: 1,
+    });
+
+    await processOnChain(indexer, CHAIN_ID, [
+      simulateChangedThreshold({
+        safeAddress: safeAddr,
+        threshold: 4n,
+        contract: "GnosisSafeL2",
+      }),
+    ]);
+
+    const safe = await indexer.Safe.getOrThrow(id);
+    expect(safe.threshold).toBe(4);
+  });
+
+  it("auto-stubs the Safe when ChangedThreshold fires before SafeSetup / ProxyCreation", async () => {
+    // Same pre-setup wildcard semantic as EnabledModule etc.: a multiSend
+    // bundle could call changeThreshold inside setup() before SafeSetup is
+    // emitted. The wildcard handler must not drop the event.
+    resetBlockCounter();
+    const indexer = createIndexer();
+    const safeAddr = addr("ghost-modern-thr");
+
+    await processOnChain(indexer, CHAIN_ID, [
+      simulateChangedThreshold({
+        safeAddress: safeAddr,
+        threshold: 3n,
+        contract: "GnosisSafeL2",
+      }),
+    ]);
+
+    const stub = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, safeAddr));
+    expect(stub.threshold).toBe(3);
+    expect(stub.counted).toBe(false); // orphan stub stays uncounted
+  });
+
+  it("sequence: SafeSetup → ChangedThreshold → final Safe has the post-mutation threshold", async () => {
+    resetBlockCounter();
+    const indexer = createIndexer();
+    const safeAddr = addr("thr-seq");
+
+    await processOnChain(indexer, CHAIN_ID, [
+      simulateSafeSetup({
+        safeAddress: safeAddr,
+        owners: [addr("thr-seq-a"), addr("thr-seq-b"), addr("thr-seq-c")],
+        threshold: 2n,
+      }),
+      simulateChangedThreshold({
+        safeAddress: safeAddr,
+        threshold: 3n,
+        contract: "GnosisSafeL2",
+      }),
+    ]);
+
+    const safe = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, safeAddr));
+    expect(safe.threshold).toBe(3);
+    expect(safe.owners).toHaveLength(3);
+  });
+});

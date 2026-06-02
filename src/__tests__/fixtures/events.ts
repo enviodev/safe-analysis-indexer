@@ -197,11 +197,15 @@ export function simulateRemovedOwner(args: RemovedOwnerArgs) {
 }
 
 // ---------------------------------------------------------------------------
-// ChangedThreshold (SafePre1_3_0 only — modern ABIs are not subscribed)
+// ChangedThreshold — same signature `ChangedThreshold(uint256 threshold)`
+// across all versions. SafePre1_3_0 path is contract-registered; modern
+// path (GnosisSafeL2) is wildcard. Both share the simulator; default is
+// SafePre1_3_0 for backward compatibility with existing tests.
 // ---------------------------------------------------------------------------
 export function simulateChangedThreshold(args: {
   safeAddress: `0x${string}`;
   threshold: bigint;
+  contract?: "SafePre1_3_0" | "GnosisSafeL2";
   block?: { number?: number; timestamp?: number; hash?: string };
   tx?: { hash?: string };
   logIndex?: number;
@@ -209,14 +213,14 @@ export function simulateChangedThreshold(args: {
   const block = autoBlock(args.block);
   const li = args.logIndex ?? nextLogIndex();
   return {
-    contract: "SafePre1_3_0" as const,
+    contract: args.contract ?? ("SafePre1_3_0" as const),
     event: "ChangedThreshold" as const,
     srcAddress: args.safeAddress,
     logIndex: li,
     block,
     transaction: autoTx(args.tx, block.number, li),
     params: { threshold: args.threshold },
-  };
+  } as const;
 }
 
 // ---------------------------------------------------------------------------
