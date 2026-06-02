@@ -270,9 +270,24 @@ export const removeOwner = async (event: any, context: any) => {
 // Dedup guard for execution events: both ExecutionSuccess and ExecutionSuccessV4
 // (and Failure variants) fire for the same on-chain event because indexed/non-indexed
 // versions share the same topic0 hash. Track recently processed events to skip duplicates.
+//
+// IMPORTANT: dedup state must be skipped during the preload pass.
+// HyperIndex runs each handler TWICE per event — once for preload (to discover
+// entity reads / effects so envio can batch-fetch) and once for the real
+// execution pass. The `processedExecutions` Set is module-level state that
+// persists across both passes. If we add to it during preload, the execution
+// pass finds the key already present and bails — none of the entity writes
+// commit. That manifests in production as Safes with SafeTransaction rows
+// but no `safeTxHash` / `success` linkage (Safe.numberOfSuccessfulExecutions
+// stays at 0), surfaced by the cross-reference integration suite.
 const processedExecutions = new Set<string>();
 
-function executionDedup(event: any): boolean {
+function executionDedup(event: any, isPreload: boolean): boolean {
+  // Preload pass mustn't touch the dedup set — see comment above.
+  // We still want both V4/non-V4 handlers to discover their reads during
+  // preload, so we just no-op the dedup there.
+  if (isPreload) return false;
+
   const key = `${event.chainId}-${event.block.number}-${event.logIndex}`;
   if (processedExecutions.has(key)) return true;
   processedExecutions.add(key);
@@ -284,7 +299,7 @@ function executionDedup(event: any): boolean {
 }
 
 export const executionSuccess = async (event: any, context: any, enableTraces: boolean = false) => {
-  if (executionDedup(event)) return;
+  if (executionDedup(event, context.isPreload)) return;
 
   const { payment, txHash: safeTxHash } = event.params;
   const { srcAddress, chainId } = event;
@@ -319,7 +334,7 @@ export const executionSuccess = async (event: any, context: any, enableTraces: b
 };
 
 export const executionFailure = async (event: any, context: any, enableTraces: boolean = false) => {
-  if (executionDedup(event)) return;
+  if (executionDedup(event, context.isPreload)) return;
 
   const { payment, txHash: safeTxHash } = event.params;
   const { srcAddress, chainId } = event;
