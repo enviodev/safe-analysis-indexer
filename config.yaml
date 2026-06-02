@@ -53,6 +53,7 @@ contracts:
             - hash
             - input
             - from
+      - event: ChangedThreshold(uint256 threshold)
       - event: ChangedMasterCopy(address singleton)
       - event: ChangedFallbackHandler(address indexed handler)
       - event: ChangedGuard(address guard)
