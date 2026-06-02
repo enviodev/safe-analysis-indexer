@@ -15,6 +15,7 @@ export interface Safe {
   version: SafeVersion;
   initializer: string;
   creationTxFrom: string;
+  creator: string;
   numberOfSuccessfulExecutions: number;
   numberOfFailedExecutions: number;
   totalGasSpent: string;
@@ -77,6 +78,7 @@ const SAFE_FRAGMENT = gql`
     version
     initializer
     creationTxFrom
+    creator
     numberOfSuccessfulExecutions
     numberOfFailedExecutions
     totalGasSpent

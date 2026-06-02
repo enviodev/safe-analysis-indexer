@@ -1,6 +1,6 @@
 import { indexer, type Entity } from "envio";
 import { addOwner, removeOwner, addSafeToOwner, executionSuccess, executionFailure, incrementSafeCount, incrementTransactionCount, incrementModuleTransactionCount, getOrCreateVersion, ensureSafeStub } from "./helpers";
-import { getSetupTrace, decodeSetupInput, getMasterCopyFromTrace, getSafeMasterCopyViaRpc, resolveVersionFromMasterCopy, decodeCreateProxyWithNonceInitializer } from "./hypersync";
+import { getSetupTrace, decodeSetupInput, getMasterCopyFromTrace, getSafeMasterCopyViaRpc, resolveVersionFromMasterCopy, decodeCreateProxyWithNonceInitializer, getSafeCreatorViaTraceTransaction, CREATOR_TRACE_CHAINS } from "./hypersync";
 import { LEGACY_V1_0_0_PROXY } from "./consts";
 import type { SafeVersion } from "./consts";
 import { decodeAbiParameters, zeroAddress } from "viem";
@@ -11,6 +11,27 @@ type Safe = Entity<"Safe">;
 // have no guard concept at all; v1.3.0+ Safes can later mutate via
 // ChangedGuard / ChangedGuardV4.
 const NO_GUARD = zeroAddress;
+
+// Resolve `creator` (Safe-TX-Service-compatible: the address that directly
+// called the factory's `createProxyWithNonce`). On chains with trace support
+// (currently Ethereum mainnet only) we walk the deployment tx's trace tree;
+// elsewhere we fall back to `tx.from` — matches Safe TX Service's behavior
+// on chains they treat as L2 (simulated traces).
+async function resolveCreator(
+  chainId: number,
+  txHash: string,
+  safeAddress: string,
+  fallbackTxFrom: string,
+  context: any,
+): Promise<string> {
+  if (!CREATOR_TRACE_CHAINS.has(chainId)) return fallbackTxFrom;
+  const traced = await context.effect(getSafeCreatorViaTraceTransaction, {
+    chainId,
+    txHash,
+    safeAddress,
+  });
+  return traced ?? fallbackTxFrom;
+}
 
 indexer.contractRegister({ contract: "GnosisSafeProxyPre1_3_0", event: "ProxyCreation" }, async ({ event, context }) => {
   const { proxy } = event.params;
@@ -93,6 +114,10 @@ indexer.onEvent({ contract: "GnosisSafeProxyPre1_3_0", event: "ProxyCreation" },
   const existingSafe = await context.Safe.get(safeId);
   const wasCountedBefore = existingSafe?.counted ?? false;
 
+  // Resolve `creator` per Safe-TX-Service semantics (trace parent's `from`)
+  // when we're on a chain with trace support; otherwise fall back to tx.from.
+  const creator = await resolveCreator(chainId, hash, proxy, creationTxFrom, context);
+
   const safe: Safe = {
     id: safeId,
     version,
@@ -110,6 +135,7 @@ indexer.onEvent({ contract: "GnosisSafeProxyPre1_3_0", event: "ProxyCreation" },
     guard: NO_GUARD,
     initializer: "",
     creationTxFrom,
+    creator,
     numberOfSuccessfulExecutions: 0,
     numberOfFailedExecutions: 0,
     nonce: 0,
@@ -191,6 +217,9 @@ async function handleModernProxyCreation(
   const existingSafe = await context.Safe.get(safeId);
   const wasCountedBefore = existingSafe?.counted ?? false;
 
+  // Resolve `creator` via trace walk on supported chains; fall back to tx.from.
+  const creator = await resolveCreator(chainId, hash, proxy, creationTxFrom, context);
+
   if (existingSafe) {
     // SafeSetup already created the Safe - update version, creation info, masterCopy,
     // and creation-context fields (SafeSetup-first only knew its own block; ProxyCreation
@@ -206,6 +235,7 @@ async function handleModernProxyCreation(
       blockCreationNum: block.number,
       factoryAddress: factory,
       setupData: setupData ?? existingSafe.setupData,
+      creator,
       counted: true, // ProxyCreation is the canonical counting event
     });
   } else {
@@ -227,6 +257,7 @@ async function handleModernProxyCreation(
       address: proxy,
       initializer: "",
       creationTxFrom,
+      creator,
       numberOfSuccessfulExecutions: 0,
       numberOfFailedExecutions: 0,
       nonce: 0,
@@ -304,6 +335,13 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeSetup", wildcard: true }
     }
   }
 
+  // Resolve `creator` via trace walk on supported chains; fall back to tx.from.
+  // ProxyCreation's resolveCreator takes precedence when it fires (canonical
+  // source), but in the SafeSetup-orphan path SafeSetup is the only chance
+  // we get — wire it here too so 3rd-party-factory orphans still get a
+  // trace-walked creator on chains where we support it.
+  const creator = await resolveCreator(chainId, hash, srcAddress, creationTxFrom, context);
+
   if (existingSafe) {
     // Update existing safe with owners and threshold from SafeSetup. If
     // the existing entity is a stub (masterCopy still null because it was
@@ -311,6 +349,8 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeSetup", wildcard: true }
     // in order), apply the RPC-resolved masterCopy/version too. If
     // ProxyCreation already populated them on a previous handler call, leave
     // them alone — ProxyCreation's singleton param is the canonical source.
+    // creator: if ProxyCreation has already counted this Safe its creator is
+    // authoritative; otherwise SafeSetup's trace-walked value fills it in.
     const safe: Safe = {
       ...existingSafe,
       owners: ownersArray,
@@ -323,6 +363,7 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeSetup", wildcard: true }
         existingSafe.version !== "UNKNOWN"
           ? existingSafe.version
           : (resolvedVersion ?? "UNKNOWN"),
+      creator: existingSafe.counted ? existingSafe.creator : creator,
     };
 
     context.Safe.set(safe);
@@ -353,6 +394,7 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeSetup", wildcard: true }
       setupData: undefined,
       initializer,
       creationTxFrom,
+      creator,
       numberOfSuccessfulExecutions: 0,
       numberOfFailedExecutions: 0,
       nonce: 0,

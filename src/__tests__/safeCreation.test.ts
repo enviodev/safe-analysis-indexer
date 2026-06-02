@@ -286,6 +286,137 @@ describe("ProxyCreation — setupData backfill from tx.input", () => {
   });
 });
 
+describe("ProxyCreation — `creator` trace-walk (Ethereum mainnet only)", () => {
+  // Chain 1 = Ethereum mainnet = the only chain in CREATOR_TRACE_CHAINS today.
+  const ETH_MAINNET = 1;
+
+  it("chain=1 with a trace fixture: creator resolves to the trace-walked address (NOT tx.from)", async () => {
+    // Models a 4337 deployment on Ethereum: bundler is tx.from, but the
+    // actual address that called the factory was SenderCreator. Safe TX
+    // Service reports SenderCreator as `creator`; with the trace walk wired
+    // up we should match.
+    const proxy = addr("creator-trace-eth");
+    const bundler = addr("creator-bundler");
+    const senderCreator = "0xefc2c1444ebcc4db75e7613d20c6a62ff67a167c";
+    const creationTxHash = "0xcafe000000000000000000000000000000000000000000000000000000000001";
+
+    setEffectFixtures({
+      getSafeCreatorViaTraceTransaction: {
+        [JSON.stringify({
+          chainId: ETH_MAINNET,
+          txHash: creationTxHash,
+          safeAddress: proxy,
+        })]: senderCreator,
+      },
+    });
+
+    const indexer = createIndexer();
+    await processOnChain(indexer, ETH_MAINNET, [
+      simulateProxyCreationModern({
+        contract: "GnosisSafeProxy1_4_1",
+        proxy,
+        singleton: MASTER_COPIES.V1_4_1_L2 as `0x${string}`,
+        tx: { from: bundler, hash: creationTxHash },
+      }),
+    ]);
+
+    const safe = await indexer.Safe.getOrThrow(safeId(ETH_MAINNET, proxy));
+    expect(safe.creator).toBe(senderCreator);
+    // `creationTxFrom` remains tx.from for consumers that want the raw value.
+    expect(safe.creationTxFrom).toBe(bundler);
+  });
+
+  it("chain=1 with no trace fixture (RPC returned null): creator falls back to creationTxFrom", async () => {
+    const proxy = addr("creator-trace-eth-null");
+    const txFrom = addr("creator-eth-null-from");
+
+    // No fixture set → lookupFixture returns null → effect returns null →
+    // resolveCreator falls back to creationTxFrom.
+    const indexer = createIndexer();
+    await processOnChain(indexer, ETH_MAINNET, [
+      simulateProxyCreationModern({
+        contract: "GnosisSafeProxy1_3_0",
+        proxy,
+        singleton: MASTER_COPIES.V1_3_0_L2 as `0x${string}`,
+        tx: { from: txFrom },
+      }),
+    ]);
+
+    const safe = await indexer.Safe.getOrThrow(safeId(ETH_MAINNET, proxy));
+    expect(safe.creator).toBe(txFrom);
+  });
+
+  it("chain=100 (Gnosis): trace walk is gated off, creator equals creationTxFrom regardless of fixture", async () => {
+    // Wire a trace fixture that WOULD return SenderCreator if the effect
+    // were called — and assert it's ignored. This proves the chain gate
+    // works; we deliberately don't run the trace walk on non-CREATOR_TRACE_CHAINS.
+    const GNOSIS = 100;
+    const proxy = addr("creator-no-trace-gno");
+    const txFrom = addr("creator-gno-from");
+    const creationTxHash = "0xcafe000000000000000000000000000000000000000000000000000000000064";
+    const senderCreator = "0xefc2c1444ebcc4db75e7613d20c6a62ff67a167c";
+
+    setEffectFixtures({
+      getSafeCreatorViaTraceTransaction: {
+        [JSON.stringify({
+          chainId: GNOSIS,
+          txHash: creationTxHash,
+          safeAddress: proxy,
+        })]: senderCreator, // would be returned if the effect were called
+      },
+    });
+
+    const indexer = createIndexer();
+    await processOnChain(indexer, GNOSIS, [
+      simulateProxyCreationModern({
+        contract: "GnosisSafeProxy1_4_1",
+        proxy,
+        singleton: MASTER_COPIES.V1_4_1_L2 as `0x${string}`,
+        tx: { from: txFrom, hash: creationTxHash },
+      }),
+    ]);
+
+    const safe = await indexer.Safe.getOrThrow(safeId(GNOSIS, proxy));
+    expect(safe.creator).toBe(txFrom);
+    expect(safe.creator).not.toBe(senderCreator); // gate is doing its job
+  });
+
+  it("SafeSetup orphan (no ProxyCreation): trace walk fires from the SafeSetup handler on chain=1", async () => {
+    // Models a 3rd-party-factory deployment on Ethereum where ProxyCreation
+    // never reaches us but SafeSetup does (caught via wildcard). The trace
+    // walk runs in the SafeSetup orphan branch and gives us a creator that
+    // matches what Safe TX Service would report.
+    const proxy = addr("creator-trace-orphan");
+    const txFrom = addr("creator-orphan-from");
+    const wrapper = addr("creator-orphan-wrapper");
+    const creationTxHash = "0xcafe000000000000000000000000000000000000000000000000000000000002";
+
+    setEffectFixtures({
+      getSafeCreatorViaTraceTransaction: {
+        [JSON.stringify({
+          chainId: ETH_MAINNET,
+          txHash: creationTxHash,
+          safeAddress: proxy,
+        })]: wrapper,
+      },
+    });
+
+    const indexer = createIndexer();
+    await processOnChain(indexer, ETH_MAINNET, [
+      simulateSafeSetup({
+        safeAddress: proxy,
+        owners: [addr("creator-orphan-owner")],
+        threshold: 1n,
+        tx: { from: txFrom, hash: creationTxHash },
+      }),
+    ]);
+
+    const safe = await indexer.Safe.getOrThrow(safeId(ETH_MAINNET, proxy));
+    expect(safe.creator).toBe(wrapper);
+    expect(safe.counted).toBe(false); // orphan path still uncounted
+  });
+});
+
 describe("SafeSetup ↔ ProxyCreation ordering (1.3.0+)", () => {
   it("SafeSetup-then-ProxyCreation: final Safe merges owners/threshold from SafeSetup + version/masterCopy/creationTxHash from ProxyCreation", async () => {
     const indexer = createIndexer();

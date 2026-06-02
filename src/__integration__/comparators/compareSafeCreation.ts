@@ -67,11 +67,11 @@ export async function compareSafeCreation(
   }
   if (canonical.creator !== indexer.creator) {
     diffs.push({
-      // Field name retained as `creator/creationTxFrom` so the mismatched-fields
-      // summary table makes the canonical-vs-indexer mapping legible at a glance.
-      // The two sides genuinely diverge for sponsored deployments — see the
-      // `Safe.creationTxFrom` schema comment.
-      field: "creator/creationTxFrom",
+      // Both sides report `creator`. Indexer side resolves via trace walk on
+      // chains in CREATOR_TRACE_CHAINS (Ethereum mainnet currently); other
+      // chains fall back to tx.from, same as Safe TX Service's L2 behavior.
+      // See `Safe.creator` schema comment.
+      field: "creator",
       canonical: canonical.creator,
       indexer: indexer.creator,
     });
