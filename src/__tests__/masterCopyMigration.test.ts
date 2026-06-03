@@ -10,6 +10,7 @@ import {
 import {
   simulateChangedMasterCopy,
   simulateSafeSetup,
+  simulateProxyCreationModern,
 } from "./fixtures/events";
 
 const CHAIN_ID = 1;
@@ -233,5 +234,75 @@ describe("ChangedMasterCopy", () => {
     const oldV = await indexer.Version.getOrThrow("V1_3_0");
     expect(oldV.numberOfSafes).toBe(0); // Math.max floor
     void id;
+  });
+});
+
+describe("ProxyCreation does not clobber a pre-arrived ChangedMasterCopy (L1→L2 migration during setup)", () => {
+  it("ChangedMasterCopy(L2) before ProxyCreation(L1): final masterCopy = L2 (the post-delegate-call state)", async () => {
+    // Repro for the production bug surfaced on Gnosis Safes
+    // 0x2e94924a…8496a5e3 and 0xf55a8b…227b50f9. Real on-chain log order:
+    //   [0] ChangedMasterCopy(L2 singleton)  ← from setup()-time delegate-call
+    //                                           (multiSend calling
+    //                                           changeMasterCopy via
+    //                                           the SafeMigration pattern)
+    //   [1] SafeSetup
+    //   [2] ProxyCreation(proxy, singleton=L1)  ← FACTORY emits with the
+    //                                             INITIAL singleton it
+    //                                             deployed against — NOT
+    //                                             the post-delegate-call
+    //                                             state.
+    //
+    // Pre-fix `handleModernProxyCreation` unconditionally overwrote
+    // masterCopy with ProxyCreation's `singleton` arg (L1), clobbering the
+    // ChangedMasterCopy-set L2. Fix: preserve any already-set masterCopy
+    // on the existing-safe branch (same defensive pattern as
+    // fallbackHandler in #45).
+    const indexer = createIndexer();
+    const proxy = addr("mc-l1-to-l2");
+
+    await processOnChain(indexer, CHAIN_ID, [
+      simulateChangedMasterCopy({
+        safeAddress: proxy,
+        singleton: MASTER_COPIES.V1_4_1_L2 as `0x${string}`,
+      }),
+      simulateSafeSetup({
+        safeAddress: proxy,
+        owners: [addr("mc-migration-owner")],
+        threshold: 1n,
+      }),
+      simulateProxyCreationModern({
+        contract: "GnosisSafeProxy1_4_1",
+        proxy,
+        singleton: MASTER_COPIES.V1_4_1_L1 as `0x${string}`,
+      }),
+    ]);
+
+    const safe = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, proxy));
+    expect(safe.masterCopy).toBe(MASTER_COPIES.V1_4_1_L2);
+    expect(safe.version).toBe("V1_4_1"); // both L1 + L2 are V1_4_1, but the
+                                          // preserved one wins
+    // ProxyCreation still wins for `factoryAddress` (its canonical field).
+    expect(safe.factoryAddress).toBeDefined();
+    expect(safe.counted).toBe(true);
+  });
+
+  it("ProxyCreation alone (no prior ChangedMasterCopy): masterCopy = ProxyCreation's singleton", async () => {
+    // Counter-test: the preserve logic must not break the normal path.
+    // If no prior event set masterCopy, ProxyCreation's `singleton` arg is
+    // still the source of truth.
+    const indexer = createIndexer();
+    const proxy = addr("mc-no-prior");
+
+    await processOnChain(indexer, CHAIN_ID, [
+      simulateProxyCreationModern({
+        contract: "GnosisSafeProxy1_4_1",
+        proxy,
+        singleton: MASTER_COPIES.V1_4_1_L1 as `0x${string}`,
+      }),
+    ]);
+
+    const safe = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, proxy));
+    expect(safe.masterCopy).toBe(MASTER_COPIES.V1_4_1_L1);
+    expect(safe.version).toBe("V1_4_1");
   });
 });
