@@ -10,6 +10,7 @@ import {
   simulateSafeMultiSigTransaction,
   simulateSafeModuleTransaction,
   simulateExecutionSuccess,
+  simulateExecutionFailure,
 } from "./fixtures/events";
 import { expectTxCount, expectModuleTxCount } from "./fixtures/assertions";
 
@@ -131,45 +132,148 @@ describe("ExecutionSuccess / ExecutionFailure", () => {
     expect(await indexer.Safe.getAll()).toEqual([]);
   });
 
-  // ---------------------------------------------------------------------
-  // The following branches are deferred behind it.todo for now.
+  // The dual-fire dedup bug previously blocked these tests:
   //
-  // envio v3.0.0's TestIndexer fires the GnosisSafeL2 ExecutionSuccess
-  // (and ExecutionSuccessV4) handlers TWICE for a single simulate item —
-  // once before the prior block's writes have committed (so Safe.get()
-  // returns undefined), then once after. The first invocation adds the
-  // event's (chainId, block, logIndex) key to the module-scope
-  // `processedExecutions` Set; the second is dedup-skipped, so the state
-  // mutations never happen.
-  //
-  // In production with real chain events this isn't a problem — each
-  // on-chain event has exactly one matching handler signature (topic
-  // count disambiguates indexed vs non-indexed). It's specific to
-  // TestIndexer's overload routing.
-  //
-  // Restoring these tests is unblocked by either: envio publishing a
-  // TestIndexer mock-effect / dedup-reset hook, or refactoring the
-  // dedup state to be per-event (e.g., keyed inclusive of the handler
-  // identity) instead of module-scope. Filed under the test-suite
-  // follow-up backlog.
-  // ---------------------------------------------------------------------
+  // envio's TestIndexer fires GnosisSafeL2 ExecutionSuccess (and V4) twice
+  // per event — once for preload, once for execution. The module-scope
+  // `processedExecutions` Set used to accumulate keys during preload and
+  // bail the execution pass, so writes never committed. Diagnosed and fixed
+  // in the same PR as these tests being restored — `executionDedup` now
+  // returns false during `context.isPreload`, so dedup only fires during
+  // the real execution pass. The bug was also live in production (Safes
+  // had SafeTransaction rows with safeTxHash=null), surfaced by the
+  // cross-reference integration suite.
 
-  it.todo("ExecutionSuccess with a prior SafeTransaction sets success=true and updates Safe counters (blocked: envio dual-fire + dedup, see comment above)");
-  it.todo("ExecutionFailure with a prior SafeTransaction sets success=false and updates Safe counters (blocked: envio dual-fire + dedup)");
-  it.todo("ExecutionSuccess + ExecutionSuccessV4 same event: dedup, counters increment exactly once (blocked: envio dual-fire + dedup)");
-  it.todo("ExecutionSuccess on a non-L1 safe with no prior multisig tx is a silent skip (blocked: envio dual-fire + dedup)");
-  it.todo("ExecutionSuccess L1 path: decodes execTransaction from event.transaction.input directly (blocked: envio dual-fire + dedup)");
-  it.todo("ExecutionSuccess L1 path: falls back to getExecTransactionViaRpcTrace when tx.input isn't decodable (blocked: envio dual-fire + dedup)");
-  it.todo("Sequence multisig→success→multisig→failure: nonce, gas, success flags (blocked: envio dual-fire + dedup)");
+  it("ExecutionSuccess with a prior SafeTransaction sets success=true and updates Safe counters", async () => {
+    const indexer = createIndexer();
+    const safeAddr = addr("exec-success-safe");
+    const id = seedSafe(indexer, {
+      chainId: CHAIN_ID,
+      address: safeAddr,
+      version: "V1_4_1",
+    });
+    const safeTxHash = ("0x" + "ab".repeat(32)) as `0x${string}`;
+
+    await processOnChain(indexer, CHAIN_ID, [
+      simulateSafeMultiSigTransaction({
+        safeAddress: safeAddr,
+        nonce: 0n,
+        msgSender: addr("sender"),
+        threshold: 1n,
+      }),
+      simulateExecutionSuccess({
+        safeAddress: safeAddr,
+        txHash: safeTxHash,
+        payment: 100n,
+      }),
+    ]);
+
+    const safe = await indexer.Safe.getOrThrow(id);
+    expect(safe.numberOfSuccessfulExecutions).toBe(1);
+    expect(safe.nonce).toBe(1);
+    expect(safe.totalGasSpent).toBe(100n);
+
+    const tx = await indexer.SafeTransaction.getOrThrow(`${id}-0`);
+    expect(tx.success).toBe(true);
+    expect(tx.safeTxHash).toBe(safeTxHash);
+  });
+
+  it("ExecutionFailure with a prior SafeTransaction sets success=false and updates Safe counters", async () => {
+    const indexer = createIndexer();
+    const safeAddr = addr("exec-failure-safe");
+    const id = seedSafe(indexer, {
+      chainId: CHAIN_ID,
+      address: safeAddr,
+      version: "V1_4_1",
+    });
+    const safeTxHash = ("0x" + "cd".repeat(32)) as `0x${string}`;
+
+    await processOnChain(indexer, CHAIN_ID, [
+      simulateSafeMultiSigTransaction({
+        safeAddress: safeAddr,
+        nonce: 0n,
+        msgSender: addr("fail-sender"),
+        threshold: 1n,
+      }),
+      simulateExecutionFailure({
+        safeAddress: safeAddr,
+        txHash: safeTxHash,
+        payment: 50n,
+      }),
+    ]);
+
+    const safe = await indexer.Safe.getOrThrow(id);
+    expect(safe.numberOfFailedExecutions).toBe(1);
+    expect(safe.numberOfSuccessfulExecutions).toBe(0);
+    expect(safe.nonce).toBe(1);
+    expect(safe.totalGasSpent).toBe(50n);
+
+    const tx = await indexer.SafeTransaction.getOrThrow(`${id}-0`);
+    expect(tx.success).toBe(false);
+    expect(tx.safeTxHash).toBe(safeTxHash);
+  });
+
+  it("ExecutionSuccess + ExecutionSuccessV4 same event: dedup keeps counters at +1, not +2", async () => {
+    // V4 and non-V4 share the same topic0 — both handlers fire on a single
+    // on-chain emission. The dedup ensures we don't double-count. This is
+    // the test that specifically validates the dedup semantic (regression
+    // for the production bug fixed by gating dedup on `!context.isPreload`).
+    const indexer = createIndexer();
+    const safeAddr = addr("exec-dedup-safe");
+    const id = seedSafe(indexer, {
+      chainId: CHAIN_ID,
+      address: safeAddr,
+      version: "V1_4_1",
+    });
+    const safeTxHash = ("0x" + "ef".repeat(32)) as `0x${string}`;
+    // Force both V4 and non-V4 simulators to emit at the same (block, logIndex)
+    // so they collide on the dedup key — that's what an actual on-chain event
+    // looks like to envio (same topic0, two matching handler registrations).
+    const collisionBlock = { number: 9_001 };
+    const collisionLogIndex = 0;
+
+    await processOnChain(indexer, CHAIN_ID, [
+      simulateSafeMultiSigTransaction({
+        safeAddress: safeAddr,
+        nonce: 0n,
+        msgSender: addr("dedup-sender"),
+        threshold: 1n,
+      }),
+      simulateExecutionSuccess({
+        safeAddress: safeAddr,
+        txHash: safeTxHash,
+        payment: 10n,
+        block: collisionBlock,
+        logIndex: collisionLogIndex,
+      }),
+      simulateExecutionSuccess({
+        safeAddress: safeAddr,
+        txHash: safeTxHash,
+        payment: 10n,
+        block: collisionBlock,
+        logIndex: collisionLogIndex,
+        v4: true,
+      }),
+    ]);
+
+    const safe = await indexer.Safe.getOrThrow(id);
+    // Exactly +1 — not +2. This is the load-bearing assertion.
+    expect(safe.numberOfSuccessfulExecutions).toBe(1);
+    expect(safe.nonce).toBe(1);
+    expect(safe.totalGasSpent).toBe(10n);
+  });
+
+  it.todo("ExecutionSuccess on a non-L1 safe with no prior multisig tx is a silent skip");
+  it.todo("ExecutionSuccess L1 path: decodes execTransaction from event.transaction.input directly");
+  it.todo("ExecutionSuccess L1 path: falls back to getExecTransactionViaRpcTrace when tx.input isn't decodable");
+  it.todo("Sequence multisig→success→multisig→failure: nonce, gas, success flags");
 });
 
 describe("safeTxHash linking (Section 3.6)", () => {
-  // safeTxHash is read from ExecutionSuccess/Failure's `txHash` event
-  // param and persisted onto the SafeTransaction row. Linking through
-  // TestIndexer is blocked by the same envio dual-fire + dedup quirk
-  // documented above the other execution todos — converted to it.todo
-  // with the same restoration path.
-  it.todo("ExecutionSuccess sets safeTxHash + success=true on the prior SafeTransaction (blocked: envio dual-fire + dedup)");
-  it.todo("ExecutionFailure sets safeTxHash + success=false on the prior SafeTransaction (blocked: envio dual-fire + dedup)");
-  it.todo("L1 path createL1SafeTransaction stores safeTxHash from the event (blocked: envio dual-fire + dedup)");
+  // The L2 path (SafeMultiSigTransaction → ExecutionSuccess/Failure
+  // → safeTxHash set on the row) is covered by the two tests above in
+  // "ExecutionSuccess / ExecutionFailure". The L1 trace-path test below
+  // stays a todo because it needs createL1SafeTransaction fixture wiring
+  // (effect mocks for getExecTransactionViaRpcTrace + tx.input decoding).
+  it.todo("L1 path createL1SafeTransaction stores safeTxHash from the event");
 });
