@@ -225,4 +225,66 @@ describe("ChangedFallbackHandler", () => {
     const safe = await indexer.Safe.getOrThrow(id);
     expect(safe.fallbackHandler).toBe(newHandler);
   });
+
+  it("ChangedFallbackHandler before SafeSetup wins — SafeSetup's initial arg must not clobber it (4337 install pattern)", async () => {
+    // Repro for the production bug surfaced on Safe
+    // 0xd765df…ac304c09 (chain 1, ETH mainnet). Real on-chain log order:
+    //   [0] EnabledModule(0xa581c4a4…)           ← from setup()-time delegate-call
+    //   [1] ChangedFallbackHandler(0xa581c4a4…)  ← also delegate-call (4337 install)
+    //   [4] SafeSetup(…, fallbackHandler=0x0…0)  ← SafeSetup reports the INITIAL
+    //                                              setup() arg, NOT the post-
+    //                                              delegate-call state
+    // Pre-fix the SafeSetup handler unconditionally overwrote fallbackHandler
+    // with the SafeSetup arg, clobbering the ChangedFallbackHandler-set value
+    // and leaving the indexer at fallbackHandler=0x0…0. Fix: preserve any
+    // already-set fallbackHandler on the SafeSetup existing-safe branch.
+    const indexer = createIndexer();
+    const safeAddr = addr("fh-clobber-bug");
+    const finalHandler = "0xa581c4a4db7175302464ff3c06380bc3270b4037" as `0x${string}`;
+    await processOnChain(indexer, CHAIN_ID, [
+      simulateChangedFallbackHandler({
+        safeAddress: safeAddr,
+        handler: finalHandler,
+      }),
+      simulateSafeSetup({
+        safeAddress: safeAddr,
+        owners: [addr("fh-clobber-owner")],
+        threshold: 1n,
+        // SafeSetup reports the INITIAL setup() arg (zero), which would
+        // clobber the ChangedFallbackHandler-set finalHandler without the fix.
+        fallbackHandler: zeroAddress as `0x${string}`,
+      }),
+    ]);
+
+    const safe = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, safeAddr));
+    expect(safe.fallbackHandler).toBe(finalHandler);
+  });
+
+  it("SafeSetup sets fallbackHandler on the existing-safe branch when it's still undefined", async () => {
+    // Counterpart to the test above: if no setup-time delegate-call touched
+    // fallbackHandler before SafeSetup, the existing entity's
+    // fallbackHandler is undefined (just a stub from a state event like
+    // EnabledModule). SafeSetup should populate it from its arg.
+    const indexer = createIndexer();
+    const safeAddr = addr("fh-stub-then-setup");
+    const handlerFromSetup = "0xcafebabecafebabecafebabecafebabecafebabe" as `0x${string}`;
+    // No prior ChangedFallbackHandler — only an EnabledModule to create the stub.
+    const { simulateEnabledModule } = await import("./fixtures/events");
+    await processOnChain(indexer, CHAIN_ID, [
+      simulateEnabledModule({
+        safeAddress: safeAddr,
+        module: addr("some-mod"),
+        v4: true,
+      }),
+      simulateSafeSetup({
+        safeAddress: safeAddr,
+        owners: [addr("fh-stub-owner")],
+        threshold: 1n,
+        fallbackHandler: handlerFromSetup,
+      }),
+    ]);
+
+    const safe = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, safeAddr));
+    expect(safe.fallbackHandler).toBe(handlerFromSetup.toLowerCase());
+  });
 });
