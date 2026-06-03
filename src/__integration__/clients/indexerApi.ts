@@ -84,6 +84,7 @@ const SAFE_QUERY = `
       masterCopy
       fallbackHandler
       guard
+      moduleGuard
       version
       nonce
       modules { module }

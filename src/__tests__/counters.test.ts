@@ -57,8 +57,8 @@ describe("getOrCreate helpers", () => {
 
   it("getOrCreateVersion creates with id = version string", async () => {
     const ctx = makeStubContext();
-    const v = await getOrCreateVersion("V1_3_0", ctx);
-    expect(v.id).toBe("V1_3_0");
+    const v = await getOrCreateVersion("1.3.0", ctx);
+    expect(v.id).toBe("1.3.0");
     expect(v.numberOfSafes).toBe(0);
   });
 
@@ -74,62 +74,62 @@ describe("getOrCreate helpers", () => {
 describe("incrementSafeCount", () => {
   it("touches GlobalStats + Network + Version on a fresh context", async () => {
     const ctx = makeStubContext();
-    await incrementSafeCount(1, "V1_3_0", ctx);
+    await incrementSafeCount(1, "1.3.0", ctx);
 
     expect((await ctx.GlobalStats.get("global")).totalSafes).toBe(1);
     expect((await ctx.Network.get("1")).numberOfSafes).toBe(1);
-    expect((await ctx.Version.get("V1_3_0")).numberOfSafes).toBe(1);
+    expect((await ctx.Version.get("1.3.0")).numberOfSafes).toBe(1);
   });
 
   it("accumulates without double-creating on repeated increments", async () => {
     const ctx = makeStubContext();
-    await incrementSafeCount(1, "V1_3_0", ctx);
-    await incrementSafeCount(1, "V1_3_0", ctx);
-    await incrementSafeCount(1, "V1_3_0", ctx);
+    await incrementSafeCount(1, "1.3.0", ctx);
+    await incrementSafeCount(1, "1.3.0", ctx);
+    await incrementSafeCount(1, "1.3.0", ctx);
 
     expect((await ctx.GlobalStats.get("global")).totalSafes).toBe(3);
     expect((await ctx.Network.get("1")).numberOfSafes).toBe(3);
-    expect((await ctx.Version.get("V1_3_0")).numberOfSafes).toBe(3);
+    expect((await ctx.Version.get("1.3.0")).numberOfSafes).toBe(3);
   });
 
   it("separates per-network and per-version buckets", async () => {
     const ctx = makeStubContext();
-    await incrementSafeCount(1, "V1_3_0", ctx);
-    await incrementSafeCount(137, "V1_4_1", ctx);
+    await incrementSafeCount(1, "1.3.0", ctx);
+    await incrementSafeCount(137, "1.4.1", ctx);
 
     expect((await ctx.GlobalStats.get("global")).totalSafes).toBe(2);
     expect((await ctx.Network.get("1")).numberOfSafes).toBe(1);
     expect((await ctx.Network.get("137")).numberOfSafes).toBe(1);
-    expect((await ctx.Version.get("V1_3_0")).numberOfSafes).toBe(1);
-    expect((await ctx.Version.get("V1_4_1")).numberOfSafes).toBe(1);
+    expect((await ctx.Version.get("1.3.0")).numberOfSafes).toBe(1);
+    expect((await ctx.Version.get("1.4.1")).numberOfSafes).toBe(1);
   });
 });
 
 describe("incrementTransactionCount", () => {
   it("touches all three levels", async () => {
     const ctx = makeStubContext();
-    await incrementTransactionCount(1, "V1_3_0", ctx);
+    await incrementTransactionCount(1, "1.3.0", ctx);
     expect((await ctx.GlobalStats.get("global")).totalTransactions).toBe(1);
     expect((await ctx.Network.get("1")).numberOfTransactions).toBe(1);
-    expect((await ctx.Version.get("V1_3_0")).numberOfTransactions).toBe(1);
+    expect((await ctx.Version.get("1.3.0")).numberOfTransactions).toBe(1);
   });
 
   it("does NOT increment Safe counts", async () => {
     const ctx = makeStubContext();
-    await incrementTransactionCount(1, "V1_3_0", ctx);
+    await incrementTransactionCount(1, "1.3.0", ctx);
     expect((await ctx.GlobalStats.get("global")).totalSafes).toBe(0);
     expect((await ctx.Network.get("1")).numberOfSafes).toBe(0);
-    expect((await ctx.Version.get("V1_3_0")).numberOfSafes).toBe(0);
+    expect((await ctx.Version.get("1.3.0")).numberOfSafes).toBe(0);
   });
 });
 
 describe("incrementModuleTransactionCount", () => {
   it("touches all three levels", async () => {
     const ctx = makeStubContext();
-    await incrementModuleTransactionCount(1, "V1_3_0", ctx);
+    await incrementModuleTransactionCount(1, "1.3.0", ctx);
     expect((await ctx.GlobalStats.get("global")).totalModuleTransactions).toBe(1);
     expect((await ctx.Network.get("1")).numberOfModuleTransactions).toBe(1);
-    expect((await ctx.Version.get("V1_3_0")).numberOfModuleTransactions).toBe(1);
+    expect((await ctx.Version.get("1.3.0")).numberOfModuleTransactions).toBe(1);
   });
 });
 

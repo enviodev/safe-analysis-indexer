@@ -7,19 +7,6 @@
 export type ChainId = 1 | 100;
 export type SafeAddress = `0x${string}`;
 
-// SafeVersion enum string as stored in the indexer.
-export type SafeVersionEnum =
-  | "V0_0_2"
-  | "V0_1_0"
-  | "V1_0_0"
-  | "V1_1_0"
-  | "V1_1_1"
-  | "V1_2_0"
-  | "V1_3_0"
-  | "V1_4_1"
-  | "V1_5_0"
-  | "UNKNOWN";
-
 export interface NormalisedSafe {
   chainId: ChainId;
   address: string; // lowercase
@@ -28,9 +15,15 @@ export interface NormalisedSafe {
   masterCopy: string | null; // lowercase or null
   fallbackHandler: string | null; // lowercase or null
   guard: string; // lowercase, defaults to ZERO_ADDRESS
+  moduleGuard: string; // lowercase, defaults to ZERO_ADDRESS (v1.5.0+ only)
   modules: string[]; // lowercase, sorted
-  version: SafeVersionEnum;
-  nonce: number;
+  // Safe-Transaction-Service format: "1.4.1+L2" / "1.3.0" / null. Both
+  // sides now produce this directly (indexer's `Safe.version` is the same
+  // format Safe TX Service uses on `/safes/{address}/`), so the comparator
+  // is a straight string equality check.
+  version: string | null;
+  // Decimal-string nonce (both sides serialize bigint as string).
+  nonce: string;
 }
 
 // Creation context from `/v1/safes/{address}/creation/` vs our Safe entity's

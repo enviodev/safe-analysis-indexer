@@ -74,7 +74,7 @@ describe("SafeMultiSigTransaction", () => {
       global: 1,
       chainId: CHAIN_ID,
       network: 1,
-      version: "V1_3_0",
+      version: "1.3.0",
       versionCount: 1,
     });
   });
@@ -117,7 +117,7 @@ describe("SafeModuleTransaction", () => {
       global: 1,
       chainId: CHAIN_ID,
       network: 1,
-      version: "V1_3_0",
+      version: "1.3.0",
       versionCount: 1,
     });
   });
@@ -150,7 +150,7 @@ describe("ExecutionSuccess / ExecutionFailure", () => {
     const id = seedSafe(indexer, {
       chainId: CHAIN_ID,
       address: safeAddr,
-      version: "V1_4_1",
+      version: "1.4.1",
     });
     const safeTxHash = ("0x" + "ab".repeat(32)) as `0x${string}`;
 
@@ -170,7 +170,7 @@ describe("ExecutionSuccess / ExecutionFailure", () => {
 
     const safe = await indexer.Safe.getOrThrow(id);
     expect(safe.numberOfSuccessfulExecutions).toBe(1);
-    expect(safe.nonce).toBe(1);
+    expect(safe.nonce).toBe(1n);
     expect(safe.totalGasSpent).toBe(100n);
 
     const tx = await indexer.SafeTransaction.getOrThrow(`${id}-0`);
@@ -184,7 +184,7 @@ describe("ExecutionSuccess / ExecutionFailure", () => {
     const id = seedSafe(indexer, {
       chainId: CHAIN_ID,
       address: safeAddr,
-      version: "V1_4_1",
+      version: "1.4.1",
     });
     const safeTxHash = ("0x" + "cd".repeat(32)) as `0x${string}`;
 
@@ -205,7 +205,7 @@ describe("ExecutionSuccess / ExecutionFailure", () => {
     const safe = await indexer.Safe.getOrThrow(id);
     expect(safe.numberOfFailedExecutions).toBe(1);
     expect(safe.numberOfSuccessfulExecutions).toBe(0);
-    expect(safe.nonce).toBe(1);
+    expect(safe.nonce).toBe(1n);
     expect(safe.totalGasSpent).toBe(50n);
 
     const tx = await indexer.SafeTransaction.getOrThrow(`${id}-0`);
@@ -223,7 +223,7 @@ describe("ExecutionSuccess / ExecutionFailure", () => {
     const id = seedSafe(indexer, {
       chainId: CHAIN_ID,
       address: safeAddr,
-      version: "V1_4_1",
+      version: "1.4.1",
     });
     const safeTxHash = ("0x" + "ef".repeat(32)) as `0x${string}`;
     // Force both V4 and non-V4 simulators to emit at the same (block, logIndex)
@@ -259,7 +259,7 @@ describe("ExecutionSuccess / ExecutionFailure", () => {
     const safe = await indexer.Safe.getOrThrow(id);
     // Exactly +1 — not +2. This is the load-bearing assertion.
     expect(safe.numberOfSuccessfulExecutions).toBe(1);
-    expect(safe.nonce).toBe(1);
+    expect(safe.nonce).toBe(1n);
     expect(safe.totalGasSpent).toBe(10n);
   });
 

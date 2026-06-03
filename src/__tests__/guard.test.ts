@@ -11,6 +11,7 @@ import {
   simulateProxyCreationModern,
   simulateSafeSetup,
   simulateChangedGuard,
+  simulateChangedModuleGuard,
 } from "./fixtures/events";
 
 const CHAIN_ID = 1;
@@ -22,7 +23,7 @@ describe("Safe.guard defaults to the zero address on every creation path", () =>
       simulateProxyCreationPre1_3_0({ proxy: LEGACY_V1_0_0_PROXY as `0x${string}` }),
     ]);
     const safe = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, LEGACY_V1_0_0_PROXY));
-    expect(safe.version).toBe("V1_0_0");
+    expect(safe.version).toBe("1.0.0");
     expect(safe.guard).toBe(zeroAddress);
   });
 
@@ -81,7 +82,7 @@ describe("ChangedGuard (v1.3.0 non-indexed)", () => {
     const id = seedSafe(indexer, {
       chainId: CHAIN_ID,
       address: safeAddr,
-      version: "V1_3_0",
+      version: "1.3.0",
       masterCopy: MASTER_COPIES.V1_3_0_L2,
     });
 
@@ -92,7 +93,7 @@ describe("ChangedGuard (v1.3.0 non-indexed)", () => {
 
     const safe = await indexer.Safe.getOrThrow(id);
     expect(safe.guard).toBe(newGuard.toLowerCase());
-    expect(safe.version).toBe("V1_3_0");
+    expect(safe.version).toBe("1.3.0");
     expect(safe.masterCopy).toBe(MASTER_COPIES.V1_3_0_L2);
   });
 
@@ -121,7 +122,7 @@ describe("ChangedGuardV4 (v1.4.0+ indexed)", () => {
     const id = seedSafe(indexer, {
       chainId: CHAIN_ID,
       address: safeAddr,
-      version: "V1_4_1",
+      version: "1.4.1",
       masterCopy: MASTER_COPIES.V1_4_1_L2,
     });
 
@@ -132,7 +133,7 @@ describe("ChangedGuardV4 (v1.4.0+ indexed)", () => {
 
     const safe = await indexer.Safe.getOrThrow(id);
     expect(safe.guard).toBe(newGuard);
-    expect(safe.version).toBe("V1_4_1");
+    expect(safe.version).toBe("1.4.1");
   });
 
   it("auto-stubs the Safe for the V4 variant too when fired before setup", async () => {
@@ -163,5 +164,58 @@ describe("ChangedGuard sequence", () => {
 
     const safe = await indexer.Safe.getOrThrow(id);
     expect(safe.guard).toBe(zeroAddress);
+  });
+});
+
+describe("Safe.moduleGuard (v1.5.0+ ChangedModuleGuard)", () => {
+  it("defaults to the zero address on a freshly-created modern Safe", async () => {
+    const indexer = createIndexer();
+    const proxy = addr("modguard-default");
+    await processOnChain(indexer, CHAIN_ID, [
+      simulateProxyCreationModern({
+        contract: "GnosisSafeProxy1_5_0",
+        proxy,
+        singleton: MASTER_COPIES.V1_5_0_L1 as `0x${string}`,
+      }),
+    ]);
+    const safe = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, proxy));
+    expect(safe.moduleGuard).toBe(zeroAddress);
+  });
+
+  it("ChangedModuleGuard updates Safe.moduleGuard in-place (lowercase)", async () => {
+    const indexer = createIndexer();
+    const safeAddr = addr("modguard-update");
+    const id = seedSafe(indexer, {
+      chainId: CHAIN_ID,
+      address: safeAddr,
+      version: "1.5.0",
+      masterCopy: MASTER_COPIES.V1_5_0_L1,
+    });
+
+    const newModGuard = "0xCaFeBaBeCaFeBaBeCaFeBaBeCaFeBaBeCaFeBaBe" as `0x${string}`;
+    await processOnChain(indexer, CHAIN_ID, [
+      simulateChangedModuleGuard({ safeAddress: safeAddr, moduleGuard: newModGuard }),
+    ]);
+
+    const safe = await indexer.Safe.getOrThrow(id);
+    expect(safe.moduleGuard).toBe(newModGuard.toLowerCase());
+    // guard (the regular tx guard) untouched.
+    expect(safe.guard).toBe(zeroAddress);
+  });
+
+  it("auto-stubs the Safe when ChangedModuleGuard fires before SafeSetup / ProxyCreation", async () => {
+    // Same setup()-time delegate-call concern as the other GnosisSafeL2
+    // wildcards: a multiSend bundle could call setModuleGuard inside setup()
+    // before SafeSetup. Wildcard handler must create a stub Safe so the
+    // moduleGuard isn't dropped.
+    const indexer = createIndexer();
+    const safeAddr = addr("modguard-pre-setup");
+    const newModGuard = addr("modguard-handler-x");
+    await processOnChain(indexer, CHAIN_ID, [
+      simulateChangedModuleGuard({ safeAddress: safeAddr, moduleGuard: newModGuard }),
+    ]);
+    const stub = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, safeAddr));
+    expect(stub.moduleGuard).toBe(newModGuard);
+    expect(stub.counted).toBe(false); // orphan stub stays uncounted
   });
 });

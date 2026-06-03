@@ -1,16 +1,3 @@
-enum SafeVersion {
-  V0_0_2
-  V0_1_0
-  V1_0_0
-  V1_1_0
-  V1_1_1
-  V1_2_0
-  V1_3_0
-  V1_4_1
-  V1_5_0
-  UNKNOWN
-}
-
 # Global statistics - single entity with id "global"
 type GlobalStats {
   id: ID! # "global"
@@ -49,10 +36,11 @@ type Safe {
   chainId: Int! @index
   owners: [String!]!
   threshold: Int!
-  version: SafeVersion! @index
+  version: String @index # Safe Transaction Service-compatible version string: "1.3.0" / "1.3.0+L2" / "1.4.1" / "1.4.1+L2" / "1.5.0" / "1.5.0+L2" / "1.2.0" / "1.1.1" / "1.0.0" / etc. The "+L2" suffix marks SafeL2.sol-variant master copies (which emit SafeMultiSigTransaction events). `null` when masterCopy is not in our known set — matches Safe Transaction Service's nullable `version` field. Indexed for "Safes by version" lookups. Derived directly from `masterCopy` via `MASTER_COPY_TO_STS_VERSION` (see consts.ts); pre-1.3.0 versions without a known masterCopy use an enum→string fallback table.
   masterCopy: String # nullable - the singleton/master copy address if known
   fallbackHandler: String # nullable - 1.3.0+ set on SafeSetup, mutated by ChangedFallbackHandler. Pre-1.3.0 derived from initializer when v1.1.1+ ABI; null for v0.x/v1.0.0 (no fallbackHandler param). "Legacy, unknown" — left null when undecidable.
   guard: String! # transaction guard contract. Always defaults to 0x000…000 (no guard) on creation; mutated by ChangedGuard / ChangedGuardV4 on v1.3.0+ Safes. Pre-1.3.0 versions have no guard concept and remain at the zero address.
+  moduleGuard: String! # module-execution guard contract. Always defaults to 0x000…000. Mutated by `ChangedModuleGuard(address indexed moduleGuard)` (v1.5.0+ only — earlier versions have no moduleGuard concept and remain at the zero address). Matches Safe Transaction Service's `moduleGuard` field on `/safes/{address}/`.
   modules: [SafeModule!]! @derivedFrom(field: "safe") # enabled modules. Defaults to [] on creation; mutated by EnabledModule / DisabledModule (and indexed v1.4.0+ variants).
   safeOwners: [SafeOwner!]! @derivedFrom(field: "safe")
   initializer: String!
@@ -60,7 +48,7 @@ type Safe {
   safeModuleTransactions: [SafeModuleTransaction!]! @derivedFrom(field: "safe")
   numberOfSuccessfulExecutions: Int!
   numberOfFailedExecutions: Int!
-  nonce: Int!
+  nonce: BigInt! # Safe's internal execution counter. BigInt rather than Int so Hasura serializes it as a decimal string (matching Safe Transaction Service `nonce` shape, and giving full uint256 precision). Incremented exactly once per ExecutionSuccess/ExecutionFailure.
   totalGasSpent: BigInt!
   creationTxFrom: String! @index # `tx.from` of the deployment transaction. For directly-submitted deployments this IS the user who created the Safe — matches Safe Transaction Service `creator`. For sponsored deployments (ERC-4337 bundlers via EntryPoint, Gelato/Pimlico relayers, Safe Relay, …) this is the bundler/relayer EOA paying gas, NOT the end user. Lowercase. Indexed so "Safes created by tx-sender X" is a fast lookup. See `creator` for the trace-walked, Safe-TX-Service-compatible field.
   creator: String! @index # The address that directly called the factory's `createProxyWithNonce` — matches Safe Transaction Service `creator` semantics (`safe_service.py:132`: `creator = (parent_internal_tx or creation_ethereum_tx)._from`). Resolved by walking the deployment tx's trace tree to find the CREATE frame for this Safe, then returning its parent frame's `from`. For direct deployments this equals `creationTxFrom` (= `tx.from` = user EOA). For 4337 deployments via EntryPoint v0.7 this is the SenderCreator contract (`0xefc2c1444ebcc4db75e7613d20c6a62ff67a167c`, deterministic across chains). For Gelato Relay it's Gelato's router contract. For MultiSend it's MultiSend. Note: this is NOT the user EOA for wrapped deployments — Safe TX Service has the same limitation. **Trace lookup runs on chains in `CREATOR_TRACE_CHAINS` (Ethereum mainnet + Gnosis today); all other chains fall back to `creationTxFrom`** — matches Safe TX Service's behavior on chains they treat as L2 (simulated traces, no real trace data). Lowercase, indexed.

@@ -62,15 +62,17 @@ export async function compareSafeMetadata(
   diffField(diffs, "masterCopy", canonical, indexer);
   diffField(diffs, "fallbackHandler", canonical, indexer);
   diffField(diffs, "guard", canonical, indexer);
+  diffField(diffs, "moduleGuard", canonical, indexer);
   diffField(diffs, "modules", canonical, indexer);
   diffField(diffs, "version", canonical, indexer);
   // nonce is "in-flight" — Safe TX Service reports the current on-chain nonce
   // including queued txs, our indexer reports the last executed nonce. They
   // can legitimately differ on actively-used Safes. Skip from the strict
-  // compare; surface as a soft-diff only when both sides report 0/0 — i.e.,
-  // when there's no in-flight ambiguity.
-  if (canonical.nonce === 0 && indexer.nonce !== 0) {
-    diffs.push({ field: "nonce", canonical: 0, indexer: indexer.nonce });
+  // compare; surface as a soft-diff only when canonical reports "0" but our
+  // indexer reports any non-zero value — there's no in-flight ambiguity when
+  // canonical itself has seen zero txs.
+  if (canonical.nonce === "0" && indexer.nonce !== "0") {
+    diffs.push({ field: "nonce", canonical: "0", indexer: indexer.nonce });
   }
 
   return diffs.length === 0 ? { kind: "passed" } : { kind: "mismatched", diffs };

@@ -39,7 +39,7 @@ describe("resolveVersionFromMasterCopy", () => {
 });
 
 describe("isL1Safe", () => {
-  const pre1_3_0Versions = ["V0_0_2", "V0_1_0", "V1_0_0", "V1_1_0", "V1_1_1", "V1_2_0"] as const;
+  const pre1_3_0Versions = ["0.0.2", "0.1.0", "1.0.0", "1.1.0", "1.1.1", "1.2.0"] as const;
 
   it.each(pre1_3_0Versions)(
     "returns true for pre-1.3.0 version %s regardless of masterCopy",
@@ -50,16 +50,16 @@ describe("isL1Safe", () => {
   );
 
   it("returns true for V1_3_0 with an L1 masterCopy", () => {
-    expect(isL1Safe({ version: "V1_3_0", masterCopy: MASTER_COPIES.V1_3_0_L1 })).toBe(true);
+    expect(isL1Safe({ version: "1.3.0", masterCopy: MASTER_COPIES.V1_3_0_L1 })).toBe(true);
   });
 
   it("returns false for V1_3_0 with an L2 masterCopy", () => {
-    expect(isL1Safe({ version: "V1_3_0", masterCopy: MASTER_COPIES.V1_3_0_L2 })).toBe(false);
+    expect(isL1Safe({ version: "1.3.0", masterCopy: MASTER_COPIES.V1_3_0_L2 })).toBe(false);
   });
 
   it("returns false for V1_3_0+ with no masterCopy", () => {
-    expect(isL1Safe({ version: "V1_3_0", masterCopy: undefined })).toBe(false);
-    expect(isL1Safe({ version: "V1_4_1", masterCopy: undefined })).toBe(false);
+    expect(isL1Safe({ version: "1.3.0", masterCopy: undefined })).toBe(false);
+    expect(isL1Safe({ version: "1.4.1", masterCopy: undefined })).toBe(false);
   });
 
   it("L1_MASTER_COPIES covers every L1 entry the resolver knows about", () => {

@@ -1,7 +1,7 @@
 import { indexer, type Entity } from "envio";
 import { addOwner, removeOwner, addSafeToOwner, executionSuccess, executionFailure, incrementSafeCount, incrementTransactionCount, incrementModuleTransactionCount, getOrCreateVersion, ensureSafeStub } from "./helpers";
 import { getSetupTrace, decodeSetupInput, getMasterCopyFromTrace, getSafeMasterCopyViaRpc, resolveVersionFromMasterCopy, decodeCreateProxyWithNonceInitializer, getSafeCreatorViaTraceTransaction, CREATOR_TRACE_CHAINS } from "./hypersync";
-import { LEGACY_V1_0_0_PROXY } from "./consts";
+import { LEGACY_V1_0_0_PROXY, formatStsVersion, versionStatKey } from "./consts";
 import type { SafeVersion } from "./consts";
 import { decodeAbiParameters, zeroAddress } from "viem";
 
@@ -119,9 +119,15 @@ indexer.onEvent({ contract: "GnosisSafeProxyPre1_3_0", event: "ProxyCreation" },
   // when we're on a chain with trace support; otherwise fall back to tx.from.
   const creator = await resolveCreator(chainId, hash, proxy, creationTxFrom, context);
 
+  // STS-format string ("1.1.1", "1.0.0", etc.) for the Safe.version field;
+  // version-stat key uses "UNKNOWN" as the sentinel when formatStsVersion
+  // returns null so stats remain non-nullable.
+  const stsVersion = formatStsVersion(version === "UNKNOWN" ? undefined : version, masterCopyAddress);
+  const statKey = versionStatKey(version === "UNKNOWN" ? undefined : version, masterCopyAddress);
+
   const safe: Safe = {
     id: safeId,
-    version,
+    version: stsVersion,
     creationTxHash: hash,
     creationTimestamp: BigInt(block.timestamp),
     blockCreationNum: block.number,
@@ -134,12 +140,13 @@ indexer.onEvent({ contract: "GnosisSafeProxyPre1_3_0", event: "ProxyCreation" },
     masterCopy: masterCopyAddress,
     fallbackHandler: fallbackHandler ? fallbackHandler.toLowerCase() : undefined,
     guard: NO_GUARD,
+    moduleGuard: NO_GUARD, // pre-1.3.0 has no moduleGuard concept; defaults to zero
     initializer: "",
     creationTxFrom,
     creator,
     numberOfSuccessfulExecutions: 0,
     numberOfFailedExecutions: 0,
-    nonce: 0,
+    nonce: 0n,
     totalGasSpent: 0n,
     counted: true, // ProxyCreation is the canonical counting event
   };
@@ -149,7 +156,7 @@ indexer.onEvent({ contract: "GnosisSafeProxyPre1_3_0", event: "ProxyCreation" },
   // Increment exactly once per Safe — skip if a prior ProxyCreation already
   // counted this one (defensive against re-emitted ProxyCreation events).
   if (!wasCountedBefore) {
-    await incrementSafeCount(chainId, version, context);
+    await incrementSafeCount(chainId, statKey, context);
   }
 
   // Add safe to each Owner entity
@@ -202,7 +209,11 @@ async function handleModernProxyCreation(
 
   // Resolve version from singleton address; fall back to factory-implied version
   const resolvedVersion = masterCopy ? resolveVersionFromMasterCopy(masterCopy) : undefined;
-  const version = resolvedVersion ?? factoryImpliedVersion;
+  const enumVersion = resolvedVersion ?? factoryImpliedVersion;
+  // STS-format (e.g. "1.4.1+L2") for the Safe.version field; stat key uses
+  // "UNKNOWN" sentinel when STS format isn't resolvable.
+  const stsVersion = formatStsVersion(enumVersion === "UNKNOWN" ? undefined : enumVersion, masterCopy);
+  const statKey = versionStatKey(enumVersion === "UNKNOWN" ? undefined : enumVersion, masterCopy);
 
   // Backfill setupData by decoding `createProxyWithNonce(address,bytes,uint256)`
   // from the deployment tx's calldata. Works for direct factory calls (the
@@ -239,8 +250,10 @@ async function handleModernProxyCreation(
     // is what matches Safe Transaction Service's `/safes/{addr}/` response.
     context.Safe.set({
       ...existingSafe,
-      version:
-        existingSafe.version !== "UNKNOWN" ? existingSafe.version : version,
+      // version: STS string or null. Preserve any prior set (state-mutation
+      // events like ChangedMasterCopy fired in setup-time delegate-calls
+      // are authoritative — see comment block above).
+      version: existingSafe.version ?? stsVersion,
       masterCopy: existingSafe.masterCopy ?? masterCopy,
       creationTxHash: hash,
       creationTimestamp: BigInt(block.timestamp),
@@ -256,10 +269,11 @@ async function handleModernProxyCreation(
       id: safeId,
       owners: [],
       chainId,
-      version,
+      version: stsVersion,
       masterCopy,
       fallbackHandler: undefined, // Will be set by SafeSetup
       guard: NO_GUARD,
+      moduleGuard: NO_GUARD, // v1.5.0+ only; defaults to zero, mutated by ChangedModuleGuard
       creationTxHash: hash,
       creationTimestamp: BigInt(block.timestamp),
       blockCreationNum: block.number,
@@ -272,7 +286,7 @@ async function handleModernProxyCreation(
       creator,
       numberOfSuccessfulExecutions: 0,
       numberOfFailedExecutions: 0,
-      nonce: 0,
+      nonce: 0n,
       totalGasSpent: 0n,
       counted: true, // ProxyCreation is the canonical counting event
     };
@@ -282,7 +296,7 @@ async function handleModernProxyCreation(
 
   // Increment exactly once per Safe — guard against re-emitted ProxyCreation.
   if (!wasCountedBefore) {
-    await incrementSafeCount(chainId, version, context);
+    await incrementSafeCount(chainId, statKey, context);
   }
 }
 
@@ -373,6 +387,15 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeSetup", wildcard: true }
     // already has the final fallbackHandler set and we must NOT clobber it
     // with SafeSetup's stale initial. Mirrors how masterCopy/version/creator
     // are preserved here.
+    // Resolve STS-format version from whichever masterCopy ends up on the
+    // entity (existing first, then RPC-resolved, then null).
+    const effectiveMasterCopy =
+      existingSafe.masterCopy ?? rpcMasterCopy ?? undefined;
+    const stsVersionFromMc = formatStsVersion(
+      resolvedVersion ?? undefined,
+      effectiveMasterCopy,
+    );
+
     const safe: Safe = {
       ...existingSafe,
       owners: ownersArray,
@@ -380,11 +403,11 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeSetup", wildcard: true }
       initializer,
       creationTxFrom,
       fallbackHandler: existingSafe.fallbackHandler ?? fallback,
-      masterCopy: existingSafe.masterCopy ?? rpcMasterCopy ?? undefined,
-      version:
-        existingSafe.version !== "UNKNOWN"
-          ? existingSafe.version
-          : (resolvedVersion ?? "UNKNOWN"),
+      masterCopy: effectiveMasterCopy,
+      // version: preserve any non-null existing value (state-mutation
+      // events like ChangedMasterCopy are authoritative). Otherwise derive
+      // from the effective masterCopy.
+      version: existingSafe.version ?? stsVersionFromMc,
       creator: existingSafe.counted ? existingSafe.creator : creator,
     };
 
@@ -405,10 +428,11 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeSetup", wildcard: true }
       threshold: Number(threshold),
       chainId,
       address: srcAddress,
-      version: resolvedVersion ?? "UNKNOWN",
+      version: formatStsVersion(resolvedVersion ?? undefined, rpcMasterCopy ?? undefined),
       masterCopy: rpcMasterCopy ?? undefined,
       fallbackHandler: fallback,
       guard: NO_GUARD,
+      moduleGuard: NO_GUARD,
       creationTxHash: hash,
       creationTimestamp: BigInt(event.block.timestamp),
       blockCreationNum: event.block.number,
@@ -419,7 +443,7 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeSetup", wildcard: true }
       creator,
       numberOfSuccessfulExecutions: 0,
       numberOfFailedExecutions: 0,
-      nonce: 0,
+      nonce: 0n,
       totalGasSpent: 0n,
       // SafeSetup never counts — ProxyCreation is the canonical counting event.
       counted: false,
@@ -484,8 +508,10 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeMultiSigTransaction", wi
     success: undefined,
   });
 
-  // Increment global, network, and version transaction counts
-  await incrementTransactionCount(chainId, safe.version, context);
+  // Increment global, network, and version transaction counts. `safe.version`
+  // is now nullable (Safe-TX-Service shape); bucket nulls under "UNKNOWN" so
+  // Version-stat keys stay non-null.
+  await incrementTransactionCount(chainId, safe.version ?? "UNKNOWN", context);
 });
 
 indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeModuleTransaction", wildcard: true }, async ({ event, context }) => {
@@ -519,8 +545,9 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeModuleTransaction", wild
     blockNumber: event.block.number,
   });
 
-  // Increment global, network, and version module transaction counts
-  await incrementModuleTransactionCount(chainId, safe.version, context);
+  // Increment global, network, and version module transaction counts.
+  // `safe.version` is now nullable; bucket nulls under "UNKNOWN".
+  await incrementModuleTransactionCount(chainId, safe.version ?? "UNKNOWN", context);
 });
 
 indexer.onEvent({ contract: "GnosisSafeL2", event: "AddedOwner", wildcard: true }, async ({ event, context }) => {
@@ -558,28 +585,26 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "ExecutionFailureV4", wildcar
 
 indexer.onEvent({ contract: "GnosisSafeL2", event: "ChangedMasterCopy", wildcard: true }, async ({ event, context }) => {
   const { singleton } = event.params;
-  const { chainId } = event;
-  const safeId = `${chainId}-${event.srcAddress}`;
 
   // Stub if missing — possible if ChangedMasterCopy fires inside a
   // setup()-time delegate-call ahead of SafeSetup / ProxyCreation.
   const safe = await ensureSafeStub(event, context);
 
   const newMasterCopy = singleton.toLowerCase();
-  const newVersion = resolveVersionFromMasterCopy(newMasterCopy);
+  const newStsVersion = formatStsVersion(undefined, newMasterCopy);
 
-  if (!newVersion) {
+  if (!newStsVersion) {
     // Unknown singleton - update masterCopy but keep version
     context.Safe.set({ ...safe, masterCopy: newMasterCopy });
     return;
   }
 
-  const oldVersion = safe.version;
+  const oldStsVersion = safe.version;
 
   context.Safe.set({
     ...safe,
     masterCopy: newMasterCopy,
-    version: newVersion,
+    version: newStsVersion,
   });
 
   // Adjust Version stats: decrement old, increment new.
@@ -591,19 +616,36 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "ChangedMasterCopy", wildcard
   // incrementing the new version would phantom-count it. When/if
   // ProxyCreation eventually arrives it'll increment the resolved version
   // exactly once.
-  if (safe.counted && oldVersion !== newVersion) {
-    const oldVersionEntity = await getOrCreateVersion(oldVersion, context);
+  //
+  // Note: stat keys use the STS string format ("1.4.1+L2", "1.3.0") with
+  // "UNKNOWN" as the null-bucket sentinel.
+  if (safe.counted && oldStsVersion !== newStsVersion) {
+    const oldKey = oldStsVersion ?? "UNKNOWN";
+    const oldVersionEntity = await getOrCreateVersion(oldKey, context);
     context.Version.set({
       ...oldVersionEntity,
       numberOfSafes: Math.max(0, oldVersionEntity.numberOfSafes - 1),
     });
 
-    const newVersionEntity = await getOrCreateVersion(newVersion, context);
+    // newStsVersion is non-null here — we returned early above when it was null.
+    const newVersionEntity = await getOrCreateVersion(newStsVersion!, context);
     context.Version.set({
       ...newVersionEntity,
       numberOfSafes: newVersionEntity.numberOfSafes + 1,
     });
   }
+});
+
+// ChangedModuleGuard — v1.5.0+ only (earlier versions have no moduleGuard
+// concept). Emitted by `setModuleGuard(...)`. Same wildcard / ensureSafeStub
+// pattern as ChangedGuard / ChangedFallbackHandler.
+indexer.onEvent({ contract: "GnosisSafeL2", event: "ChangedModuleGuard", wildcard: true }, async ({ event, context }) => {
+  // Stub if missing — handles setup()-time delegate-call emission.
+  const safe = await ensureSafeStub(event, context);
+  context.Safe.set({
+    ...safe,
+    moduleGuard: event.params.moduleGuard.toLowerCase(),
+  });
 });
 
 indexer.onEvent({ contract: "GnosisSafeL2", event: "ChangedFallbackHandler", wildcard: true }, async ({ event, context }) => {

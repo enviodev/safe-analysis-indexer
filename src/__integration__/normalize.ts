@@ -8,7 +8,6 @@ import type {
   NormalisedMultisigTx,
   NormalisedSafe,
   NormalisedSafeCreation,
-  SafeVersionEnum,
 } from "./types";
 
 export const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
@@ -39,48 +38,21 @@ const bigIntStr = (v: string | number | null | undefined): string => {
   }
 };
 
-// Map Safe TX Service version strings ("1.3.0+L2", "1.4.1", null) to the
-// indexer enum. Returns "UNKNOWN" for anything we can't recognise.
-export function versionStringToEnum(v: string | null | undefined): SafeVersionEnum {
-  if (v == null) return "UNKNOWN";
-  // Safe TX Service sometimes appends "+L2" or "+Soft" suffixes; strip them.
-  const semver = v.replace(/\+.*$/, "").trim();
-  switch (semver) {
-    case "0.0.2":
-      return "V0_0_2";
-    case "0.1.0":
-      return "V0_1_0";
-    case "1.0.0":
-      return "V1_0_0";
-    case "1.1.0":
-      return "V1_1_0";
-    case "1.1.1":
-      return "V1_1_1";
-    case "1.2.0":
-      return "V1_2_0";
-    case "1.3.0":
-      return "V1_3_0";
-    case "1.4.1":
-      return "V1_4_1";
-    case "1.5.0":
-      return "V1_5_0";
-    default:
-      return "UNKNOWN";
-  }
-}
-
 // Raw Safe Transaction Service `/safes/{address}/` response shape (the fields
 // we care about). Keep this loose — the spec evolves, and we only pin the
 // fields we compare.
 export interface SafeApiSafe {
   address: string;
-  nonce: number;
+  // STS spec types nonce as integer on /safes/{address}/ (SafeLastStatus); we
+  // accept number|string for resilience and canonicalise to decimal string.
+  nonce: number | string;
   threshold: number;
   owners: string[];
   masterCopy: string | null;
   modules: string[] | null;
   fallbackHandler: string | null;
   guard: string | null;
+  moduleGuard: string | null;
   version: string | null;
 }
 
@@ -96,9 +68,12 @@ export function normaliseSafeFromApi(
     masterCopy: lower(raw.masterCopy),
     fallbackHandler: lower(raw.fallbackHandler),
     guard: lowerOrZero(raw.guard),
+    moduleGuard: lowerOrZero(raw.moduleGuard),
     modules: [...(raw.modules ?? [])].map((m) => m.toLowerCase()).sort(),
-    version: versionStringToEnum(raw.version),
-    nonce: raw.nonce,
+    // STS-format string verbatim — both sides now speak the same dialect.
+    version: raw.version ?? null,
+    // STS returns nonce as a decimal string; normalize to string on our side too.
+    nonce: bigIntStr(raw.nonce),
   };
 }
 
@@ -111,8 +86,10 @@ export interface IndexerSafe {
   masterCopy: string | null;
   fallbackHandler: string | null;
   guard: string;
-  version: SafeVersionEnum;
-  nonce: number;
+  moduleGuard: string;
+  version: string | null;
+  // Hasura serializes BigInt as string in REST / GraphQL responses.
+  nonce: string;
   modules: { module: string }[];
 }
 
@@ -125,9 +102,10 @@ export function normaliseSafeFromIndexer(raw: IndexerSafe): NormalisedSafe {
     masterCopy: lower(raw.masterCopy),
     fallbackHandler: lower(raw.fallbackHandler),
     guard: lowerOrZero(raw.guard),
+    moduleGuard: lowerOrZero(raw.moduleGuard),
     modules: raw.modules.map((m) => m.module.toLowerCase()).sort(),
     version: raw.version,
-    nonce: raw.nonce,
+    nonce: bigIntStr(raw.nonce),
   };
 }
 
