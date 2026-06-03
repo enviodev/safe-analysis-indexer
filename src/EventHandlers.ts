@@ -352,13 +352,23 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeSetup", wildcard: true }
     // them alone — ProxyCreation's singleton param is the canonical source.
     // creator: if ProxyCreation has already counted this Safe its creator is
     // authoritative; otherwise SafeSetup's trace-walked value fills it in.
+    //
+    // fallbackHandler: SafeSetup's `fallbackHandler` event param reports the
+    // value passed INTO setup() — i.e. the INITIAL value, before
+    // `setupModules(to, data)` delegate-calls anything. If a setup-time
+    // delegate-call emitted ChangedFallbackHandler before us (the canonical
+    // 4337 module-install pattern: log[N] EnabledModule, log[N+1]
+    // ChangedFallbackHandler, log[N+M] SafeSetup), the existing entity
+    // already has the final fallbackHandler set and we must NOT clobber it
+    // with SafeSetup's stale initial. Mirrors how masterCopy/version/creator
+    // are preserved here.
     const safe: Safe = {
       ...existingSafe,
       owners: ownersArray,
       threshold: Number(threshold),
       initializer,
       creationTxFrom,
-      fallbackHandler: fallback,
+      fallbackHandler: existingSafe.fallbackHandler ?? fallback,
       masterCopy: existingSafe.masterCopy ?? rpcMasterCopy ?? undefined,
       version:
         existingSafe.version !== "UNKNOWN"
