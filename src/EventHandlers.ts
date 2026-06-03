@@ -227,10 +227,21 @@ async function handleModernProxyCreation(
     // is the authoritative creation point, and only it knows the factory).
     // setupData: ProxyCreation is the canonical source — overwrite even if
     // the stub had something else (which it shouldn't, on this path).
+    //
+    // masterCopy/version: ProxyCreation's `singleton` arg reports the INITIAL
+    // value the factory deployed against, NOT the current state. Setup-time
+    // delegate-call patterns can call `changeMasterCopy(...)` inside
+    // `setupModules(to, data)`, which emits ChangedMasterCopy BEFORE
+    // ProxyCreation in log order (the canonical L1→L2 migration pattern
+    // observed on Gnosis Safes 0x2e94924a… / 0xf55a8b…). Preserve any
+    // already-set masterCopy/version — same defensive pattern as
+    // SafeSetup, ChangedFallbackHandler, etc. The post-delegate-call state
+    // is what matches Safe Transaction Service's `/safes/{addr}/` response.
     context.Safe.set({
       ...existingSafe,
-      version,
-      masterCopy,
+      version:
+        existingSafe.version !== "UNKNOWN" ? existingSafe.version : version,
+      masterCopy: existingSafe.masterCopy ?? masterCopy,
       creationTxHash: hash,
       creationTimestamp: BigInt(block.timestamp),
       blockCreationNum: block.number,
