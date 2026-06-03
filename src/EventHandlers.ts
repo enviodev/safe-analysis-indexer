@@ -615,6 +615,30 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "ChangedMasterCopy", wildcard
   }
 });
 
+// SafeReceived — v1.3.0+ Safe.receive() emits this for bare ETH inbound.
+// Pre-1.3.0 Safes don't emit anything for inbound ETH (silent). Edge cases
+// also missed: selfdestruct funding, coinbase rewards, CREATE2 prefunds,
+// value-bearing calls that hit the fallback path. Outbound native ETH from
+// Safes emits no event — not tracked here. Skip when the emitter isn't a
+// known Safe (rare topic0 collision) so we don't create phantom rows.
+indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeReceived", wildcard: true }, async ({ event, context }) => {
+  const safeId = `${event.chainId}-${event.srcAddress}`;
+  const safe = await context.Safe.get(safeId);
+  if (!safe) return;
+
+  context.NativeTransfer.set({
+    id: `${event.chainId}_${event.block.number}_${event.logIndex}`,
+    chainId: event.chainId,
+    blockNumber: event.block.number,
+    blockTimestamp: BigInt(event.block.timestamp),
+    txHash: event.transaction.hash,
+    logIndex: event.logIndex,
+    safeAddress: event.srcAddress.toLowerCase(),
+    sender: event.params.sender.toLowerCase(),
+    value: event.params.value,
+  });
+});
+
 // ChangedModuleGuard — v1.5.0+ only (earlier versions have no moduleGuard
 // concept). Emitted by `setModuleGuard(...)`. Same wildcard / ensureSafeStub
 // pattern as ChangedGuard / ChangedFallbackHandler.

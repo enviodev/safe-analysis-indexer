@@ -299,6 +299,32 @@ export function simulateChangedGuard(args: {
 }
 
 // ---------------------------------------------------------------------------
+// SafeReceived (GnosisSafeL2, wildcard) — v1.3.0+ only. Single ABI
+// `SafeReceived(address indexed sender, uint256 value)` emitted from
+// Safe.receive() for bare ETH inbound.
+// ---------------------------------------------------------------------------
+export function simulateSafeReceived(args: {
+  safeAddress: `0x${string}`;
+  sender: `0x${string}`;
+  value: bigint;
+  block?: { number?: number; timestamp?: number; hash?: string };
+  tx?: { hash?: string };
+  logIndex?: number;
+}) {
+  const block = autoBlock(args.block);
+  const li = args.logIndex ?? nextLogIndex();
+  return {
+    contract: "GnosisSafeL2" as const,
+    event: "SafeReceived" as const,
+    srcAddress: args.safeAddress,
+    logIndex: li,
+    block,
+    transaction: autoTx(args.tx, block.number, li),
+    params: { sender: args.sender, value: args.value },
+  } as const;
+}
+
+// ---------------------------------------------------------------------------
 // ChangedModuleGuard (GnosisSafeL2, wildcard) — v1.5.0+ only. Single ABI
 // shape `ChangedModuleGuard(address indexed moduleGuard)`, so no V4 variant.
 // ---------------------------------------------------------------------------
