@@ -23,8 +23,8 @@ const GLOBAL_STATS_ID = "global";
 // stays on the canonical `ProxyCreation` path so it doesn't double-count.
 //
 // `version: "UNKNOWN"` is deliberate (not `V1_3_0`): we genuinely don't know
-// the version yet, and it serves as a marker downstream (`ChangedMasterCopy`)
-// for "uncounted stub — skip Version-stats reconciliation."
+// the version yet, and `counted: false` already gates Version-stats
+// reconciliation for stubs.
 export const ensureSafeStub = async (
   event: {
     srcAddress: string;
@@ -44,7 +44,7 @@ export const ensureSafeStub = async (
     address: event.srcAddress,
     owners: [] as string[],
     threshold: 0,
-    version: undefined, // we don't know yet; ProxyCreation will resolve it
+    version: "UNKNOWN", // we don't know yet; ProxyCreation will resolve it
     masterCopy: undefined,
     fallbackHandler: undefined,
     guard: zeroAddress,
@@ -422,9 +422,7 @@ async function createL1SafeTransaction(event: any, context: any, safe: any, nonc
       success: isSuccess,
     });
 
-    // Increment global, network, and version transaction counts. `safe.version`
-    // is nullable STS-format; bucket nulls under "UNKNOWN".
-    await incrementTransactionCount(chainId, safe.version ?? "UNKNOWN", context);
+    await incrementTransactionCount(chainId, safe.version, context);
   } catch (e) {
     console.log(`[L1 TX] Failed to create SafeTransaction for ${safeId} tx=${hash}:`, e);
   }

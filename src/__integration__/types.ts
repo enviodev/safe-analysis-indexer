@@ -7,6 +7,24 @@
 export type ChainId = 1 | 100;
 export type SafeAddress = `0x${string}`;
 
+// Mirrors the indexer's `enum SafeVersion` (schema.graphql). Both sides of the
+// cross-reference get normalised onto this enum at the wrapper layer — STS's
+// nullable "1.4.1+L2" string is mapped here in normalize.ts.
+export type SafeVersionEnum =
+  | "UNKNOWN"
+  | "V0_0_2"
+  | "V0_1_0"
+  | "V1_0_0"
+  | "V1_1_0"
+  | "V1_1_1"
+  | "V1_2_0"
+  | "V1_3_0"
+  | "V1_3_0_L2"
+  | "V1_4_1"
+  | "V1_4_1_L2"
+  | "V1_5_0"
+  | "V1_5_0_L2";
+
 export interface NormalisedSafe {
   chainId: ChainId;
   address: string; // lowercase
@@ -17,11 +35,10 @@ export interface NormalisedSafe {
   guard: string; // lowercase, defaults to ZERO_ADDRESS
   moduleGuard: string; // lowercase, defaults to ZERO_ADDRESS (v1.5.0+ only)
   modules: string[]; // lowercase, sorted
-  // Safe-Transaction-Service format: "1.4.1+L2" / "1.3.0" / null. Both
-  // sides now produce this directly (indexer's `Safe.version` is the same
-  // format Safe TX Service uses on `/safes/{address}/`), so the comparator
-  // is a straight string equality check.
-  version: string | null;
+  // Indexer SafeVersion enum. The wrapper layer (normalize.ts) maps STS's
+  // nullable "1.4.1+L2" / "1.3.0" / null string onto this enum so the
+  // comparator is a straight equality check.
+  version: SafeVersionEnum;
   // Decimal-string nonce (both sides serialize bigint as string).
   nonce: string;
 }

@@ -150,7 +150,7 @@ describe("Pre-1.3.0 ProxyCreation derives fallbackHandler from initializer", () 
     ]);
 
     const safe = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, proxy));
-    expect(safe.version).toBe("1.1.1");
+    expect(safe.version).toBe("V1_1_1");
     expect(safe.fallbackHandler).toBe(fallback);
   });
 
@@ -169,7 +169,7 @@ describe("Pre-1.3.0 ProxyCreation derives fallbackHandler from initializer", () 
     const safe = await indexer.Safe.getOrThrow(
       safeId(CHAIN_ID, "0x12302fe9c02ff50939baaaf415fc226c078613c"),
     );
-    expect(safe.version).toBe("1.0.0");
+    expect(safe.version).toBe("V1_0_0");
     expect(safe.fallbackHandler).toBeUndefined();
   });
 });
@@ -194,7 +194,7 @@ describe("ChangedFallbackHandler", () => {
     const id = seedSafe(indexer, {
       chainId: CHAIN_ID,
       address: safeAddr,
-      version: "1.3.0",
+      version: "V1_3_0",
       masterCopy: MASTER_COPIES.V1_3_0_L2,
       fallbackHandler: addr("old-handler"),
     });
@@ -207,7 +207,7 @@ describe("ChangedFallbackHandler", () => {
     const safe = await indexer.Safe.getOrThrow(id);
     expect(safe.fallbackHandler).toBe(newHandler.toLowerCase());
     // Other fields unchanged
-    expect(safe.version).toBe("1.3.0");
+    expect(safe.version).toBe("V1_3_0");
     expect(safe.masterCopy).toBe(MASTER_COPIES.V1_3_0_L2);
   });
 

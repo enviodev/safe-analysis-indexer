@@ -74,7 +74,7 @@ describe("SafeMultiSigTransaction", () => {
       global: 1,
       chainId: CHAIN_ID,
       network: 1,
-      version: "1.3.0",
+      version: "V1_3_0",
       versionCount: 1,
     });
   });
@@ -117,7 +117,7 @@ describe("SafeModuleTransaction", () => {
       global: 1,
       chainId: CHAIN_ID,
       network: 1,
-      version: "1.3.0",
+      version: "V1_3_0",
       versionCount: 1,
     });
   });
@@ -150,7 +150,7 @@ describe("ExecutionSuccess / ExecutionFailure", () => {
     const id = seedSafe(indexer, {
       chainId: CHAIN_ID,
       address: safeAddr,
-      version: "1.4.1",
+      version: "V1_4_1",
     });
     const safeTxHash = ("0x" + "ab".repeat(32)) as `0x${string}`;
 
@@ -184,7 +184,7 @@ describe("ExecutionSuccess / ExecutionFailure", () => {
     const id = seedSafe(indexer, {
       chainId: CHAIN_ID,
       address: safeAddr,
-      version: "1.4.1",
+      version: "V1_4_1",
     });
     const safeTxHash = ("0x" + "cd".repeat(32)) as `0x${string}`;
 
@@ -223,7 +223,7 @@ describe("ExecutionSuccess / ExecutionFailure", () => {
     const id = seedSafe(indexer, {
       chainId: CHAIN_ID,
       address: safeAddr,
-      version: "1.4.1",
+      version: "V1_4_1",
     });
     const safeTxHash = ("0x" + "ef".repeat(32)) as `0x${string}`;
     // Force both V4 and non-V4 simulators to emit at the same (block, logIndex)

@@ -5,7 +5,6 @@ import {
   resolveVersionFromMasterCopy,
   isL1Safe,
   MASTER_COPY_TO_VERSION,
-  L1_MASTER_COPIES,
   SETUP_ABI_V1_0_0,
   SETUP_ABI_V1_1_1,
   EXEC_TRANSACTION_ABI,
@@ -39,34 +38,32 @@ describe("resolveVersionFromMasterCopy", () => {
 });
 
 describe("isL1Safe", () => {
-  const pre1_3_0Versions = ["0.0.2", "0.1.0", "1.0.0", "1.1.0", "1.1.1", "1.2.0"] as const;
+  const l1Versions = [
+    "V0_0_2",
+    "V0_1_0",
+    "V1_0_0",
+    "V1_1_0",
+    "V1_1_1",
+    "V1_2_0",
+    "V1_3_0",
+    "V1_4_1",
+    "V1_5_0",
+  ] as const;
 
-  it.each(pre1_3_0Versions)(
-    "returns true for pre-1.3.0 version %s regardless of masterCopy",
-    (version) => {
-      expect(isL1Safe({ version, masterCopy: undefined })).toBe(true);
-      expect(isL1Safe({ version, masterCopy: MASTER_COPIES.V1_3_0_L2 })).toBe(true);
-    },
-  );
-
-  it("returns true for V1_3_0 with an L1 masterCopy", () => {
-    expect(isL1Safe({ version: "1.3.0", masterCopy: MASTER_COPIES.V1_3_0_L1 })).toBe(true);
+  it.each(l1Versions)("returns true for non-L2 enum %s", (version) => {
+    expect(isL1Safe({ version })).toBe(true);
   });
 
-  it("returns false for V1_3_0 with an L2 masterCopy", () => {
-    expect(isL1Safe({ version: "1.3.0", masterCopy: MASTER_COPIES.V1_3_0_L2 })).toBe(false);
+  const l2Versions = ["V1_3_0_L2", "V1_4_1_L2", "V1_5_0_L2"] as const;
+
+  it.each(l2Versions)("returns false for L2-suffixed enum %s", (version) => {
+    expect(isL1Safe({ version })).toBe(false);
   });
 
-  it("returns false for V1_3_0+ with no masterCopy", () => {
-    expect(isL1Safe({ version: "1.3.0", masterCopy: undefined })).toBe(false);
-    expect(isL1Safe({ version: "1.4.1", masterCopy: undefined })).toBe(false);
-  });
-
-  it("L1_MASTER_COPIES covers every L1 entry the resolver knows about", () => {
-    // Sanity: every entry in L1_MASTER_COPIES is also in MASTER_COPY_TO_VERSION
-    for (const l1 of L1_MASTER_COPIES) {
-      expect(MASTER_COPY_TO_VERSION[l1], `L1 entry ${l1} missing from version map`).toBeDefined();
-    }
+  it("returns false for UNKNOWN / null / undefined", () => {
+    expect(isL1Safe({ version: "UNKNOWN" })).toBe(false);
+    expect(isL1Safe({ version: null })).toBe(false);
+    expect(isL1Safe({ version: undefined })).toBe(false);
   });
 });
 

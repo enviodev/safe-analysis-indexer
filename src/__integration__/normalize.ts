@@ -8,6 +8,7 @@ import type {
   NormalisedMultisigTx,
   NormalisedSafe,
   NormalisedSafeCreation,
+  SafeVersionEnum,
 } from "./types";
 
 export const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
@@ -37,6 +38,43 @@ const bigIntStr = (v: string | number | null | undefined): string => {
     return String(v);
   }
 };
+
+// Map Safe Transaction Service `version` strings ("1.4.1+L2" / "1.3.0" / null)
+// onto the indexer enum. STS uses "+L2" to mark SafeL2.sol variants; we map
+// those to the explicit `_L2` enum members so an L1/L2-mismatched Safe surfaces
+// as a real diff rather than being silently collapsed.
+export function versionStringToEnum(v: string | null | undefined): SafeVersionEnum {
+  if (v == null) return "UNKNOWN";
+  const trimmed = v.trim();
+  switch (trimmed) {
+    case "0.0.2":
+      return "V0_0_2";
+    case "0.1.0":
+      return "V0_1_0";
+    case "1.0.0":
+      return "V1_0_0";
+    case "1.1.0":
+      return "V1_1_0";
+    case "1.1.1":
+      return "V1_1_1";
+    case "1.2.0":
+      return "V1_2_0";
+    case "1.3.0":
+      return "V1_3_0";
+    case "1.3.0+L2":
+      return "V1_3_0_L2";
+    case "1.4.1":
+      return "V1_4_1";
+    case "1.4.1+L2":
+      return "V1_4_1_L2";
+    case "1.5.0":
+      return "V1_5_0";
+    case "1.5.0+L2":
+      return "V1_5_0_L2";
+    default:
+      return "UNKNOWN";
+  }
+}
 
 // Raw Safe Transaction Service `/safes/{address}/` response shape (the fields
 // we care about). Keep this loose — the spec evolves, and we only pin the
@@ -70,9 +108,7 @@ export function normaliseSafeFromApi(
     guard: lowerOrZero(raw.guard),
     moduleGuard: lowerOrZero(raw.moduleGuard),
     modules: [...(raw.modules ?? [])].map((m) => m.toLowerCase()).sort(),
-    // STS-format string verbatim — both sides now speak the same dialect.
-    version: raw.version ?? null,
-    // STS returns nonce as a decimal string; normalize to string on our side too.
+    version: versionStringToEnum(raw.version),
     nonce: bigIntStr(raw.nonce),
   };
 }
@@ -87,7 +123,7 @@ export interface IndexerSafe {
   fallbackHandler: string | null;
   guard: string;
   moduleGuard: string;
-  version: string | null;
+  version: SafeVersionEnum;
   // Hasura serializes BigInt as string in REST / GraphQL responses.
   nonce: string;
   modules: { module: string }[];

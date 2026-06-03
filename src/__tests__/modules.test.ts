@@ -41,7 +41,7 @@ describe("EnabledModule (pre-1.4.0, non-indexed)", () => {
     const id = seedSafe(indexer, {
       chainId: CHAIN_ID,
       address: safeAddr,
-      version: "1.3.0",
+      version: "V1_3_0",
       masterCopy: MASTER_COPIES.V1_3_0_L2,
     });
     const moduleAddr = addr("mod-A");
@@ -184,7 +184,7 @@ describe("EnabledModuleV4 / DisabledModuleV4 (v1.4.0+, indexed)", () => {
     const id = seedSafe(indexer, {
       chainId: CHAIN_ID,
       address: safeAddr,
-      version: "1.4.1",
+      version: "V1_4_1",
       masterCopy: MASTER_COPIES.V1_4_1_L2,
     });
     const moduleAddr = addr("mod-v4");
@@ -208,7 +208,7 @@ describe("EnabledModuleV4 / DisabledModuleV4 (v1.4.0+, indexed)", () => {
     const id = seedSafe(indexer, {
       chainId: CHAIN_ID,
       address: safeAddr,
-      version: "1.4.1",
+      version: "V1_4_1",
     });
     const moduleAddr = addr("mod-cross");
 
@@ -253,7 +253,7 @@ describe("Pre-creation delegate-call emissions (Safe 4337 module installer patte
     const safe = await indexer.Safe.getOrThrow(id);
     expect(safe.owners).toEqual([owner]);
     expect(safe.threshold).toBe(1);
-    expect(safe.version).toBe("1.4.1+L2");
+    expect(safe.version).toBe("V1_4_1_L2");
     expect(safe.masterCopy).toBe(MASTER_COPIES.V1_4_1_L2);
     const row = await indexer.SafeModule.getOrThrow(`${id}-${module}`);
     expect(row.module).toBe(module);

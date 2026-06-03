@@ -23,7 +23,7 @@ describe("Safe.guard defaults to the zero address on every creation path", () =>
       simulateProxyCreationPre1_3_0({ proxy: LEGACY_V1_0_0_PROXY as `0x${string}` }),
     ]);
     const safe = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, LEGACY_V1_0_0_PROXY));
-    expect(safe.version).toBe("1.0.0");
+    expect(safe.version).toBe("V1_0_0");
     expect(safe.guard).toBe(zeroAddress);
   });
 
@@ -82,7 +82,7 @@ describe("ChangedGuard (v1.3.0 non-indexed)", () => {
     const id = seedSafe(indexer, {
       chainId: CHAIN_ID,
       address: safeAddr,
-      version: "1.3.0",
+      version: "V1_3_0",
       masterCopy: MASTER_COPIES.V1_3_0_L2,
     });
 
@@ -93,7 +93,7 @@ describe("ChangedGuard (v1.3.0 non-indexed)", () => {
 
     const safe = await indexer.Safe.getOrThrow(id);
     expect(safe.guard).toBe(newGuard.toLowerCase());
-    expect(safe.version).toBe("1.3.0");
+    expect(safe.version).toBe("V1_3_0");
     expect(safe.masterCopy).toBe(MASTER_COPIES.V1_3_0_L2);
   });
 
@@ -122,7 +122,7 @@ describe("ChangedGuardV4 (v1.4.0+ indexed)", () => {
     const id = seedSafe(indexer, {
       chainId: CHAIN_ID,
       address: safeAddr,
-      version: "1.4.1",
+      version: "V1_4_1",
       masterCopy: MASTER_COPIES.V1_4_1_L2,
     });
 
@@ -133,7 +133,7 @@ describe("ChangedGuardV4 (v1.4.0+ indexed)", () => {
 
     const safe = await indexer.Safe.getOrThrow(id);
     expect(safe.guard).toBe(newGuard);
-    expect(safe.version).toBe("1.4.1");
+    expect(safe.version).toBe("V1_4_1");
   });
 
   it("auto-stubs the Safe for the V4 variant too when fired before setup", async () => {
@@ -188,7 +188,7 @@ describe("Safe.moduleGuard (v1.5.0+ ChangedModuleGuard)", () => {
     const id = seedSafe(indexer, {
       chainId: CHAIN_ID,
       address: safeAddr,
-      version: "1.5.0",
+      version: "V1_5_0",
       masterCopy: MASTER_COPIES.V1_5_0_L1,
     });
 

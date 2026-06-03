@@ -80,9 +80,9 @@ export function seedSafe(
     id,
     chainId: args.chainId,
     address: args.address.toLowerCase(),
-    // Default STS-format string ("1.3.0") instead of the old "V1_3_0" enum.
+    // Default STS-format string ("V1_3_0") instead of the old "V1_3_0" enum.
     // Callers can pass null to seed an unknown-version Safe.
-    version: args.version === undefined ? "1.3.0" : args.version,
+    version: args.version === undefined ? "V1_3_0" : args.version,
     owners: (args.owners ?? []).map((o) => o.toLowerCase()),
     threshold: args.threshold ?? 1,
     masterCopy: args.masterCopy,

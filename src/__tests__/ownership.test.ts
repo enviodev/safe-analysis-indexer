@@ -231,7 +231,7 @@ describe("ChangedThreshold (GnosisSafeL2 wildcard — modern Safes v1.3.0+)", ()
     const id = seedSafe(indexer, {
       chainId: CHAIN_ID,
       address: safeAddr,
-      version: "1.4.1",
+      version: "V1_4_1",
       threshold: 1,
     });
 
