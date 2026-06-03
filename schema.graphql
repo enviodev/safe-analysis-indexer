@@ -141,6 +141,24 @@ type SafeTransaction {
   success: Boolean # null until ExecutionSuccess/Failure fires
 }
 
+# Native ETH inbound — emitted by `Safe.receive()` on v1.3.0+ Safes when a
+# bare ETH transfer hits the Safe (no calldata). Misses pre-1.3.0 Safes (no
+# event), selfdestruct funding, coinbase rewards, CREATE2 prefunds, and
+# value-bearing calls that hit the fallback path instead of receive() —
+# matches the common wallet-to-Safe send path. Outbound native ETH is not
+# tracked here (Safes emit no event on outbound).
+type NativeTransfer {
+  id: ID! # chainId_blockNumber_logIndex
+  chainId: Int! @index
+  blockNumber: Int! @index
+  blockTimestamp: BigInt! @index
+  txHash: String! @index
+  logIndex: Int!
+  safeAddress: String! @index
+  sender: String! @index
+  value: BigInt!
+}
+
 # ERC20 Transfer events whose `from` or `to` matches a discovered Safe address.
 # Wired as a wildcard event (fires across any token contract) with HyperSync
 # topic1/topic2 filtering against the live Safe address pool — the pool is

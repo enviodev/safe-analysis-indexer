@@ -81,6 +81,11 @@ contracts:
       - event: RemovedOwner(address owner)
       - event: RemovedOwner(address indexed owner)
         name: RemovedOwnerV4
+      # v1.3.0+ only — emitted by Safe.receive() on bare ETH inbound.
+      - event: SafeReceived(address indexed sender, uint256 value)
+        field_selection:
+          transaction_fields:
+            - hash
   - name: GnosisSafeProxy1_3_0
     handler: src/EventHandlers.ts
     events:
