@@ -134,12 +134,13 @@ indexer.onEvent({ contract: "GnosisSafeProxyPre1_3_0", event: "ProxyCreation" },
     masterCopy: masterCopyAddress,
     fallbackHandler: fallbackHandler ? fallbackHandler.toLowerCase() : undefined,
     guard: NO_GUARD,
+    moduleGuard: NO_GUARD, // pre-1.3.0 has no moduleGuard concept; defaults to zero
     initializer: "",
     creationTxFrom,
     creator,
     numberOfSuccessfulExecutions: 0,
     numberOfFailedExecutions: 0,
-    nonce: 0,
+    nonce: 0n,
     totalGasSpent: 0n,
     counted: true, // ProxyCreation is the canonical counting event
   };
@@ -200,9 +201,10 @@ async function handleModernProxyCreation(
   const masterCopy = singleton?.toLowerCase();
   const factory = factoryAddress.toLowerCase();
 
-  // Resolve version from singleton address; fall back to factory-implied version
+  // Resolve version from singleton address (carries L1/L2 distinction);
+  // fall back to factory-implied version.
   const resolvedVersion = masterCopy ? resolveVersionFromMasterCopy(masterCopy) : undefined;
-  const version = resolvedVersion ?? factoryImpliedVersion;
+  const version: SafeVersion = resolvedVersion ?? factoryImpliedVersion;
 
   // Backfill setupData by decoding `createProxyWithNonce(address,bytes,uint256)`
   // from the deployment tx's calldata. Works for direct factory calls (the
@@ -239,8 +241,10 @@ async function handleModernProxyCreation(
     // is what matches Safe Transaction Service's `/safes/{addr}/` response.
     context.Safe.set({
       ...existingSafe,
-      version:
-        existingSafe.version !== "UNKNOWN" ? existingSafe.version : version,
+      // version: preserve any non-UNKNOWN existing (state-mutation events
+      // like ChangedMasterCopy fired in setup-time delegate-calls are
+      // authoritative — see comment block above).
+      version: existingSafe.version !== "UNKNOWN" ? existingSafe.version : version,
       masterCopy: existingSafe.masterCopy ?? masterCopy,
       creationTxHash: hash,
       creationTimestamp: BigInt(block.timestamp),
@@ -260,6 +264,7 @@ async function handleModernProxyCreation(
       masterCopy,
       fallbackHandler: undefined, // Will be set by SafeSetup
       guard: NO_GUARD,
+      moduleGuard: NO_GUARD, // v1.5.0+ only; defaults to zero, mutated by ChangedModuleGuard
       creationTxHash: hash,
       creationTimestamp: BigInt(block.timestamp),
       blockCreationNum: block.number,
@@ -272,7 +277,7 @@ async function handleModernProxyCreation(
       creator,
       numberOfSuccessfulExecutions: 0,
       numberOfFailedExecutions: 0,
-      nonce: 0,
+      nonce: 0n,
       totalGasSpent: 0n,
       counted: true, // ProxyCreation is the canonical counting event
     };
@@ -373,6 +378,13 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeSetup", wildcard: true }
     // already has the final fallbackHandler set and we must NOT clobber it
     // with SafeSetup's stale initial. Mirrors how masterCopy/version/creator
     // are preserved here.
+    // Resolve enum version from whichever masterCopy ends up on the entity
+    // (existing first, then RPC-resolved, then UNKNOWN).
+    const effectiveMasterCopy =
+      existingSafe.masterCopy ?? rpcMasterCopy ?? undefined;
+    const effectiveVersion: SafeVersion = resolvedVersion
+      ?? (effectiveMasterCopy ? (resolveVersionFromMasterCopy(effectiveMasterCopy) ?? "UNKNOWN") : "UNKNOWN");
+
     const safe: Safe = {
       ...existingSafe,
       owners: ownersArray,
@@ -380,11 +392,11 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeSetup", wildcard: true }
       initializer,
       creationTxFrom,
       fallbackHandler: existingSafe.fallbackHandler ?? fallback,
-      masterCopy: existingSafe.masterCopy ?? rpcMasterCopy ?? undefined,
-      version:
-        existingSafe.version !== "UNKNOWN"
-          ? existingSafe.version
-          : (resolvedVersion ?? "UNKNOWN"),
+      masterCopy: effectiveMasterCopy,
+      // version: preserve any non-UNKNOWN existing value (state-mutation
+      // events like ChangedMasterCopy are authoritative). Otherwise derive
+      // from the effective masterCopy.
+      version: existingSafe.version !== "UNKNOWN" ? existingSafe.version : effectiveVersion,
       creator: existingSafe.counted ? existingSafe.creator : creator,
     };
 
@@ -409,6 +421,7 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeSetup", wildcard: true }
       masterCopy: rpcMasterCopy ?? undefined,
       fallbackHandler: fallback,
       guard: NO_GUARD,
+      moduleGuard: NO_GUARD,
       creationTxHash: hash,
       creationTimestamp: BigInt(event.block.timestamp),
       blockCreationNum: event.block.number,
@@ -419,7 +432,7 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeSetup", wildcard: true }
       creator,
       numberOfSuccessfulExecutions: 0,
       numberOfFailedExecutions: 0,
-      nonce: 0,
+      nonce: 0n,
       totalGasSpent: 0n,
       // SafeSetup never counts — ProxyCreation is the canonical counting event.
       counted: false,
@@ -484,7 +497,6 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeMultiSigTransaction", wi
     success: undefined,
   });
 
-  // Increment global, network, and version transaction counts
   await incrementTransactionCount(chainId, safe.version, context);
 });
 
@@ -519,7 +531,6 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeModuleTransaction", wild
     blockNumber: event.block.number,
   });
 
-  // Increment global, network, and version module transaction counts
   await incrementModuleTransactionCount(chainId, safe.version, context);
 });
 
@@ -558,8 +569,6 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "ExecutionFailureV4", wildcar
 
 indexer.onEvent({ contract: "GnosisSafeL2", event: "ChangedMasterCopy", wildcard: true }, async ({ event, context }) => {
   const { singleton } = event.params;
-  const { chainId } = event;
-  const safeId = `${chainId}-${event.srcAddress}`;
 
   // Stub if missing — possible if ChangedMasterCopy fires inside a
   // setup()-time delegate-call ahead of SafeSetup / ProxyCreation.
@@ -604,6 +613,18 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "ChangedMasterCopy", wildcard
       numberOfSafes: newVersionEntity.numberOfSafes + 1,
     });
   }
+});
+
+// ChangedModuleGuard — v1.5.0+ only (earlier versions have no moduleGuard
+// concept). Emitted by `setModuleGuard(...)`. Same wildcard / ensureSafeStub
+// pattern as ChangedGuard / ChangedFallbackHandler.
+indexer.onEvent({ contract: "GnosisSafeL2", event: "ChangedModuleGuard", wildcard: true }, async ({ event, context }) => {
+  // Stub if missing — handles setup()-time delegate-call emission.
+  const safe = await ensureSafeStub(event, context);
+  context.Safe.set({
+    ...safe,
+    moduleGuard: event.params.moduleGuard.toLowerCase(),
+  });
 });
 
 indexer.onEvent({ contract: "GnosisSafeL2", event: "ChangedFallbackHandler", wildcard: true }, async ({ event, context }) => {

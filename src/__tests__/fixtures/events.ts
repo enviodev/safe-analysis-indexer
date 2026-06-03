@@ -299,6 +299,30 @@ export function simulateChangedGuard(args: {
 }
 
 // ---------------------------------------------------------------------------
+// ChangedModuleGuard (GnosisSafeL2, wildcard) — v1.5.0+ only. Single ABI
+// shape `ChangedModuleGuard(address indexed moduleGuard)`, so no V4 variant.
+// ---------------------------------------------------------------------------
+export function simulateChangedModuleGuard(args: {
+  safeAddress: `0x${string}`;
+  moduleGuard: `0x${string}`;
+  block?: { number?: number; timestamp?: number; hash?: string };
+  tx?: { hash?: string };
+  logIndex?: number;
+}) {
+  const block = autoBlock(args.block);
+  const li = args.logIndex ?? nextLogIndex();
+  return {
+    contract: "GnosisSafeL2" as const,
+    event: "ChangedModuleGuard" as const,
+    srcAddress: args.safeAddress,
+    logIndex: li,
+    block,
+    transaction: autoTx(args.tx, block.number, li),
+    params: { moduleGuard: args.moduleGuard },
+  } as const;
+}
+
+// ---------------------------------------------------------------------------
 // EnabledModule / DisabledModule (+ V4 variants) (GnosisSafeL2, wildcard) —
 // two ABI variants share each topic0:
 //   pre-1.4.0: EnabledModule(address module)              -- non-indexed

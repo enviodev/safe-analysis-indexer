@@ -39,13 +39,14 @@ const bigIntStr = (v: string | number | null | undefined): string => {
   }
 };
 
-// Map Safe TX Service version strings ("1.3.0+L2", "1.4.1", null) to the
-// indexer enum. Returns "UNKNOWN" for anything we can't recognise.
+// Map Safe Transaction Service `version` strings ("1.4.1+L2" / "1.3.0" / null)
+// onto the indexer enum. STS uses "+L2" to mark SafeL2.sol variants; we map
+// those to the explicit `_L2` enum members so an L1/L2-mismatched Safe surfaces
+// as a real diff rather than being silently collapsed.
 export function versionStringToEnum(v: string | null | undefined): SafeVersionEnum {
   if (v == null) return "UNKNOWN";
-  // Safe TX Service sometimes appends "+L2" or "+Soft" suffixes; strip them.
-  const semver = v.replace(/\+.*$/, "").trim();
-  switch (semver) {
+  const trimmed = v.trim();
+  switch (trimmed) {
     case "0.0.2":
       return "V0_0_2";
     case "0.1.0":
@@ -60,10 +61,16 @@ export function versionStringToEnum(v: string | null | undefined): SafeVersionEn
       return "V1_2_0";
     case "1.3.0":
       return "V1_3_0";
+    case "1.3.0+L2":
+      return "V1_3_0_L2";
     case "1.4.1":
       return "V1_4_1";
+    case "1.4.1+L2":
+      return "V1_4_1_L2";
     case "1.5.0":
       return "V1_5_0";
+    case "1.5.0+L2":
+      return "V1_5_0_L2";
     default:
       return "UNKNOWN";
   }
@@ -74,13 +81,16 @@ export function versionStringToEnum(v: string | null | undefined): SafeVersionEn
 // fields we compare.
 export interface SafeApiSafe {
   address: string;
-  nonce: number;
+  // STS spec types nonce as integer on /safes/{address}/ (SafeLastStatus); we
+  // accept number|string for resilience and canonicalise to decimal string.
+  nonce: number | string;
   threshold: number;
   owners: string[];
   masterCopy: string | null;
   modules: string[] | null;
   fallbackHandler: string | null;
   guard: string | null;
+  moduleGuard: string | null;
   version: string | null;
 }
 
@@ -96,9 +106,10 @@ export function normaliseSafeFromApi(
     masterCopy: lower(raw.masterCopy),
     fallbackHandler: lower(raw.fallbackHandler),
     guard: lowerOrZero(raw.guard),
+    moduleGuard: lowerOrZero(raw.moduleGuard),
     modules: [...(raw.modules ?? [])].map((m) => m.toLowerCase()).sort(),
     version: versionStringToEnum(raw.version),
-    nonce: raw.nonce,
+    nonce: bigIntStr(raw.nonce),
   };
 }
 
@@ -111,8 +122,10 @@ export interface IndexerSafe {
   masterCopy: string | null;
   fallbackHandler: string | null;
   guard: string;
+  moduleGuard: string;
   version: SafeVersionEnum;
-  nonce: number;
+  // Hasura serializes BigInt as string in REST / GraphQL responses.
+  nonce: string;
   modules: { module: string }[];
 }
 
@@ -125,9 +138,10 @@ export function normaliseSafeFromIndexer(raw: IndexerSafe): NormalisedSafe {
     masterCopy: lower(raw.masterCopy),
     fallbackHandler: lower(raw.fallbackHandler),
     guard: lowerOrZero(raw.guard),
+    moduleGuard: lowerOrZero(raw.moduleGuard),
     modules: raw.modules.map((m) => m.module.toLowerCase()).sort(),
     version: raw.version,
-    nonce: raw.nonce,
+    nonce: bigIntStr(raw.nonce),
   };
 }
 

@@ -123,7 +123,7 @@ describe("ProxyCreation — modern (1.3.0 / 1.4.1 / 1.5.0)", () => {
     ]);
 
     const safe = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, proxy));
-    expect(safe.version).toBe("V1_3_0");
+    expect(safe.version).toBe("V1_3_0_L2");
     expect(safe.masterCopy).toBe(MASTER_COPIES.V1_3_0_L2);
   });
 
@@ -448,7 +448,7 @@ describe("SafeSetup ↔ ProxyCreation ordering (1.3.0+)", () => {
     const safe = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, proxy));
     expect(safe.owners).toEqual([ownerA, ownerB]);
     expect(safe.threshold).toBe(2);
-    expect(safe.version).toBe("V1_3_0");
+    expect(safe.version).toBe("V1_3_0_L2");
     expect(safe.masterCopy).toBe(MASTER_COPIES.V1_3_0_L2);
   });
 
@@ -469,7 +469,7 @@ describe("SafeSetup ↔ ProxyCreation ordering (1.3.0+)", () => {
     const safe = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, proxy));
     expect(safe.owners).toEqual([ownerA]);
     expect(safe.threshold).toBe(1);
-    expect(safe.version).toBe("V1_3_0");
+    expect(safe.version).toBe("V1_3_0_L2");
   });
 
   it("SafeSetup alone creates a placeholder Safe with version UNKNOWN until ProxyCreation arrives", async () => {
@@ -517,7 +517,7 @@ describe("SafeSetup ↔ ProxyCreation ordering (1.3.0+)", () => {
     ]);
 
     const safe = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, proxy));
-    expect(safe.version).toBe("V1_3_0");
+    expect(safe.version).toBe("V1_3_0_L2");
     expect(safe.masterCopy).toBe(MASTER_COPIES.V1_3_0_L2);
     // factoryAddress stays null — RPC reads storage, not the factory.
     expect(safe.factoryAddress).toBeUndefined();
@@ -582,7 +582,7 @@ describe("SafeSetup ↔ ProxyCreation ordering (1.3.0+)", () => {
     // ProxyCreation's singleton param wins — the RPC fixture was wrong but
     // never consulted because masterCopy was already populated.
     expect(safe.masterCopy).toBe(MASTER_COPIES.V1_3_0_L2);
-    expect(safe.version).toBe("V1_3_0");
+    expect(safe.version).toBe("V1_3_0_L2");
   });
 
   it("SafeSetup tolerates a readonly owners array (defensive [...owners] copy)", async () => {
@@ -618,7 +618,7 @@ describe("Safe creation counters", () => {
       global: 1,
       chainId: CHAIN_ID,
       network: 1,
-      version: "V1_3_0",
+      version: "V1_3_0_L2",
       versionCount: 1,
     });
   });
@@ -643,7 +643,7 @@ describe("Safe creation counters", () => {
     await expectSafeCount(indexer, { global: 2 });
     await expectSafeCount(indexer, { chainId: 1, network: 1 });
     await expectSafeCount(indexer, { chainId: 100, network: 1 });
-    await expectSafeCount(indexer, { version: "V1_3_0", versionCount: 2 });
+    await expectSafeCount(indexer, { version: "V1_3_0_L2", versionCount: 2 });
   });
 });
 

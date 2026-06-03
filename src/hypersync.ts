@@ -86,11 +86,23 @@ const versionConfig = {
         interface: safeInterface1_1_1,
         selector: safeInterface1_1_1.getFunction("setup")!.selector,
     },
+    V1_3_0_L2: {
+        interface: safeInterface1_1_1,
+        selector: safeInterface1_1_1.getFunction("setup")!.selector,
+    },
     V1_4_1: {
         interface: safeInterface1_1_1,
         selector: safeInterface1_1_1.getFunction("setup")!.selector,
     },
+    V1_4_1_L2: {
+        interface: safeInterface1_1_1,
+        selector: safeInterface1_1_1.getFunction("setup")!.selector,
+    },
     V1_5_0: {
+        interface: safeInterface1_1_1,
+        selector: safeInterface1_1_1.getFunction("setup")!.selector,
+    },
+    V1_5_0_L2: {
         interface: safeInterface1_1_1,
         selector: safeInterface1_1_1.getFunction("setup")!.selector,
     },

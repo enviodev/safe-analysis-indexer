@@ -59,13 +59,14 @@ export function seedSafe(
   args: {
     chainId: number;
     address: `0x${string}`;
-    version?: string;
+    version?: string | null;
     owners?: `0x${string}`[];
     threshold?: number;
     masterCopy?: string;
     fallbackHandler?: string;
     guard?: string;
-    nonce?: number;
+    moduleGuard?: string;
+    nonce?: bigint;
     numberOfSuccessfulExecutions?: number;
     numberOfFailedExecutions?: number;
     totalGasSpent?: bigint;
@@ -79,12 +80,15 @@ export function seedSafe(
     id,
     chainId: args.chainId,
     address: args.address.toLowerCase(),
-    version: args.version ?? "V1_3_0",
+    // Default STS-format string ("V1_3_0") instead of the old "V1_3_0" enum.
+    // Callers can pass null to seed an unknown-version Safe.
+    version: args.version === undefined ? "V1_3_0" : args.version,
     owners: (args.owners ?? []).map((o) => o.toLowerCase()),
     threshold: args.threshold ?? 1,
     masterCopy: args.masterCopy,
     fallbackHandler: args.fallbackHandler,
     guard: args.guard ?? ZERO_ADDRESS,
+    moduleGuard: args.moduleGuard ?? ZERO_ADDRESS,
     creationTxHash: "0x" + "0".repeat(64),
     creationTimestamp: 0n,
     blockCreationNum: args.blockCreationNum ?? 0,
@@ -98,7 +102,7 @@ export function seedSafe(
     creator: "",
     numberOfSuccessfulExecutions: args.numberOfSuccessfulExecutions ?? 0,
     numberOfFailedExecutions: args.numberOfFailedExecutions ?? 0,
-    nonce: args.nonce ?? 0,
+    nonce: args.nonce ?? 0n,
     totalGasSpent: args.totalGasSpent ?? 0n,
     // Seeded Safes are conceptually "post-ProxyCreation" — counted by default.
     counted: true,

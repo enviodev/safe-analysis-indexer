@@ -59,6 +59,8 @@ contracts:
       - event: ChangedGuard(address guard)
       - event: ChangedGuard(address indexed guard)
         name: ChangedGuardV4
+      # v1.5.0+ only — earlier versions have no moduleGuard concept.
+      - event: ChangedModuleGuard(address indexed moduleGuard)
       - event: EnabledModule(address module)
       - event: EnabledModule(address indexed module)
         name: EnabledModuleV4

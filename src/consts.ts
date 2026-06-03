@@ -1,4 +1,5 @@
-// Safe version type
+// Safe version type. "_L2" suffix marks SafeL2.sol-variant master copies
+// (which emit SafeMultiSigTransaction). Pre-1.3.0 had no L2 variant.
 export type SafeVersion =
   | "V0_0_2"
   | "V0_1_0"
@@ -7,8 +8,11 @@ export type SafeVersion =
   | "V1_1_1"
   | "V1_2_0"
   | "V1_3_0"
+  | "V1_3_0_L2"
   | "V1_4_1"
+  | "V1_4_1_L2"
   | "V1_5_0"
+  | "V1_5_0_L2"
   | "UNKNOWN";
 
 // ------------------------------------------------------------------------------------
@@ -40,19 +44,19 @@ export const MASTER_COPY_TO_VERSION: Record<string, SafeVersion> = {
   // v1.2.0 master copy (Ethereum + Gnosis)
   "0x6851d6fdfafd08c0295c392436245e5bc78b0185": "V1_2_0",
 
-  // v1.3.0 master copies
-  "0xd9db270c1b5e3bd161e8c8503c55ceabee709552": "V1_3_0", // L1 (GnosisSafe.sol)
-  "0x3e5c63644e683549055b9be8653de26e0b4cd36e": "V1_3_0", // L2 (GnosisSafeL2.sol)
-  "0x69f4d1788e39c87893c980c06edf4b7f686e2938": "V1_3_0", // L1 alternate (safe singleton factory)
-  "0xfb1bffc9d739b8d520daf37df666da4c687191ea": "V1_3_0", // L2 alternate (safe singleton address)
+  // v1.3.0 master copies — L1 vs L2 are distinct enum values
+  "0xd9db270c1b5e3bd161e8c8503c55ceabee709552": "V1_3_0",    // L1 (GnosisSafe.sol)
+  "0x3e5c63644e683549055b9be8653de26e0b4cd36e": "V1_3_0_L2", // L2 (GnosisSafeL2.sol)
+  "0x69f4d1788e39c87893c980c06edf4b7f686e2938": "V1_3_0",    // L1 alternate (safe singleton factory)
+  "0xfb1bffc9d739b8d520daf37df666da4c687191ea": "V1_3_0_L2", // L2 alternate (safe singleton address)
 
   // v1.4.1 master copies
-  "0x41675c099f32341bf84bfc5382af534df5c7461a": "V1_4_1", // L1 (Safe.sol)
-  "0x29fcb43b46531bca003ddc8fcb67ffe91900c762": "V1_4_1", // L2 (SafeL2.sol)
+  "0x41675c099f32341bf84bfc5382af534df5c7461a": "V1_4_1",    // L1 (Safe.sol)
+  "0x29fcb43b46531bca003ddc8fcb67ffe91900c762": "V1_4_1_L2", // L2 (SafeL2.sol)
 
   // v1.5.0 master copies
-  "0xff51a5898e281db6dfc7855790607438df2ca44b": "V1_5_0", // L1 (Safe.sol)
-  "0xedd160febbd92e350d4d398fb636302fccd67c7e": "V1_5_0", // L2 (SafeL2.sol)
+  "0xff51a5898e281db6dfc7855790607438df2ca44b": "V1_5_0",    // L1 (Safe.sol)
+  "0xedd160febbd92e350d4d398fb636302fccd67c7e": "V1_5_0_L2", // L2 (SafeL2.sol)
 };
 
 // ------------------------------------------------------------------------------------
@@ -93,30 +97,20 @@ export function resolveVersionFromMasterCopy(masterCopy: string): SafeVersion | 
 }
 
 // ------------------------------------------------------------------------------------
-// L1 Master Copy Detection
+// L1 / L2 detection
 // ------------------------------------------------------------------------------------
 
-// Known L1 (non-L2) master copy addresses. Pre-1.3.0 versions had no L2 variant.
-export const L1_MASTER_COPIES: Set<string> = new Set([
-  "0xac6072986e985aabe7804695ec2d8970cf7541a2", // V0_0_2
-  "0x8942595a2dc5181df0465af0d7be08c8f23c93af", // V0_1_0
-  "0xb6029ea3b2c51d09a50b53ca8012feeb05bda35a", // V1_0_0
-  "0xb945bd4b447af21c5b55ef859242829fbdc0bf0a", // V1_0_0 alternate
-  "0xae32496491b53841efb51829d6f886387708f99b", // V1_1_0
-  "0x34cfac646f301356faa8b21e94227e3583fe3f5f", // V1_1_1
-  "0x6851d6fdfafd08c0295c392436245e5bc78b0185", // V1_2_0
-  "0xd9db270c1b5e3bd161e8c8503c55ceabee709552", // V1_3_0 L1
-  "0x69f4d1788e39c87893c980c06edf4b7f686e2938", // V1_3_0 L1 alternate
-  "0x41675c099f32341bf84bfc5382af534df5c7461a", // V1_4_1 L1
-  "0xff51a5898e281db6dfc7855790607438df2ca44b", // V1_5_0 L1
+// Versions that emit SafeMultiSigTransaction (SafeL2.sol variants) and the
+// pre-1.3.0 L1-only ones are determinable from the enum alone.
+const L2_VERSIONS: Set<SafeVersion> = new Set([
+  "V1_3_0_L2",
+  "V1_4_1_L2",
+  "V1_5_0_L2",
 ]);
 
-export function isL1Safe(safe: { masterCopy?: string; version: string }): boolean {
-  // All pre-1.3.0 are L1 (no L2 variant existed)
-  if (["V0_0_2", "V0_1_0", "V1_0_0", "V1_1_0", "V1_1_1", "V1_2_0"].includes(safe.version)) return true;
-  // For 1.3.0+, check masterCopy against known L1 addresses
-  if (safe.masterCopy && L1_MASTER_COPIES.has(safe.masterCopy.toLowerCase())) return true;
-  return false;
+export function isL1Safe(safe: { version?: SafeVersion | null }): boolean {
+  if (!safe.version || safe.version === "UNKNOWN") return false;
+  return !L2_VERSIONS.has(safe.version);
 }
 
 // ------------------------------------------------------------------------------------

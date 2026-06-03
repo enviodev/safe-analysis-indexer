@@ -11,6 +11,7 @@ import {
   simulateProxyCreationModern,
   simulateSafeSetup,
   simulateChangedGuard,
+  simulateChangedModuleGuard,
 } from "./fixtures/events";
 
 const CHAIN_ID = 1;
@@ -163,5 +164,58 @@ describe("ChangedGuard sequence", () => {
 
     const safe = await indexer.Safe.getOrThrow(id);
     expect(safe.guard).toBe(zeroAddress);
+  });
+});
+
+describe("Safe.moduleGuard (v1.5.0+ ChangedModuleGuard)", () => {
+  it("defaults to the zero address on a freshly-created modern Safe", async () => {
+    const indexer = createIndexer();
+    const proxy = addr("modguard-default");
+    await processOnChain(indexer, CHAIN_ID, [
+      simulateProxyCreationModern({
+        contract: "GnosisSafeProxy1_5_0",
+        proxy,
+        singleton: MASTER_COPIES.V1_5_0_L1 as `0x${string}`,
+      }),
+    ]);
+    const safe = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, proxy));
+    expect(safe.moduleGuard).toBe(zeroAddress);
+  });
+
+  it("ChangedModuleGuard updates Safe.moduleGuard in-place (lowercase)", async () => {
+    const indexer = createIndexer();
+    const safeAddr = addr("modguard-update");
+    const id = seedSafe(indexer, {
+      chainId: CHAIN_ID,
+      address: safeAddr,
+      version: "V1_5_0",
+      masterCopy: MASTER_COPIES.V1_5_0_L1,
+    });
+
+    const newModGuard = "0xCaFeBaBeCaFeBaBeCaFeBaBeCaFeBaBeCaFeBaBe" as `0x${string}`;
+    await processOnChain(indexer, CHAIN_ID, [
+      simulateChangedModuleGuard({ safeAddress: safeAddr, moduleGuard: newModGuard }),
+    ]);
+
+    const safe = await indexer.Safe.getOrThrow(id);
+    expect(safe.moduleGuard).toBe(newModGuard.toLowerCase());
+    // guard (the regular tx guard) untouched.
+    expect(safe.guard).toBe(zeroAddress);
+  });
+
+  it("auto-stubs the Safe when ChangedModuleGuard fires before SafeSetup / ProxyCreation", async () => {
+    // Same setup()-time delegate-call concern as the other GnosisSafeL2
+    // wildcards: a multiSend bundle could call setModuleGuard inside setup()
+    // before SafeSetup. Wildcard handler must create a stub Safe so the
+    // moduleGuard isn't dropped.
+    const indexer = createIndexer();
+    const safeAddr = addr("modguard-pre-setup");
+    const newModGuard = addr("modguard-handler-x");
+    await processOnChain(indexer, CHAIN_ID, [
+      simulateChangedModuleGuard({ safeAddress: safeAddr, moduleGuard: newModGuard }),
+    ]);
+    const stub = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, safeAddr));
+    expect(stub.moduleGuard).toBe(newModGuard);
+    expect(stub.counted).toBe(false); // orphan stub stays uncounted
   });
 });

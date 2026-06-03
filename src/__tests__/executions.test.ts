@@ -170,7 +170,7 @@ describe("ExecutionSuccess / ExecutionFailure", () => {
 
     const safe = await indexer.Safe.getOrThrow(id);
     expect(safe.numberOfSuccessfulExecutions).toBe(1);
-    expect(safe.nonce).toBe(1);
+    expect(safe.nonce).toBe(1n);
     expect(safe.totalGasSpent).toBe(100n);
 
     const tx = await indexer.SafeTransaction.getOrThrow(`${id}-0`);
@@ -205,7 +205,7 @@ describe("ExecutionSuccess / ExecutionFailure", () => {
     const safe = await indexer.Safe.getOrThrow(id);
     expect(safe.numberOfFailedExecutions).toBe(1);
     expect(safe.numberOfSuccessfulExecutions).toBe(0);
-    expect(safe.nonce).toBe(1);
+    expect(safe.nonce).toBe(1n);
     expect(safe.totalGasSpent).toBe(50n);
 
     const tx = await indexer.SafeTransaction.getOrThrow(`${id}-0`);
@@ -259,7 +259,7 @@ describe("ExecutionSuccess / ExecutionFailure", () => {
     const safe = await indexer.Safe.getOrThrow(id);
     // Exactly +1 — not +2. This is the load-bearing assertion.
     expect(safe.numberOfSuccessfulExecutions).toBe(1);
-    expect(safe.nonce).toBe(1);
+    expect(safe.nonce).toBe(1n);
     expect(safe.totalGasSpent).toBe(10n);
   });
 

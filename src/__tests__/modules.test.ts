@@ -253,7 +253,7 @@ describe("Pre-creation delegate-call emissions (Safe 4337 module installer patte
     const safe = await indexer.Safe.getOrThrow(id);
     expect(safe.owners).toEqual([owner]);
     expect(safe.threshold).toBe(1);
-    expect(safe.version).toBe("V1_4_1");
+    expect(safe.version).toBe("V1_4_1_L2");
     expect(safe.masterCopy).toBe(MASTER_COPIES.V1_4_1_L2);
     const row = await indexer.SafeModule.getOrThrow(`${id}-${module}`);
     expect(row.module).toBe(module);

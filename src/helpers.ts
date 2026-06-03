@@ -23,8 +23,8 @@ const GLOBAL_STATS_ID = "global";
 // stays on the canonical `ProxyCreation` path so it doesn't double-count.
 //
 // `version: "UNKNOWN"` is deliberate (not `V1_3_0`): we genuinely don't know
-// the version yet, and it serves as a marker downstream (`ChangedMasterCopy`)
-// for "uncounted stub — skip Version-stats reconciliation."
+// the version yet, and `counted: false` already gates Version-stats
+// reconciliation for stubs.
 export const ensureSafeStub = async (
   event: {
     srcAddress: string;
@@ -48,6 +48,7 @@ export const ensureSafeStub = async (
     masterCopy: undefined,
     fallbackHandler: undefined,
     guard: zeroAddress,
+    moduleGuard: zeroAddress, // v1.5.0+ only; defaults to zero
     creationTxHash: event.transaction.hash,
     creationTimestamp: BigInt(event.block.timestamp),
     blockCreationNum: event.block.number,
@@ -62,7 +63,7 @@ export const ensureSafeStub = async (
     creator: (event.transaction.from ?? zeroAddress).toLowerCase(),
     numberOfSuccessfulExecutions: 0,
     numberOfFailedExecutions: 0,
-    nonce: 0,
+    nonce: 0n,
     totalGasSpent: 0n,
     // Stubs are uncounted by definition — only ProxyCreation flips this to
     // true. ChangedMasterCopy etc. guard on `counted` to skip Version-stats
@@ -318,7 +319,7 @@ export const executionSuccess = async (event: any, context: any, enableTraces: b
   context.Safe.set({
     ...safe,
     numberOfSuccessfulExecutions: safe.numberOfSuccessfulExecutions + 1,
-    nonce: safe.nonce + 1,
+    nonce: safe.nonce + 1n,
     totalGasSpent: safe.totalGasSpent + payment,
   });
 
@@ -353,7 +354,7 @@ export const executionFailure = async (event: any, context: any, enableTraces: b
   context.Safe.set({
     ...safe,
     numberOfFailedExecutions: safe.numberOfFailedExecutions + 1,
-    nonce: safe.nonce + 1,
+    nonce: safe.nonce + 1n,
     totalGasSpent: safe.totalGasSpent + payment,
   });
 
@@ -371,7 +372,7 @@ export const executionFailure = async (event: any, context: any, enableTraces: b
 // Create a SafeTransaction entity for L1 Safes by decoding execTransaction.
 // Primary: decode directly from event.transaction.input (works for direct calls).
 // Fallback: fetch via RPC trace_transaction (works for relayed calls).
-async function createL1SafeTransaction(event: any, context: any, safe: any, nonce: number, isSuccess: boolean, safeTxHash: string) {
+async function createL1SafeTransaction(event: any, context: any, safe: any, nonce: bigint, isSuccess: boolean, safeTxHash: string) {
   const { srcAddress, chainId, block } = event;
   const { hash, input, from } = event.transaction;
   const safeId = `${chainId}-${srcAddress}`;
@@ -411,7 +412,7 @@ async function createL1SafeTransaction(event: any, context: any, safe: any, nonc
       gasToken: decoded.gasToken,
       refundReceiver: decoded.refundReceiver,
       signatures: decoded.signatures,
-      nonce: BigInt(nonce),
+      nonce,
       msgSender: decoded.msgSender,
       threshold: safe.threshold,
       executionDate: BigInt(block.timestamp),
@@ -421,7 +422,6 @@ async function createL1SafeTransaction(event: any, context: any, safe: any, nonc
       success: isSuccess,
     });
 
-    // Increment global, network, and version transaction counts
     await incrementTransactionCount(chainId, safe.version, context);
   } catch (e) {
     console.log(`[L1 TX] Failed to create SafeTransaction for ${safeId} tx=${hash}:`, e);

@@ -131,6 +131,9 @@ describe("Pre-1.3.0 ProxyCreation derives fallbackHandler from initializer", () 
           chainId: CHAIN_ID,
           blockNumber: 2,
           proxyAddress: proxy,
+          // Effect input expects the internal SafeVersion enum, not the
+          // STS-format string. getSetupTrace uses it to look up the right
+          // setup() ABI.
           version: "V1_1_1",
         })]: setupCalldata,
       },
