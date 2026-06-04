@@ -409,6 +409,126 @@ describe("decodeCreateProxyWithNonceInitializer", () => {
     expect(decodeCreateProxyWithNonceInitializer(encodeGelato(unrelated))).toBeUndefined();
   });
 
+  // -------------------------------------------------------------------------
+  // ERC-4337 EntryPoint handleOps wrap — initCode = factory(20B) + factoryData.
+  // STS doesn't peel this from calldata; we can (handleOps is self-describing).
+  // Tests both v0.6 (UserOperation with separate gas fields) and v0.7
+  // (PackedUserOperation with packed gas fields).
+  // -------------------------------------------------------------------------
+  const entryPointV06Iface = new ethers.Interface([
+    "function handleOps(tuple(address sender, uint256 nonce, bytes initCode, bytes callData, uint256 callGasLimit, uint256 verificationGasLimit, uint256 preVerificationGas, uint256 maxFeePerGas, uint256 maxPriorityFeePerGas, bytes paymasterAndData, bytes signature)[] ops, address beneficiary)",
+  ]);
+  const entryPointV07Iface = new ethers.Interface([
+    "function handleOps(tuple(address sender, uint256 nonce, bytes initCode, bytes callData, bytes32 accountGasLimits, uint256 preVerificationGas, bytes32 gasFees, bytes paymasterAndData, bytes signature)[] ops, address beneficiary)",
+  ]);
+
+  /** Pack initCode the 4337 way: 20-byte factory address followed by factory calldata. */
+  function packInitCode(factoryAddr: string, factoryCalldata: string): string {
+    return "0x" + factoryAddr.replace(/^0x/, "").toLowerCase().padStart(40, "0") +
+      factoryCalldata.replace(/^0x/, "");
+  }
+
+  function encodeHandleOpsV06(initCodes: string[]): string {
+    return entryPointV06Iface.encodeFunctionData("handleOps", [
+      initCodes.map((ic) => [
+        "0x" + "aa".repeat(20), // sender — placeholder, not checked
+        0n,
+        ic,
+        "0x",
+        0n,
+        0n,
+        0n,
+        0n,
+        0n,
+        "0x",
+        "0x",
+      ]),
+      "0x" + "bb".repeat(20), // beneficiary
+    ]);
+  }
+
+  function encodeHandleOpsV07(initCodes: string[]): string {
+    return entryPointV07Iface.encodeFunctionData("handleOps", [
+      initCodes.map((ic) => [
+        "0x" + "aa".repeat(20),
+        0n,
+        ic,
+        "0x",
+        "0x" + "00".repeat(32),
+        0n,
+        "0x" + "00".repeat(32),
+        "0x",
+        "0x",
+      ]),
+      "0x" + "bb".repeat(20),
+    ]);
+  }
+
+  it("peels EntryPoint v0.6 handleOps to find a factory call in initCode", () => {
+    const initializer = "0xb63e800d" + "66".repeat(32 * 5);
+    const initCode = packInitCode(
+      "0xfff100000000000000000000000000000000fff1",
+      encodeFactoryCall(initializer, 13n),
+    );
+    expect(decodeCreateProxyWithNonceInitializer(encodeHandleOpsV06([initCode]))).toBe(
+      initializer,
+    );
+  });
+
+  it("peels EntryPoint v0.7 handleOps (PackedUserOperation) the same way", () => {
+    const initializer = "0xb63e800d" + "77".repeat(32 * 4);
+    const initCode = packInitCode(
+      "0xfff100000000000000000000000000000000fff1",
+      encodeFactoryCall(initializer, 14n),
+    );
+    expect(decodeCreateProxyWithNonceInitializer(encodeHandleOpsV07([initCode]))).toBe(
+      initializer,
+    );
+  });
+
+  it("scans multiple UserOps in a single handleOps batch", () => {
+    const initializer = "0xb63e800d" + "88".repeat(32 * 3);
+    // Two ops: first has empty initCode (existing account), second deploys.
+    const initCode2 = packInitCode(
+      "0xfff100000000000000000000000000000000fff1",
+      encodeFactoryCall(initializer, 21n),
+    );
+    expect(
+      decodeCreateProxyWithNonceInitializer(encodeHandleOpsV06(["0x", initCode2])),
+    ).toBe(initializer);
+  });
+
+  it("composes: handleOps wrapping a MultiSend wrapping the factory call", () => {
+    const initializer = "0xb63e800d" + "99".repeat(32 * 6);
+    const multiSendCalldata = encodeMultiSend(
+      packMultiSendSubTx({
+        to: "0x" + "ff".repeat(20),
+        data: encodeFactoryCall(initializer, 30n),
+      }),
+    );
+    const initCode = packInitCode(
+      "0xfff100000000000000000000000000000000fff1",
+      multiSendCalldata,
+    );
+    expect(decodeCreateProxyWithNonceInitializer(encodeHandleOpsV07([initCode]))).toBe(
+      initializer,
+    );
+  });
+
+  it("returns undefined when no UserOp has a factory initCode", () => {
+    expect(
+      decodeCreateProxyWithNonceInitializer(
+        encodeHandleOpsV06(["0x", "0x" + "00".repeat(20) + "deadbeef"]),
+      ),
+    ).toBeUndefined();
+  });
+
+  it("ignores UserOps with initCode too short to contain a factory address", () => {
+    // initCode of 19 bytes — invalid per 4337 (needs >=20). Decoder must not throw.
+    const tooShort = "0x" + "00".repeat(19);
+    expect(decodeCreateProxyWithNonceInitializer(encodeHandleOpsV06([tooShort]))).toBeUndefined();
+  });
+
   it("Gelato counts toward the recursion depth budget", () => {
     // Self-referential Gelato chain (>9 deep, no factory inside). Without the
     // depth cap this recurses forever; with it the decoder returns undefined
