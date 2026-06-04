@@ -367,6 +367,59 @@ describe("decodeCreateProxyWithNonceInitializer", () => {
     expect(decodeCreateProxyWithNonceInitializer(calldata)).toBeUndefined();
   });
 
+  // -------------------------------------------------------------------------
+  // Gelato Relay (sponsoredCallV2) wrap — mirrors STS's `_decode_gelato_relay`
+  // (safe_service.py:306). Single inner calldata at `_data`; we recurse into
+  // it, so Gelato → MultiSend → factory composes cleanly.
+  // -------------------------------------------------------------------------
+  const gelatoIface = new ethers.Interface([
+    "function sponsoredCallV2(address _target, bytes _data, bytes32 _correlationId, bytes32 _r, bytes32 _vs)",
+  ]);
+
+  function encodeGelato(innerCalldata: string): string {
+    return gelatoIface.encodeFunctionData("sponsoredCallV2", [
+      "0xfff100000000000000000000000000000000fff1", // _target — not checked by the decoder
+      innerCalldata,
+      "0x" + "00".repeat(32), // correlationId
+      "0x" + "11".repeat(32), // r
+      "0x" + "22".repeat(32), // vs
+    ]);
+  }
+
+  it("peels Gelato sponsoredCallV2 to find a direct factory call", () => {
+    const initializer = "0xb63e800d" + "44".repeat(32 * 7);
+    expect(decodeCreateProxyWithNonceInitializer(encodeGelato(encodeFactoryCall(initializer, 5n)))).toBe(
+      initializer,
+    );
+  });
+
+  it("composes Gelato wrapping MultiSend wrapping factory", () => {
+    const initializer = "0xb63e800d" + "55".repeat(32 * 3);
+    const factoryCalldata = encodeFactoryCall(initializer, 11n);
+    const packed = packMultiSendSubTx({
+      to: "0x" + "ff".repeat(20),
+      data: factoryCalldata,
+    });
+    const multiSendCalldata = encodeMultiSend(packed);
+    expect(decodeCreateProxyWithNonceInitializer(encodeGelato(multiSendCalldata))).toBe(initializer);
+  });
+
+  it("returns undefined when Gelato's inner data is unrelated", () => {
+    const unrelated = "0xdeadbeef" + "00".repeat(32);
+    expect(decodeCreateProxyWithNonceInitializer(encodeGelato(unrelated))).toBeUndefined();
+  });
+
+  it("Gelato counts toward the recursion depth budget", () => {
+    // Self-referential Gelato chain (>9 deep, no factory inside). Without the
+    // depth cap this recurses forever; with it the decoder returns undefined
+    // cleanly. Same regression shape as the MultiSend depth-cap test.
+    let calldata = encodeGelato("0xdeadbeef");
+    for (let i = 0; i < 12; i++) {
+      calldata = encodeGelato(calldata);
+    }
+    expect(decodeCreateProxyWithNonceInitializer(calldata)).toBeUndefined();
+  });
+
   it("unwraps nested MultiSend (MultiSend inside MultiSend) via recursion", () => {
     const initializer = "0xb63e800d" + "33".repeat(32 * 5);
     const innerFactory = packMultiSendSubTx({
