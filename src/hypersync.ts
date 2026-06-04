@@ -63,6 +63,14 @@ const multiSendInterface = new ethers.Interface(["function multiSend(bytes memor
 const gelatoRelayInterface = new ethers.Interface([
     "function sponsoredCallV2(address _target, bytes _data, bytes32 _correlationId, bytes32 _r, bytes32 _vs)",
 ]);
+// Contract Proxy Kit (CPK) factory — legacy Safe-via-CPK deployment pattern.
+// Single creation entrypoint; the `data` arg carries the post-creation exec
+// calldata which STS surfaces as `setupData`. Mirrors STS's
+// `_decode_cpk_proxy_factory` (safe_service.py:357). The on-chain CPK
+// factory ABI was lifted from safe-eth-py's CPKFactory.json.
+const cpkFactoryInterface = new ethers.Interface([
+    "function createProxyAndExecTransaction(address masterCopy, uint256 saltNonce, address fallbackHandler, address to, uint256 value, bytes data, uint8 operation)",
+]);
 // ERC-4337 EntryPoint v0.6 — `UserOperation[]` (11 fields, all gas limits as uint256).
 const entryPointV06Interface = new ethers.Interface([
     "function handleOps(tuple(address sender, uint256 nonce, bytes initCode, bytes callData, uint256 callGasLimit, uint256 verificationGasLimit, uint256 preVerificationGas, uint256 maxFeePerGas, uint256 maxPriorityFeePerGas, bytes paymasterAndData, bytes signature)[] ops, address beneficiary)",
@@ -129,17 +137,25 @@ const versionConfig = {
     },
 } as const;
 
-// Decode a SafeProxyFactory `createProxyWithNonce(address,bytes,uint256)`
-// call from the deployment transaction's calldata. Returns the `initializer`
-// param (i.e. setupData) when `data` is a direct factory call, or when one
-// is found inside a MultiSend wrap (one layer peel — STS's
-// `_decode_creation_data` mirrors the same approach). Other wrappers
-// (Gelato Relay, ERC-4337 handleOps, CPK) still land null and can be added
-// incrementally.
+// Resolve the `setupData` blob (Safe Transaction Service's nullable
+// `setupData` field) from the deployment transaction's calldata. Walks
+// nested wrappers via recursion; returns the first matching inner call's
+// bytes blob. Each wrapper recognised:
 //
-// Same `createProxyWithNonce` selector across v1.3.0 / v1.4.1 / v1.5.0 — the
-// function signature didn't change, only the emitted ProxyCreation event
-// shape did, so one decoder covers all three.
+//   - SafeProxyFactory `createProxyWithNonce` (direct, the common case)
+//   - Contract Proxy Kit `createProxyAndExecTransaction` (legacy CPK Safes)
+//   - ERC-4337 EntryPoint `handleOps` (v0.6 UserOperation + v0.7 PackedUserOperation)
+//   - Gelato Relay `sponsoredCallV2`
+//   - Gnosis Safe `multiSend(bytes)` (iterates each sub-tx)
+//
+// Mirrors Safe Transaction Service's `_decode_creation_data`
+// (safe_service.py) for all five — plus 4337 handleOps, which STS does
+// NOT decode from calldata (they rely on trace data) so this is a
+// calldata-only win for our indexer.
+//
+// Returns `undefined` when no recognised wrapper / no factory call found,
+// when the inner initializer is the empty sentinel "0x", or when the
+// recursion guard trips on a self-referential nested payload.
 const CREATE_PROXY_WITH_NONCE_SELECTOR = factoryInterface
     .getFunction("createProxyWithNonce")!.selector.toLowerCase();
 const MULTI_SEND_SELECTOR = multiSendInterface
@@ -150,6 +166,8 @@ const ENTRY_POINT_V06_HANDLE_OPS_SELECTOR = entryPointV06Interface
     .getFunction("handleOps")!.selector.toLowerCase();
 const ENTRY_POINT_V07_HANDLE_OPS_SELECTOR = entryPointV07Interface
     .getFunction("handleOps")!.selector.toLowerCase();
+const CPK_CREATE_PROXY_AND_EXEC_TX_SELECTOR = cpkFactoryInterface
+    .getFunction("createProxyAndExecTransaction")!.selector.toLowerCase();
 
 // Parse the packed transactions blob from a MultiSend `multiSend(bytes)` call.
 // Each sub-tx is laid out as:
@@ -209,6 +227,26 @@ function decodeCreateProxyWithNonceInitializerInner(
             // TX Service's `setupData: null` representation.
             if (!initializer || initializer === "0x") return undefined;
             return initializer;
+        } catch {
+            return undefined;
+        }
+    }
+
+    // Contract Proxy Kit factory — legacy Safe-via-CPK deployment. The bytes
+    // `data` arg (index 5) carries the post-creation exec calldata that STS
+    // surfaces as setupData (`_decode_cpk_proxy_factory`, safe_service.py:357).
+    // Terminal peel: no recursion needed — the `data` is itself the setupData
+    // value we record, even when it's a call to a setup helper contract.
+    if (selector === CPK_CREATE_PROXY_AND_EXEC_TX_SELECTOR) {
+        try {
+            const decoded = cpkFactoryInterface.decodeFunctionData(
+                "createProxyAndExecTransaction",
+                inputData,
+            );
+            // (masterCopy, saltNonce, fallbackHandler, to, value, data, operation)
+            const data = decoded[5] as string | undefined;
+            if (!data || data === "0x") return undefined;
+            return data;
         } catch {
             return undefined;
         }
