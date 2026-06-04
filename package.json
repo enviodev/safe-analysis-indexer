@@ -26,7 +26,7 @@
   "dependencies": {
     "@envio-dev/hypersync-client": "^0.7.2",
     "amqplib": "^2.0.1",
-    "envio": "3.1.0-rc.2",
+    "envio": "3.1.0",
     "ethers": "6.8.0",
     "viem": "^2.46.2"
   }
