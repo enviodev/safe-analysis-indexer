@@ -126,6 +126,35 @@ describe("SafeErc20Watcher.Transfer", () => {
     expect(bal.outboundCount).toBe(1);
   });
 
+  it("self-transfer (from === to) leaves the balance unchanged (no race on the same row id)", async () => {
+    // Self-transfers on ERC20 are legal and not uncommon — some token
+    // contracts emit zero-value or no-op transfers as accounting markers
+    // (re-approval flows, dust collectors, certain flashloan repays). The
+    // handler must not race the parallel out+in updates on the same row id.
+    const indexer = createIndexer();
+    const safeAddr = addr("erc20-self-xfer");
+    const token = addr("token");
+    seedSafe(indexer, { chainId: CHAIN_ID, address: safeAddr });
+
+    // Seed a real balance first via a normal inbound, then issue a self-transfer.
+    await processOnChain(indexer, CHAIN_ID, [
+      simulateErc20Transfer({ token, from: addr("ext"), to: safeAddr, value: 100n }),
+      simulateErc20Transfer({ token, from: safeAddr, to: safeAddr, value: 50n }),
+    ]);
+
+    const bal = await indexer.SafeTokenBalance.getOrThrow(
+      `${CHAIN_ID}-${safeAddr.toLowerCase()}-${token}`,
+    );
+    // Balance unchanged by the self-transfer (net delta is 0). inbound/outbound
+    // counters are NOT bumped for self-transfers — the immutable ERC20Transfer
+    // log captures the event, the balance view stays meaningful.
+    expect(bal.balance).toBe(100n);
+    expect(bal.inboundCount).toBe(1);
+    expect(bal.outboundCount).toBe(0);
+    // Both transfers are still in the immutable log.
+    expect((await indexer.ERC20Transfer.getAll()).length).toBe(2);
+  });
+
   it("stores lowercase token/from/to even if simulate provides checksummed addresses", async () => {
     const indexer = createIndexer();
     const safeAddr = addr("erc20-casing");
