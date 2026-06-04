@@ -258,13 +258,129 @@ describe("decodeCreateProxyWithNonceInitializer", () => {
     expect(decodeCreateProxyWithNonceInitializer("0x")).toBeUndefined();
   });
 
-  it("returns undefined when the selector isn't createProxyWithNonce (wrapped call: handleOps/MultiSend/Gelato/etc.)", () => {
+  it("returns undefined for non-decodable wrapper selectors (handleOps, Gelato, etc.)", () => {
     // Some other 4-byte selector with otherwise-plausible ABI-encoded data —
-    // e.g. an ERC-4337 EntryPoint handleOps call. The decoder must not try
-    // to interpret it as a factory call.
+    // e.g. an ERC-4337 EntryPoint handleOps call. Only MultiSend is peeled
+    // (see below); other wrappers are still TODO and must land null.
     const handleOpsSelector = "0x765e827f"; // EntryPoint v0.6 handleOps
     const calldata = handleOpsSelector + "00".repeat(64);
     expect(decodeCreateProxyWithNonceInitializer(calldata)).toBeUndefined();
+  });
+
+  // -------------------------------------------------------------------------
+  // MultiSend wrap — one-layer peel matching Safe Transaction Service's
+  // `_decode_creation_data` (`safe_service.py`). Each sub-tx is packed as
+  // `operation(1B) + to(20B) + value(32B) + dataLength(32B) + data`.
+  // -------------------------------------------------------------------------
+  const multiSendIface = new ethers.Interface([
+    "function multiSend(bytes memory transactions)",
+  ]);
+
+  /** Pack one sub-tx into the MultiSend transactions blob format. */
+  function packMultiSendSubTx(args: {
+    operation?: number; // 0 CALL, 1 DELEGATECALL — value irrelevant for the decoder
+    to: string;
+    value?: bigint;
+    data: string;
+  }): string {
+    const op = (args.operation ?? 0).toString(16).padStart(2, "0");
+    const to = args.to.replace(/^0x/, "").toLowerCase().padStart(40, "0");
+    const value = (args.value ?? 0n).toString(16).padStart(64, "0");
+    const dataHex = args.data.replace(/^0x/, "");
+    const dataLen = Math.floor(dataHex.length / 2)
+      .toString(16)
+      .padStart(64, "0");
+    return op + to + value + dataLen + dataHex;
+  }
+
+  function encodeMultiSend(packedSubTxs: string): string {
+    return multiSendIface.encodeFunctionData("multiSend", ["0x" + packedSubTxs]);
+  }
+
+  it("peels one MultiSend layer to find the factory call's initializer", () => {
+    const initializer = "0xb63e800d" + "11".repeat(32 * 6);
+    const factoryCalldata = encodeFactoryCall(initializer, 7n);
+    const packed = packMultiSendSubTx({
+      to: "0xfff100000000000000000000000000000000fff1", // factory addr — value not checked
+      data: factoryCalldata,
+    });
+    expect(decodeCreateProxyWithNonceInitializer(encodeMultiSend(packed))).toBe(
+      initializer,
+    );
+  });
+
+  it("scans past unrelated sub-txs and finds the factory call further in the bundle", () => {
+    const initializer = "0xb63e800d" + "22".repeat(32 * 4);
+    const unrelated1 = packMultiSendSubTx({
+      to: "0x" + "ab".repeat(20),
+      data: "0xdeadbeef" + "00".repeat(32),
+    });
+    const unrelated2 = packMultiSendSubTx({
+      to: "0x" + "cd".repeat(20),
+      data: "0x12345678",
+    });
+    const factory = packMultiSendSubTx({
+      to: "0x" + "ff".repeat(20),
+      data: encodeFactoryCall(initializer, 99n),
+    });
+    expect(
+      decodeCreateProxyWithNonceInitializer(
+        encodeMultiSend(unrelated1 + unrelated2 + factory),
+      ),
+    ).toBe(initializer);
+  });
+
+  it("returns undefined for a MultiSend with no factory sub-tx", () => {
+    const sub = packMultiSendSubTx({
+      to: "0x" + "ab".repeat(20),
+      data: "0xdeadbeefdeadbeef",
+    });
+    expect(
+      decodeCreateProxyWithNonceInitializer(encodeMultiSend(sub)),
+    ).toBeUndefined();
+  });
+
+  it("returns undefined for a malformed MultiSend transactions blob", () => {
+    // Looks like multiSend selector, but the transactions blob is too short
+    // to be a valid sub-tx header. The decoder must bail without throwing.
+    const truncated = multiSendIface.encodeFunctionData("multiSend", ["0xdeadbeef"]);
+    expect(decodeCreateProxyWithNonceInitializer(truncated)).toBeUndefined();
+  });
+
+  it("bails (returns undefined) when nested MultiSend exceeds the recursion depth cap", () => {
+    // Build a >9-deep chain of MultiSend wrapping MultiSend, with NO factory
+    // call anywhere inside. Without the depth guard this recurses to the
+    // bottom; with the guard it returns undefined cleanly. Either way we
+    // assert no throw and no stack overflow.
+    const innermost = packMultiSendSubTx({
+      to: "0x" + "ab".repeat(20),
+      data: "0xdeadbeef",
+    });
+    let calldata = encodeMultiSend(innermost);
+    for (let i = 0; i < 12; i++) {
+      const wrapped = packMultiSendSubTx({
+        to: "0x" + "ee".repeat(20),
+        data: calldata,
+      });
+      calldata = encodeMultiSend(wrapped);
+    }
+    expect(decodeCreateProxyWithNonceInitializer(calldata)).toBeUndefined();
+  });
+
+  it("unwraps nested MultiSend (MultiSend inside MultiSend) via recursion", () => {
+    const initializer = "0xb63e800d" + "33".repeat(32 * 5);
+    const innerFactory = packMultiSendSubTx({
+      to: "0x" + "ff".repeat(20),
+      data: encodeFactoryCall(initializer, 1n),
+    });
+    const innerMultiSend = encodeMultiSend(innerFactory);
+    const outerSub = packMultiSendSubTx({
+      to: "0x" + "ee".repeat(20),
+      data: innerMultiSend,
+    });
+    expect(decodeCreateProxyWithNonceInitializer(encodeMultiSend(outerSub))).toBe(
+      initializer,
+    );
   });
 
   it("returns undefined when initializer is the empty bytes sentinel (`0x`)", () => {
