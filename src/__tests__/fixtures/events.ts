@@ -549,3 +549,29 @@ export function simulateErc20Transfer(args: {
     params: { from: args.from, to: args.to, value: args.value },
   };
 }
+
+// ---------------------------------------------------------------------------
+// SafeErc721Watcher.Transfer (wildcard ERC721 Transfer)
+// Same topic0 as ERC20; distinguished by `tokenId` being indexed (4 topics).
+// ---------------------------------------------------------------------------
+export function simulateErc721Transfer(args: {
+  token: `0x${string}`;
+  from: `0x${string}`;
+  to: `0x${string}`;
+  tokenId: bigint;
+  block?: { number?: number; timestamp?: number; hash?: string };
+  tx?: { hash?: string };
+  logIndex?: number;
+}) {
+  const block = autoBlock(args.block);
+  const li = args.logIndex ?? nextLogIndex();
+  return {
+    contract: "SafeErc721Watcher" as const,
+    event: "Transfer" as const,
+    srcAddress: args.token,
+    logIndex: li,
+    block,
+    transaction: autoTx(args.tx, block.number, li),
+    params: { from: args.from, to: args.to, tokenId: args.tokenId },
+  };
+}

@@ -191,3 +191,38 @@ type SafeTokenBalance {
   lastUpdatedBlock: Int!
   lastUpdatedTimestamp: BigInt!
 }
+
+# ERC721 Transfer events whose `from` or `to` matches a discovered Safe.
+# Distinguished from ERC20 Transfer by topic count (ERC721 indexes `tokenId`
+# as topic3; ERC20's `value` lives in `data`). HyperSync delivers them as
+# separate streams via the indexed-vs-non-indexed event signature in
+# `config.yaml`. Same dynamic-address-pool registration as the ERC20 watcher.
+type ERC721Transfer {
+  id: ID! # chainId_blockNumber_logIndex
+  chainId: Int! @index
+  blockNumber: Int! @index
+  blockTimestamp: BigInt! @index
+  txHash: String! @index
+  logIndex: Int!
+  token: String! @index
+  from: String! @index
+  to: String! @index
+  tokenId: BigInt! @index
+}
+
+# Current NFT holdings — exists iff a Safe currently holds (token, tokenId).
+# Created on inbound transfer to a Safe, deleted on outbound transfer from a
+# Safe. The row's id is deterministic on (chain, safe, token, tokenId) so a
+# re-acquired NFT recreates the same id. For lifetime / historical inbound
+# and outbound counts of a given (Safe, token, tokenId), query
+# `ERC721Transfer` directly.
+type SafeNftHolding {
+  id: ID! # chainId-safeAddress-tokenAddress-tokenId
+  chainId: Int! @index
+  safeAddress: String! @index
+  token: String! @index
+  tokenId: BigInt! @index
+  acquiredAtBlock: Int! # block of the most recent inbound transfer that created this holding
+  acquiredAtTimestamp: BigInt!
+  acquiredTxHash: String!
+}

@@ -38,18 +38,22 @@ indexer.contractRegister({ contract: "GnosisSafeProxyPre1_3_0", event: "ProxyCre
   const { proxy } = event.params;
   context.chain.SafePre1_3_0.add(proxy);
   context.chain.SafeErc20Watcher.add(proxy);
+  context.chain.SafeErc721Watcher.add(proxy);
 });
 
 indexer.contractRegister({ contract: "GnosisSafeProxy1_3_0", event: "ProxyCreation" }, async ({ event, context }) => {
   context.chain.SafeErc20Watcher.add(event.params.proxy);
+  context.chain.SafeErc721Watcher.add(event.params.proxy);
 });
 
 indexer.contractRegister({ contract: "GnosisSafeProxy1_4_1", event: "ProxyCreation" }, async ({ event, context }) => {
   context.chain.SafeErc20Watcher.add(event.params.proxy);
+  context.chain.SafeErc721Watcher.add(event.params.proxy);
 });
 
 indexer.contractRegister({ contract: "GnosisSafeProxy1_5_0", event: "ProxyCreation" }, async ({ event, context }) => {
   context.chain.SafeErc20Watcher.add(event.params.proxy);
+  context.chain.SafeErc721Watcher.add(event.params.proxy);
 });
 
 indexer.onEvent({ contract: "GnosisSafeProxyPre1_3_0", event: "ProxyCreation" }, async ({ event, context }) => {
@@ -830,6 +834,89 @@ indexer.onEvent({
     applyBalanceDelta(context, chainId, to, token, value, block, ts, "in"),
   ]);
 });
+
+// Wildcard ERC721 Transfer filtered to transfers touching a known Safe.
+// Same topic0 as ERC20 Transfer but with `tokenId` indexed (4 topics on the
+// log, no data); HyperSync delivers it as a separate stream because the
+// event signatures differ at the indexed-arg level.
+indexer.onEvent({
+  contract: "SafeErc721Watcher",
+  event: "Transfer",
+  wildcard: true,
+  where: ({ chain }) => ({
+    params: [
+      { from: chain.SafeErc721Watcher.addresses },
+      { to:   chain.SafeErc721Watcher.addresses },
+    ],
+  }),
+}, async ({ event, context }) => {
+  const chainId = event.chainId;
+  const token = event.srcAddress.toLowerCase();
+  const from = event.params.from.toLowerCase();
+  const to = event.params.to.toLowerCase();
+  const tokenId = event.params.tokenId;
+  const block = event.block.number;
+  const ts = BigInt(event.block.timestamp);
+  const txHash = event.transaction.hash;
+
+  context.ERC721Transfer.set({
+    id: `${chainId}_${block}_${event.logIndex}`,
+    chainId,
+    blockNumber: block,
+    blockTimestamp: ts,
+    txHash,
+    logIndex: event.logIndex,
+    token,
+    from,
+    to,
+    tokenId,
+  });
+
+  // Update holdings on both sides — only persists for sides that are known
+  // Safes (applySafeNftHoldingDelta short-circuits otherwise).
+  await Promise.all([
+    applySafeNftHoldingDelta(context, chainId, from, token, tokenId, "out", block, ts, txHash),
+    applySafeNftHoldingDelta(context, chainId, to,   token, tokenId, "in",  block, ts, txHash),
+  ]);
+});
+
+async function applySafeNftHoldingDelta(
+  context: any,
+  chainId: number,
+  address: string,
+  token: string,
+  tokenId: bigint,
+  side: "in" | "out",
+  block: number,
+  ts: bigint,
+  txHash: string,
+) {
+  const safe = await context.Safe.get(`${chainId}-${address}`);
+  if (!safe) return;
+
+  const id = `${chainId}-${address}-${token}-${tokenId.toString()}`;
+
+  if (side === "in") {
+    // Inbound: create the holding (or re-create if previously held + sold +
+    // re-acquired). `acquired*` timestamps reflect the most recent inbound
+    // so a UI can sort holdings by "recently acquired" without walking
+    // ERC721Transfer rows. Lifetime in/out counts come from ERC721Transfer.
+    context.SafeNftHolding.set({
+      id,
+      chainId,
+      safeAddress: address,
+      token,
+      tokenId,
+      acquiredAtBlock: block,
+      acquiredAtTimestamp: ts,
+      acquiredTxHash: txHash,
+    });
+  } else {
+    // Outbound: delete the row. deleteUnsafe is a no-op for an absent id, so
+    // we don't need to read-then-delete.
+    context.SafeNftHolding.deleteUnsafe(id);
+  }
+}
 
 async function applyBalanceDelta(
   context: any,
