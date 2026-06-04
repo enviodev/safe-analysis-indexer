@@ -347,6 +347,26 @@ describe("decodeCreateProxyWithNonceInitializer", () => {
     expect(decodeCreateProxyWithNonceInitializer(truncated)).toBeUndefined();
   });
 
+  it("bails (returns undefined) when nested MultiSend exceeds the recursion depth cap", () => {
+    // Build a >9-deep chain of MultiSend wrapping MultiSend, with NO factory
+    // call anywhere inside. Without the depth guard this recurses to the
+    // bottom; with the guard it returns undefined cleanly. Either way we
+    // assert no throw and no stack overflow.
+    const innermost = packMultiSendSubTx({
+      to: "0x" + "ab".repeat(20),
+      data: "0xdeadbeef",
+    });
+    let calldata = encodeMultiSend(innermost);
+    for (let i = 0; i < 12; i++) {
+      const wrapped = packMultiSendSubTx({
+        to: "0x" + "ee".repeat(20),
+        data: calldata,
+      });
+      calldata = encodeMultiSend(wrapped);
+    }
+    expect(decodeCreateProxyWithNonceInitializer(calldata)).toBeUndefined();
+  });
+
   it("unwraps nested MultiSend (MultiSend inside MultiSend) via recursion", () => {
     const initializer = "0xb63e800d" + "33".repeat(32 * 5);
     const innerFactory = packMultiSendSubTx({

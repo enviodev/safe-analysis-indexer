@@ -153,9 +153,24 @@ function parseMultiSendTransactions(transactionsHex: string): Array<{ data: stri
     return out;
 }
 
+// Cap on how deep nested MultiSend will unwind. Real-world deployments use
+// at most 1-2 levels (occasionally MultiSendCallOnly inside a delegate-call
+// MultiSend). The guard exists to bound a hostile self-referential payload
+// — every recursive call costs work even when it ultimately returns
+// undefined.
+const MAX_MULTISEND_DECODE_DEPTH = 8;
+
 export function decodeCreateProxyWithNonceInitializer(
     inputData: string | undefined,
 ): string | undefined {
+    return decodeCreateProxyWithNonceInitializerInner(inputData, 0);
+}
+
+function decodeCreateProxyWithNonceInitializerInner(
+    inputData: string | undefined,
+    depth: number,
+): string | undefined {
+    if (depth > MAX_MULTISEND_DECODE_DEPTH) return undefined;
     if (!inputData || inputData.length < 10) return undefined;
     const selector = inputData.slice(0, 10).toLowerCase();
 
@@ -185,7 +200,10 @@ export function decodeCreateProxyWithNonceInitializer(
             const decoded = multiSendInterface.decodeFunctionData("multiSend", inputData);
             const transactionsBlob = decoded[0] as string;
             for (const sub of parseMultiSendTransactions(transactionsBlob)) {
-                const result = decodeCreateProxyWithNonceInitializer(sub.data);
+                const result = decodeCreateProxyWithNonceInitializerInner(
+                    sub.data,
+                    depth + 1,
+                );
                 if (result) return result;
             }
             return undefined;
