@@ -56,6 +56,13 @@ const safeInterface1_0_0 = new ethers.Interface(SETUP_ABI_V1_0_0);
 const safeInterface1_1_1 = new ethers.Interface(SETUP_ABI_V1_1_1);
 const factoryInterface = new ethers.Interface(FACTORY_ABI);
 const multiSendInterface = new ethers.Interface(["function multiSend(bytes memory transactions)"]);
+// Gelato Relay 1Balance v2 — only one function shape we care about. The Safe
+// 4337-via-Gelato bundler routes the inner factory/multiSend call through
+// `_data`. Mirrors STS's `gelato_relay_1_balance_v2_abi`
+// (utils/abis/gelato.py) — also the only Gelato form STS decodes today.
+const gelatoRelayInterface = new ethers.Interface([
+    "function sponsoredCallV2(address _target, bytes _data, bytes32 _correlationId, bytes32 _r, bytes32 _vs)",
+]);
 
 // Version-specific interfaces and selectors for Safe.setup
 const versionConfig = {
@@ -129,6 +136,8 @@ const CREATE_PROXY_WITH_NONCE_SELECTOR = factoryInterface
     .getFunction("createProxyWithNonce")!.selector.toLowerCase();
 const MULTI_SEND_SELECTOR = multiSendInterface
     .getFunction("multiSend")!.selector.toLowerCase();
+const GELATO_SPONSORED_CALL_V2_SELECTOR = gelatoRelayInterface
+    .getFunction("sponsoredCallV2")!.selector.toLowerCase();
 
 // Parse the packed transactions blob from a MultiSend `multiSend(bytes)` call.
 // Each sub-tx is laid out as:
@@ -188,6 +197,24 @@ function decodeCreateProxyWithNonceInitializerInner(
             // TX Service's `setupData: null` representation.
             if (!initializer || initializer === "0x") return undefined;
             return initializer;
+        } catch {
+            return undefined;
+        }
+    }
+
+    // Gelato Relay 1Balance v2 wrap — the bundler routes the actual deployment
+    // call through `_data`. Recurse so a Gelato-wrapped MultiSend-wrapped
+    // factory call still unwinds. STS's `_decode_creation_data` peels Gelato
+    // first; we cover the same composition via plain recursion.
+    if (selector === GELATO_SPONSORED_CALL_V2_SELECTOR) {
+        try {
+            const decoded = gelatoRelayInterface.decodeFunctionData(
+                "sponsoredCallV2",
+                inputData,
+            );
+            // (_target, _data, _correlationId, _r, _vs) — index 1 is the inner calldata.
+            const innerData = decoded[1] as string | undefined;
+            return decodeCreateProxyWithNonceInitializerInner(innerData, depth + 1);
         } catch {
             return undefined;
         }
