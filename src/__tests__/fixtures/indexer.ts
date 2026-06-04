@@ -11,6 +11,13 @@ export function createIndexer(): TestIndexer {
 // Sugar over indexer.process: auto-computes endBlock from the max block.number
 // in the simulate items so callers don't have to. Drives a single chain at a
 // time; for multi-chain tests, call once per chain or compose manually.
+//
+// The optional `isRealtime` knob drives the
+// `ENVIO_TEST_FORCE_REALTIME` env var so handlers that use `publishIfRealtime`
+// (see src/rabbitmqEffect.ts) can be exercised in both "during historical
+// sync" (`false`) and "after catch-up" (`true`) modes. Default `undefined`
+// keeps existing tests on envio's native isRealtime (which is `true` once
+// endBlock is reached — finite-range tests are always "realtime" by default).
 export async function processOnChain(
   indexer: TestIndexer,
   chainId: number,
@@ -18,20 +25,32 @@ export async function processOnChain(
   // these via the typed builders in events.ts so a loose any[] here is fine
   // (the builder return types are checked at their callsite).
   items: any[],
+  options?: { isRealtime?: boolean },
 ): Promise<unknown> {
   const maxBlock = items.reduce<number>(
     (acc, it) => Math.max(acc, (it.block?.number as number | undefined) ?? 0),
     0,
   );
-  return indexer.process({
-    chains: {
-      [chainId]: {
-        startBlock: 0,
-        endBlock: maxBlock + 1,
-        simulate: items,
+  const prev = process.env.ENVIO_TEST_FORCE_REALTIME;
+  if (options?.isRealtime !== undefined) {
+    process.env.ENVIO_TEST_FORCE_REALTIME = options.isRealtime ? "true" : "false";
+  }
+  try {
+    return await indexer.process({
+      chains: {
+        [chainId]: {
+          startBlock: 0,
+          endBlock: maxBlock + 1,
+          simulate: items,
+        },
       },
-    },
-  } as any);
+    } as any);
+  } finally {
+    if (options?.isRealtime !== undefined) {
+      if (prev === undefined) delete process.env.ENVIO_TEST_FORCE_REALTIME;
+      else process.env.ENVIO_TEST_FORCE_REALTIME = prev;
+    }
+  }
 }
 
 // Set the fixtures the in-worker hypersync shim will look up. Call before

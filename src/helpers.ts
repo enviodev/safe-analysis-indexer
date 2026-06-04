@@ -1,6 +1,8 @@
 import { zeroAddress } from "viem";
 import { isL1Safe } from "./consts";
 import { decodeExecTransaction, getExecTransactionViaRpcTrace } from "./hypersync";
+import { publishIfRealtime } from "./rabbitmqEffect";
+import { buildExecutedMultisigTransaction } from "./safeEvents";
 
 const GLOBAL_STATS_ID = "global";
 
@@ -328,8 +330,22 @@ export const executionSuccess = async (event: any, context: any, enableTraces: b
   const existingTx = await context.SafeTransaction.get(txId);
   if (existingTx) {
     context.SafeTransaction.set({ ...existingTx, success: true, safeTxHash });
+    // RabbitMQ EXECUTED_MULTISIG_TRANSACTION event — realtime-only.
+    await publishIfRealtime(
+      context,
+      buildExecutedMultisigTransaction({
+        chainId,
+        safeAddress: srcAddress,
+        safeTxHash,
+        to: existingTx.to,
+        data: existingTx.data,
+        success: true,
+        txHash: event.transaction.hash,
+      }),
+    );
   } else if (enableTraces && isL1Safe(safe)) {
-    // L1 Safes: no SafeMultiSigTransaction event, create from traces
+    // L1 Safes: no SafeMultiSigTransaction event, create from traces.
+    // createL1SafeTransaction publishes the event after the entity is built.
     await createL1SafeTransaction(event, context, safe, currentNonce, true, safeTxHash);
   }
 };
@@ -363,8 +379,22 @@ export const executionFailure = async (event: any, context: any, enableTraces: b
   const existingTx = await context.SafeTransaction.get(txId);
   if (existingTx) {
     context.SafeTransaction.set({ ...existingTx, success: false, safeTxHash });
+    // RabbitMQ EXECUTED_MULTISIG_TRANSACTION event — realtime-only.
+    await publishIfRealtime(
+      context,
+      buildExecutedMultisigTransaction({
+        chainId,
+        safeAddress: srcAddress,
+        safeTxHash,
+        to: existingTx.to,
+        data: existingTx.data,
+        success: false,
+        txHash: event.transaction.hash,
+      }),
+    );
   } else if (enableTraces && isL1Safe(safe)) {
-    // L1 Safes: no SafeMultiSigTransaction event, create from traces
+    // L1 Safes: no SafeMultiSigTransaction event, create from traces.
+    // createL1SafeTransaction publishes the event after the entity is built.
     await createL1SafeTransaction(event, context, safe, currentNonce, false, safeTxHash);
   }
 };
@@ -423,6 +453,22 @@ async function createL1SafeTransaction(event: any, context: any, safe: any, nonc
     });
 
     await incrementTransactionCount(chainId, safe.version, context);
+
+    // RabbitMQ EXECUTED_MULTISIG_TRANSACTION event — realtime-only. Mirrors
+    // the publish at the existingTx branch above; for L1 Safes this is the
+    // only place the entity exists, so the publish lives next to the set().
+    await publishIfRealtime(
+      context,
+      buildExecutedMultisigTransaction({
+        chainId,
+        safeAddress: srcAddress,
+        safeTxHash,
+        to: decoded.to,
+        data: decoded.data,
+        success: isSuccess,
+        txHash: hash,
+      }),
+    );
   } catch (e) {
     console.log(`[L1 TX] Failed to create SafeTransaction for ${safeId} tx=${hash}:`, e);
   }

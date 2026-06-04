@@ -4,6 +4,8 @@ import { getSetupTrace, decodeSetupInput, getMasterCopyFromTrace, getSafeMasterC
 import { LEGACY_V1_0_0_PROXY } from "./consts";
 import type { SafeVersion } from "./consts";
 import { decodeAbiParameters, zeroAddress } from "viem";
+import { publishIfRealtime } from "./rabbitmqEffect";
+import { buildIncomingEther, buildErc20Token, buildErc721Token } from "./safeEvents";
 
 type Safe = Entity<"Safe">;
 
@@ -641,6 +643,17 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeReceived", wildcard: tru
     sender: event.params.sender.toLowerCase(),
     value: event.params.value,
   });
+
+  // RabbitMQ INCOMING_ETHER event — realtime-only.
+  await publishIfRealtime(
+    context,
+    buildIncomingEther({
+      chainId: event.chainId,
+      safeAddress: event.srcAddress,
+      txHash: event.transaction.hash,
+      value: event.params.value,
+    }),
+  );
 });
 
 // ChangedModuleGuard — v1.5.0+ only (earlier versions have no moduleGuard
@@ -824,6 +837,30 @@ indexer.onEvent({
     value,
   });
 
+  // RabbitMQ INCOMING_TOKEN / OUTGOING_TOKEN events — realtime-only. Emit
+  // one message per side that resolves to a known Safe. Self-transfers
+  // (from === to) naturally emit both because the Safe.get lookups touch
+  // the same row twice. The two Safe.get reads are independent so they
+  // parallelise safely (no race — both reads, both decide independently).
+  const [fromSafe, toSafe] = await Promise.all([
+    context.Safe.get(`${chainId}-${from}`),
+    context.Safe.get(`${chainId}-${to}`),
+  ]);
+  const tokenPublishes: Promise<void>[] = [];
+  if (fromSafe) {
+    tokenPublishes.push(publishIfRealtime(context, buildErc20Token({
+      chainId, safeAddress: from, tokenAddress: token,
+      txHash: event.transaction.hash, value, direction: "OUTGOING_TOKEN",
+    })));
+  }
+  if (toSafe) {
+    tokenPublishes.push(publishIfRealtime(context, buildErc20Token({
+      chainId, safeAddress: to, tokenAddress: token,
+      txHash: event.transaction.hash, value, direction: "INCOMING_TOKEN",
+    })));
+  }
+  await Promise.all(tokenPublishes);
+
   // Self-transfer (from === to): balance net delta is 0 and running both
   // sides as a Promise.all races on the same SafeTokenBalance row id
   // (both read the same `existing`, the second `.set` clobbers the first).
@@ -881,6 +918,27 @@ indexer.onEvent({
     to,
     tokenId,
   });
+
+  // RabbitMQ INCOMING_TOKEN / OUTGOING_TOKEN events — realtime-only.
+  // Mirrors the ERC20 publish loop above. Self-transfers emit both.
+  const [nftFromSafe, nftToSafe] = await Promise.all([
+    context.Safe.get(`${chainId}-${from}`),
+    context.Safe.get(`${chainId}-${to}`),
+  ]);
+  const nftPublishes: Promise<void>[] = [];
+  if (nftFromSafe) {
+    nftPublishes.push(publishIfRealtime(context, buildErc721Token({
+      chainId, safeAddress: from, tokenAddress: token,
+      txHash, tokenId, direction: "OUTGOING_TOKEN",
+    })));
+  }
+  if (nftToSafe) {
+    nftPublishes.push(publishIfRealtime(context, buildErc721Token({
+      chainId, safeAddress: to, tokenAddress: token,
+      txHash, tokenId, direction: "INCOMING_TOKEN",
+    })));
+  }
+  await Promise.all(nftPublishes);
 
   // Self-transfer (from === to): ownership unchanged, holding row unchanged.
   // Skip both sides — running them as a Promise.all would race on the same
