@@ -56,6 +56,21 @@ const safeInterface1_0_0 = new ethers.Interface(SETUP_ABI_V1_0_0);
 const safeInterface1_1_1 = new ethers.Interface(SETUP_ABI_V1_1_1);
 const factoryInterface = new ethers.Interface(FACTORY_ABI);
 const multiSendInterface = new ethers.Interface(["function multiSend(bytes memory transactions)"]);
+// Gelato Relay 1Balance v2 — only one function shape we care about. The Safe
+// 4337-via-Gelato bundler routes the inner factory/multiSend call through
+// `_data`. Mirrors STS's `gelato_relay_1_balance_v2_abi`
+// (utils/abis/gelato.py) — also the only Gelato form STS decodes today.
+const gelatoRelayInterface = new ethers.Interface([
+    "function sponsoredCallV2(address _target, bytes _data, bytes32 _correlationId, bytes32 _r, bytes32 _vs)",
+]);
+// ERC-4337 EntryPoint v0.6 — `UserOperation[]` (11 fields, all gas limits as uint256).
+const entryPointV06Interface = new ethers.Interface([
+    "function handleOps(tuple(address sender, uint256 nonce, bytes initCode, bytes callData, uint256 callGasLimit, uint256 verificationGasLimit, uint256 preVerificationGas, uint256 maxFeePerGas, uint256 maxPriorityFeePerGas, bytes paymasterAndData, bytes signature)[] ops, address beneficiary)",
+]);
+// ERC-4337 EntryPoint v0.7 — `PackedUserOperation[]` (gas limits packed into bytes32).
+const entryPointV07Interface = new ethers.Interface([
+    "function handleOps(tuple(address sender, uint256 nonce, bytes initCode, bytes callData, bytes32 accountGasLimits, uint256 preVerificationGas, bytes32 gasFees, bytes paymasterAndData, bytes signature)[] ops, address beneficiary)",
+]);
 
 // Version-specific interfaces and selectors for Safe.setup
 const versionConfig = {
@@ -129,6 +144,12 @@ const CREATE_PROXY_WITH_NONCE_SELECTOR = factoryInterface
     .getFunction("createProxyWithNonce")!.selector.toLowerCase();
 const MULTI_SEND_SELECTOR = multiSendInterface
     .getFunction("multiSend")!.selector.toLowerCase();
+const GELATO_SPONSORED_CALL_V2_SELECTOR = gelatoRelayInterface
+    .getFunction("sponsoredCallV2")!.selector.toLowerCase();
+const ENTRY_POINT_V06_HANDLE_OPS_SELECTOR = entryPointV06Interface
+    .getFunction("handleOps")!.selector.toLowerCase();
+const ENTRY_POINT_V07_HANDLE_OPS_SELECTOR = entryPointV07Interface
+    .getFunction("handleOps")!.selector.toLowerCase();
 
 // Parse the packed transactions blob from a MultiSend `multiSend(bytes)` call.
 // Each sub-tx is laid out as:
@@ -188,6 +209,63 @@ function decodeCreateProxyWithNonceInitializerInner(
             // TX Service's `setupData: null` representation.
             if (!initializer || initializer === "0x") return undefined;
             return initializer;
+        } catch {
+            return undefined;
+        }
+    }
+
+    // ERC-4337 EntryPoint `handleOps` — for each UserOperation in the batch,
+    // `initCode` is the canonical "factory(20B) + factoryCalldata" packing.
+    // Strip the 20-byte factory addr and recurse on the rest. STS doesn't
+    // peel this from calldata (they rely on trace data); we can do better
+    // since handleOps calldata is self-describing.
+    //
+    // v0.6 and v0.7 use the same `initCode` convention but different
+    // UserOperation struct shapes (and thus different selectors). Try each
+    // ABI; bail to undefined if neither decodes.
+    if (
+        selector === ENTRY_POINT_V06_HANDLE_OPS_SELECTOR ||
+        selector === ENTRY_POINT_V07_HANDLE_OPS_SELECTOR
+    ) {
+        const iface =
+            selector === ENTRY_POINT_V06_HANDLE_OPS_SELECTOR
+                ? entryPointV06Interface
+                : entryPointV07Interface;
+        try {
+            const decoded = iface.decodeFunctionData("handleOps", inputData);
+            // ops[] is index 0; each op's `initCode` is field index 2 in both v0.6/v0.7.
+            const ops = decoded[0] as Array<{ initCode?: string } & ReadonlyArray<unknown>>;
+            for (const op of ops) {
+                const initCode = (op.initCode ?? op[2]) as string | undefined;
+                if (!initCode || initCode.length < 2 + 40) continue; // need at least factory addr
+                // Strip the leading 20-byte factory address; the remainder is
+                // the factory calldata itself (createProxyWithNonce / multiSend / ...).
+                const factoryCalldata = "0x" + initCode.slice(2 + 40);
+                const result = decodeCreateProxyWithNonceInitializerInner(
+                    factoryCalldata,
+                    depth + 1,
+                );
+                if (result) return result;
+            }
+            return undefined;
+        } catch {
+            return undefined;
+        }
+    }
+
+    // Gelato Relay 1Balance v2 wrap — the bundler routes the actual deployment
+    // call through `_data`. Recurse so a Gelato-wrapped MultiSend-wrapped
+    // factory call still unwinds. STS's `_decode_creation_data` peels Gelato
+    // first; we cover the same composition via plain recursion.
+    if (selector === GELATO_SPONSORED_CALL_V2_SELECTOR) {
+        try {
+            const decoded = gelatoRelayInterface.decodeFunctionData(
+                "sponsoredCallV2",
+                inputData,
+            );
+            // (_target, _data, _correlationId, _r, _vs) — index 1 is the inner calldata.
+            const innerData = decoded[1] as string | undefined;
+            return decodeCreateProxyWithNonceInitializerInner(innerData, depth + 1);
         } catch {
             return undefined;
         }
