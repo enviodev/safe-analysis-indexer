@@ -55,6 +55,7 @@ function getClient(chainId: number): HypersyncClient {
 const safeInterface1_0_0 = new ethers.Interface(SETUP_ABI_V1_0_0);
 const safeInterface1_1_1 = new ethers.Interface(SETUP_ABI_V1_1_1);
 const factoryInterface = new ethers.Interface(FACTORY_ABI);
+const multiSendInterface = new ethers.Interface(["function multiSend(bytes memory transactions)"]);
 
 // Version-specific interfaces and selectors for Safe.setup
 const versionConfig = {
@@ -115,38 +116,85 @@ const versionConfig = {
 
 // Decode a SafeProxyFactory `createProxyWithNonce(address,bytes,uint256)`
 // call from the deployment transaction's calldata. Returns the `initializer`
-// param (i.e. setupData) when `data` is a direct factory call. Returns null
-// for any other shape — wrapped patterns (MultiSend, Gelato Relay, ERC-4337
-// handleOps, etc.) are explicitly out of scope here; those land as null and
-// can be added incrementally per wrapper.
+// param (i.e. setupData) when `data` is a direct factory call, or when one
+// is found inside a MultiSend wrap (one layer peel — STS's
+// `_decode_creation_data` mirrors the same approach). Other wrappers
+// (Gelato Relay, ERC-4337 handleOps, CPK) still land null and can be added
+// incrementally.
 //
-// Same selector across v1.3.0 / v1.4.1 / v1.5.0 — the function signature
-// (`createProxyWithNonce(address,bytes,uint256)`) didn't change, only the
-// emitted ProxyCreation event shape did, so one decoder covers all three.
+// Same `createProxyWithNonce` selector across v1.3.0 / v1.4.1 / v1.5.0 — the
+// function signature didn't change, only the emitted ProxyCreation event
+// shape did, so one decoder covers all three.
 const CREATE_PROXY_WITH_NONCE_SELECTOR = factoryInterface
-    .getFunction("createProxyWithNonce")!.selector;
+    .getFunction("createProxyWithNonce")!.selector.toLowerCase();
+const MULTI_SEND_SELECTOR = multiSendInterface
+    .getFunction("multiSend")!.selector.toLowerCase();
+
+// Parse the packed transactions blob from a MultiSend `multiSend(bytes)` call.
+// Each sub-tx is laid out as:
+//   operation(1B) + to(20B) + value(32B) + dataLength(32B) + data(dataLength B)
+// concatenated with no padding. Bails on the first malformed entry.
+function parseMultiSendTransactions(transactionsHex: string): Array<{ data: string }> {
+    const out: Array<{ data: string }> = [];
+    const hex = transactionsHex.startsWith("0x") ? transactionsHex.slice(2) : transactionsHex;
+    let pos = 0;
+    while (pos < hex.length) {
+        // operation(1) + to(20) + value(32) + dataLength(32) = 85 bytes = 170 hex chars
+        if (pos + 170 > hex.length) break;
+        pos += 2 + 40 + 64; // skip operation, to, value
+        const dataLength = parseInt(hex.slice(pos, pos + 64), 16);
+        pos += 64;
+        if (!Number.isFinite(dataLength) || dataLength < 0) break;
+        const dataHexChars = 2 * dataLength;
+        if (pos + dataHexChars > hex.length) break;
+        out.push({ data: "0x" + hex.slice(pos, pos + dataHexChars) });
+        pos += dataHexChars;
+    }
+    return out;
+}
 
 export function decodeCreateProxyWithNonceInitializer(
     inputData: string | undefined,
 ): string | undefined {
     if (!inputData || inputData.length < 10) return undefined;
     const selector = inputData.slice(0, 10).toLowerCase();
-    if (selector !== CREATE_PROXY_WITH_NONCE_SELECTOR.toLowerCase()) return undefined;
-    try {
-        const decoded = factoryInterface.decodeFunctionData(
-            "createProxyWithNonce",
-            inputData,
-        );
-        // (mastercopy, initializer, saltNonce) — index 1 is the bytes blob.
-        const initializer = decoded[1] as string | undefined;
-        // Empty initializer means the deployer skipped setup() — record as
-        // null rather than the bare "0x" so it round-trips cleanly with Safe
-        // TX Service's `setupData: null` representation.
-        if (!initializer || initializer === "0x") return undefined;
-        return initializer;
-    } catch {
-        return undefined;
+
+    // Direct factory call — the common case.
+    if (selector === CREATE_PROXY_WITH_NONCE_SELECTOR) {
+        try {
+            const decoded = factoryInterface.decodeFunctionData(
+                "createProxyWithNonce",
+                inputData,
+            );
+            // (mastercopy, initializer, saltNonce) — index 1 is the bytes blob.
+            const initializer = decoded[1] as string | undefined;
+            // Empty initializer means the deployer skipped setup() — record as
+            // null rather than the bare "0x" so it round-trips cleanly with Safe
+            // TX Service's `setupData: null` representation.
+            if (!initializer || initializer === "0x") return undefined;
+            return initializer;
+        } catch {
+            return undefined;
+        }
     }
+
+    // MultiSend wrap — peel one layer. Recurse into each sub-tx's data so
+    // nested wraps (MultiSend inside MultiSend, rare but legal) unwind too.
+    if (selector === MULTI_SEND_SELECTOR) {
+        try {
+            const decoded = multiSendInterface.decodeFunctionData("multiSend", inputData);
+            const transactionsBlob = decoded[0] as string;
+            for (const sub of parseMultiSendTransactions(transactionsBlob)) {
+                const result = decodeCreateProxyWithNonceInitializer(sub.data);
+                if (result) return result;
+            }
+            return undefined;
+        } catch {
+            return undefined;
+        }
+    }
+
+    return undefined;
 }
 
 // Decode the setup function input data for a specific version. The v1.1.1+
