@@ -5,6 +5,7 @@ import {
   buildErc20Token,
   buildErc721Token,
 } from "../safeEvents";
+import { applyPortOverride } from "../rabbitmq";
 
 // Spec reference: https://github.com/safe-global/safe-events-service#events-supported
 // These tests pin the exact JSON shape — any deviation breaks the contract
@@ -156,6 +157,38 @@ describe("buildErc20Token", () => {
     });
     expect(out.type).toBe("OUTGOING_TOKEN");
     expect(out.tokenAddress).toBe(TOKEN_CKSUM);
+  });
+});
+
+describe("applyPortOverride", () => {
+  it("returns the URL unchanged when port env is unset or empty", () => {
+    expect(applyPortOverride("amqp://host", undefined)).toBe("amqp://host");
+    expect(applyPortOverride("amqp://host", "")).toBe("amqp://host");
+    expect(applyPortOverride("amqp://host", "   ")).toBe("amqp://host");
+  });
+
+  it("injects the port into a URL with no explicit port", () => {
+    expect(applyPortOverride("amqp://user:pass@host/vhost", "5672")).toBe(
+      "amqp://user:pass@host:5672/vhost",
+    );
+  });
+
+  it("overrides an existing port in the URL when the env var is set", () => {
+    expect(applyPortOverride("amqp://host:1234/vhost", "5672")).toBe(
+      "amqp://host:5672/vhost",
+    );
+  });
+
+  it("preserves the scheme (amqps) when overriding", () => {
+    expect(applyPortOverride("amqps://host/vhost", "5671")).toBe(
+      "amqps://host:5671/vhost",
+    );
+  });
+
+  it("throws for non-numeric / out-of-range port values", () => {
+    expect(() => applyPortOverride("amqp://host", "abc")).toThrow();
+    expect(() => applyPortOverride("amqp://host", "0")).toThrow();
+    expect(() => applyPortOverride("amqp://host", "99999")).toThrow();
   });
 });
 

@@ -34,6 +34,11 @@ import type { SafeEventPayload } from "./safeEvents";
 const ENV_PUBLISH_ENABLED = "ENVIO_AMQP_PUBLISH_ENABLED";
 const ENV_AMQP_URL = "ENVIO_AMQP_URL";
 const ENV_AMQP_EXCHANGE = "ENVIO_AMQP_EXCHANGE";
+// Optional override for the broker port. If unset, amqplib uses the URL's
+// own port; if the URL has none, amqplib defaults to 5672 for `amqp://`
+// and 5671 for `amqps://` (per the AMQP URI spec). Only set this when
+// your broker listens on a non-standard port.
+const ENV_AMQP_PORT = "ENVIO_AMQP_PORT";
 
 // True only when the operator has explicitly opted in. Anything other than
 // "true" / "1" / "yes" (case-insensitive) is treated as off — including the
@@ -42,6 +47,30 @@ function parseBool(v: string | undefined): boolean {
     if (!v) return false;
     const lower = v.trim().toLowerCase();
     return lower === "true" || lower === "1" || lower === "yes";
+}
+
+// Inject an explicit port into an AMQP URL when `ENVIO_AMQP_PORT` is set.
+// No-op when the env var is unset or empty — amqplib's URL parser then
+// uses whatever port is in the URL itself, or falls back to the scheme
+// default (5672 for amqp://, 5671 for amqps://). The override is applied
+// even if the URL already has a port; env var wins.
+export function applyPortOverride(rawUrl: string, portEnv: string | undefined): string {
+    if (!portEnv || !portEnv.trim()) return rawUrl;
+    const port = Number.parseInt(portEnv.trim(), 10);
+    if (!Number.isInteger(port) || port <= 0 || port > 65535) {
+        throw new Error(
+            `${ENV_AMQP_PORT} must be a positive integer (1-65535); got "${portEnv}"`,
+        );
+    }
+    try {
+        const u = new URL(rawUrl);
+        u.port = String(port);
+        return u.toString();
+    } catch {
+        // URL parse failed — bail to the original string and let amqplib
+        // surface a cleaner error.
+        return rawUrl;
+    }
 }
 
 // Resolved at module load so test/dev startup costs don't recur per publish.
@@ -97,33 +126,52 @@ function resolveInitialState(): State {
 
 // --- Connect / reconnect ------------------------------------------------
 
-async function connect(): Promise<void> {
+// `attempt` threads through so each successive failed connect grows the
+// backoff (the catch preserves it; scheduleReconnect increments it on each
+// fire). External callers (publishSafeEvent lazy-connect, ensureConnected)
+// pass nothing and start at 0 — only scheduleReconnect's setTimeout passes
+// the incremented attempt.
+async function connect(attempt = 0): Promise<void> {
     if (state.kind === "ready" || state.kind === "connecting") return;
     if (state.kind === "disabled") return;
     state = { kind: "connecting" };
 
-    const url = process.env[ENV_AMQP_URL]!;
+    const url = applyPortOverride(
+        process.env[ENV_AMQP_URL]!,
+        process.env[ENV_AMQP_PORT],
+    );
     const exchange = process.env[ENV_AMQP_EXCHANGE]!;
 
     try {
         const conn = await amqplib.connect(url);
-        const channel = await conn.createChannel();
-        await channel.assertExchange(exchange, "fanout", { durable: true });
-
+        // Register the error listener BEFORE any further awaits so a
+        // server-side rejection (e.g. PRECONDITION_FAILED on assertExchange
+        // when the exchange exists with different args) doesn't crash the
+        // process via an unhandled 'error' event on the ChannelModel.
         conn.on("error", (err: Error) => {
             console.warn(`[rabbitmq] connection error: ${err.message}`);
         });
         conn.on("close", () => {
             console.warn("[rabbitmq] connection closed; scheduling reconnect");
+            // A successful connection that dropped resets the backoff —
+            // the broker was clearly reachable; treat the next reconnect
+            // attempt as the first one for this outage.
             state = { kind: "reconnecting", attempt: 0 };
             scheduleReconnect();
         });
+
+        const channel = await conn.createChannel();
+        channel.on("error", (err: Error) => {
+            console.warn(`[rabbitmq] channel error: ${err.message}`);
+        });
+        await channel.assertExchange(exchange, "fanout", { durable: true });
 
         state = { kind: "ready", channel, conn } as State;
     } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : String(err);
         console.warn(`[rabbitmq] initial connect failed: ${msg}; scheduling reconnect`);
-        state = { kind: "reconnecting", attempt: 0 };
+        // Preserve the attempt so backoff grows on successive failures.
+        state = { kind: "reconnecting", attempt };
         scheduleReconnect();
     }
 }
@@ -140,10 +188,12 @@ function scheduleReconnect(): void {
         // Re-check state at fire time — a successful manual reconnect or a
         // shutdown could have moved us.
         if (state.kind !== "reconnecting") return;
-        state = { kind: "reconnecting", attempt: attempt + 1 };
-        void connect().then(() => {
-            if (state.kind === "reconnecting") scheduleReconnect();
-        });
+        const nextAttempt = attempt + 1;
+        state = { kind: "reconnecting", attempt: nextAttempt };
+        // connect()'s catch handles scheduling the *next* reconnect on
+        // failure — no follow-up .then() needed here. Removing it
+        // eliminates the duplicate-timer hazard CodeRabbit flagged.
+        void connect(nextAttempt);
     }, backoffMs(attempt));
 }
 
@@ -199,4 +249,37 @@ export function publisherStatus(): { enabled: boolean; testMode: boolean; reason
         testMode: TEST_MODE,
         reason: state.kind === "disabled" ? state.reason : undefined,
     };
+}
+
+// Force the publisher to (re)connect eagerly and resolve once the channel
+// is ready to accept publishes. Used by smoke-test scripts that need to
+// publish exactly N messages and know they all landed; the production
+// indexer path stays lazy-connected via the first publish() call.
+export async function ensureConnected(): Promise<void> {
+    if (state.kind === "disabled") {
+        throw new Error(`publisher disabled: ${state.reason}`);
+    }
+    if (state.kind === "ready") return;
+    await connect();
+    // TS doesn't track that `connect()` reassigns the module-level `state`.
+    if ((state as State).kind !== "ready") {
+        throw new Error("publisher failed to reach ready state");
+    }
+}
+
+// Cleanly close the connection. For long-lived processes the publisher
+// stays open; smoke-test scripts call this before exit so the message
+// flush completes and the process exits without hanging on an open socket.
+export async function closePublisher(): Promise<void> {
+    if (state.kind === "ready") {
+        const conn = state.conn;
+        // Move state out of "ready" first so the "close" event handler
+        // doesn't try to reconnect.
+        state = { kind: "disabled", reason: "closed by closePublisher()" };
+        try {
+            await conn.close();
+        } catch {
+            // ignore — connection might already be torn down
+        }
+    }
 }
