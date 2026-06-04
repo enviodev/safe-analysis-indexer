@@ -157,6 +157,34 @@ When a PR triggers CodeRabbit review, treat its inline comments as a checklist: 
 - **Module-level state**: any `Set`/`Map` declared at module scope persists across blocks and across preload/execution passes. Gate writes on `!context.isPreload` (see `processedExecutions` in `helpers.ts`).
 - **`UNKNOWN` version sentinel**: stub Safes start as `version: "UNKNOWN"` (an enum literal, not null). Handlers that derive version from masterCopy should preserve non-UNKNOWN existing values to avoid clobbering state-mutation events that fired earlier in log order.
 
+## RabbitMQ event publisher
+
+The indexer can publish Safe Transaction Service-compatible JSON events to a
+RabbitMQ exchange whenever an on-chain event matches one of Safe's webhook
+types (see `src/safeEvents.ts` for the supported list). Downstream consumers
+can then subscribe via [`safe-events-service`](https://github.com/safe-global/safe-events-service)
+without any client-side changes.
+
+Three env vars (all `ENVIO_`-prefixed so envio-cloud passes them through):
+
+| Var | Required | Description |
+|---|---|---|
+| `ENVIO_AMQP_PUBLISH_ENABLED` | No (default `false`) | Hard toggle. Unset or `false` → publisher is a permanent no-op. Production typically runs two instances side-by-side (one publishing, one not). |
+| `ENVIO_AMQP_URL` | When publishing | RabbitMQ connection URL. Scheme picks protocol + default port: `amqp://` → 5672 (plain), `amqps://` → 5671 (TLS). |
+| `ENVIO_AMQP_PORT` | No | Optional port override. Replaces any port in the URL. Set this only for non-standard broker ports. |
+| `ENVIO_AMQP_EXCHANGE` | When publishing | Exchange name. Asserted as `fanout` + `durable` (mirrors Safe TX Service's setup). Must match what your downstream consumer subscribes to. |
+
+The publisher only fires when **all** chains have caught up to head
+(`context.chain.isRealtime === true`) and we're outside the preload pass —
+historical sync never emits anything. Failures are fire-and-forget (logged,
+dropped); per the Safe events spec consumers fall back to the canonical REST
+API for source-of-truth.
+
+Off-chain Safe event types (`NEW_CONFIRMATION`, `PENDING_MULTISIG_TRANSACTION`,
+`DELETED_MULTISIG_TRANSACTION`, `MESSAGE_*`, `*_DELEGATE`, `OUTGOING_ETHER`,
+`REORG_DETECTED`) are deliberately not emitted — we have no way to observe
+them from on-chain data alone.
+
 ## Further reading
 
 - [Envio HyperIndex docs](https://docs.envio.dev) — handler API, wildcard events, effects, schema reference.

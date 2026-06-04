@@ -17,6 +17,7 @@
     "test:all": "vitest run && vitest run --config vitest.integration.config.ts"
   },
   "devDependencies": {
+    "@types/amqplib": "^0.10.8",
     "@types/node": "^22.10.5",
     "dotenv": "^17.4.2",
     "typescript": "^5.7.3",
@@ -24,6 +25,7 @@
   },
   "dependencies": {
     "@envio-dev/hypersync-client": "^0.7.2",
+    "amqplib": "^2.0.1",
     "envio": "3.1.0-rc.2",
     "ethers": "6.8.0",
     "viem": "^2.46.2"
