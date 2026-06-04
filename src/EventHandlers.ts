@@ -824,11 +824,21 @@ indexer.onEvent({
     value,
   });
 
+  // Self-transfer (from === to): balance net delta is 0 and running both
+  // sides as a Promise.all races on the same SafeTokenBalance row id
+  // (both read the same `existing`, the second `.set` clobbers the first).
+  // Skip the balance update entirely — the ERC20Transfer log row above
+  // still captures the event. Same shape of fix as the ERC721 self-transfer
+  // guard. Self-transfers are common on ERC20 (no-op transfers used by some
+  // token contracts for accounting / re-approval flows).
+  if (from === to) return;
+
   // Maintain per-(safe, token) balance. Each Transfer event is filtered to
   // touch at least one Safe (HyperSync topic filter), but not necessarily
   // both ends — and we never know which side is the Safe at decode time, so
   // try both. context.Safe.get() short-circuits when the address is not a
-  // discovered Safe.
+  // discovered Safe. from !== to here, so the two branches touch different
+  // row ids and parallelise safely.
   await Promise.all([
     applyBalanceDelta(context, chainId, from, token, -value, block, ts, "out"),
     applyBalanceDelta(context, chainId, to, token, value, block, ts, "in"),
