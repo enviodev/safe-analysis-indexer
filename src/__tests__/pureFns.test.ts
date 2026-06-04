@@ -529,6 +529,45 @@ describe("decodeCreateProxyWithNonceInitializer", () => {
     expect(decodeCreateProxyWithNonceInitializer(encodeHandleOpsV06([tooShort]))).toBeUndefined();
   });
 
+  // -------------------------------------------------------------------------
+  // Contract Proxy Kit factory — legacy Safe-via-CPK deployments. STS treats
+  // the `data` arg (index 5) as setupData; we do the same. Terminal peel —
+  // we don't recurse into `data` since it's the value we want to record.
+  // -------------------------------------------------------------------------
+  const cpkIface = new ethers.Interface([
+    "function createProxyAndExecTransaction(address masterCopy, uint256 saltNonce, address fallbackHandler, address to, uint256 value, bytes data, uint8 operation)",
+  ]);
+
+  function encodeCpkCall(data: string): string {
+    return cpkIface.encodeFunctionData("createProxyAndExecTransaction", [
+      MASTER_COPIES.V1_3_0_L2,
+      77n, // saltNonce
+      "0x" + "00".repeat(20), // fallbackHandler
+      "0x" + "ee".repeat(20), // to — exec target
+      0n, // value
+      data,
+      0, // operation: CALL
+    ]);
+  }
+
+  it("decodes a CPK createProxyAndExecTransaction and returns the `data` arg as setupData", () => {
+    const data = "0xb63e800d" + "aa".repeat(32 * 5);
+    expect(decodeCreateProxyWithNonceInitializer(encodeCpkCall(data))).toBe(data);
+  });
+
+  it("returns undefined when CPK `data` arg is the empty bytes sentinel (`0x`)", () => {
+    expect(decodeCreateProxyWithNonceInitializer(encodeCpkCall("0x"))).toBeUndefined();
+  });
+
+  it("finds CPK creation inside a MultiSend wrap (composition)", () => {
+    const data = "0xb63e800d" + "bb".repeat(32 * 3);
+    const packed = packMultiSendSubTx({
+      to: "0x" + "cc".repeat(20),
+      data: encodeCpkCall(data),
+    });
+    expect(decodeCreateProxyWithNonceInitializer(encodeMultiSend(packed))).toBe(data);
+  });
+
   it("Gelato counts toward the recursion depth budget", () => {
     // Self-referential Gelato chain (>9 deep, no factory inside). Without the
     // depth cap this recurses forever; with it the decoder returns undefined
