@@ -136,6 +136,38 @@ describe("SafeErc721Watcher.Transfer", () => {
     expect(holdingB.safeAddress).toBe(safeB.toLowerCase());
   });
 
+  it("self-transfer (from === to) leaves the holding unchanged (no race on the same row id)", async () => {
+    // Self-transfers on ERC721 are legal (re-approval workflows, some
+    // wrap-unwrap flows). The handler must not run the parallel out+in path
+    // on the same row id — that would race delete vs set.
+    const indexer = createIndexer();
+    const safeAddr = addr("erc721-self-xfer");
+    seedSafe(indexer, { chainId: CHAIN_ID, address: safeAddr });
+
+    // Seed the holding first via a normal inbound, then issue a self-transfer.
+    await processOnChain(indexer, CHAIN_ID, [
+      simulateErc721Transfer({
+        token: addr("nft"),
+        from: addr("external"),
+        to: safeAddr,
+        tokenId: 5n,
+      }),
+      simulateErc721Transfer({
+        token: addr("nft"),
+        from: safeAddr,
+        to: safeAddr,
+        tokenId: 5n,
+      }),
+    ]);
+
+    const id = `${CHAIN_ID}-${safeAddr.toLowerCase()}-${addr("nft").toLowerCase()}-5`;
+    // Holding must still exist — the self-transfer is recorded immutably in
+    // ERC721Transfer but doesn't churn the current-holdings view.
+    const holding = await indexer.SafeNftHolding.getOrThrow(id);
+    expect(holding.tokenId).toBe(5n);
+    expect((await indexer.ERC721Transfer.getAll()).length).toBe(2);
+  });
+
   it("different tokenIds on the same token are tracked independently", async () => {
     const indexer = createIndexer();
     const safeAddr = addr("erc721-multi-id");

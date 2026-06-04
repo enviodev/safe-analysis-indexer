@@ -872,8 +872,15 @@ indexer.onEvent({
     tokenId,
   });
 
+  // Self-transfer (from === to): ownership unchanged, holding row unchanged.
+  // Skip both sides — running them as a Promise.all would race on the same
+  // row id (one "out" deletes, one "in" sets, ordering is nondeterministic).
+  // Rare but legal — surfaces e.g. in some re-approval / wrap-unwrap flows.
+  if (from === to) return;
+
   // Update holdings on both sides — only persists for sides that are known
-  // Safes (applySafeNftHoldingDelta short-circuits otherwise).
+  // Safes (applySafeNftHoldingDelta short-circuits otherwise). from !== to
+  // here, so the two operations touch different row ids and parallelise safely.
   await Promise.all([
     applySafeNftHoldingDelta(context, chainId, from, token, tokenId, "out", block, ts, txHash),
     applySafeNftHoldingDelta(context, chainId, to,   token, tokenId, "in",  block, ts, txHash),
