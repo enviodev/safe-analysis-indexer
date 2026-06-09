@@ -63,7 +63,11 @@ export interface NormalisedMultisigTx {
   txHash: string; // lowercase
   executionDate: number; // unix seconds; both sources expose this
   success: boolean | null;
-  nonce: number;
+  // Decimal-string nonce: matches the uint256 semantic and side-steps the
+  // STS-vs-indexer JSON-encoding split (STS returns `"0"`, GraphQL returns
+  // a BigInt-as-string). Compared as strings — Number() coercion lost
+  // precision on >2^53 nonces anyway. Same shape as value/safeTxGas/etc.
+  nonce: string;
   // Transaction payload (matched against our SafeTransaction entity)
   to: string; // lowercase
   value: string; // decimal string (BigInt-normalised)
