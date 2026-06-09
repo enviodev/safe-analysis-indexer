@@ -42,3 +42,4 @@ build
 .cache/
 .timesheet/
 local/
+.claude/scheduled_tasks.lock
