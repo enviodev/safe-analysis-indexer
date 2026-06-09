@@ -384,6 +384,18 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeSetup", wildcard: true }
     // already has the final fallbackHandler set and we must NOT clobber it
     // with SafeSetup's stale initial. Mirrors how masterCopy/version/creator
     // are preserved here.
+    //
+    // owners: same logical shape. SafeSetup's `owners` event param reports
+    // the INITIAL owner set passed into setup(). A setup-time delegate-call
+    // (e.g. via `setupModules(to, data)`) can `addOwner(...)` BEFORE
+    // SafeSetup, in which case the AddedOwner handler already populated
+    // `existingSafe.owners` with the post-delegate-call additions. The
+    // final on-chain owner storage is the UNION: the initial set plus
+    // anything the delegate-call appended (Safe's `addOwnerWithThreshold`
+    // appends to the linked list). Take the union, deduped — preserves
+    // ordering by putting SafeSetup's initial owners first (most common
+    // case where no prior AddedOwner fired). Mirrors PR #45's preserve fix.
+    //
     // Resolve enum version from whichever masterCopy ends up on the entity
     // (existing first, then RPC-resolved, then UNKNOWN).
     const effectiveMasterCopy =
@@ -391,9 +403,17 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeSetup", wildcard: true }
     const effectiveVersion: SafeVersion = resolvedVersion
       ?? (effectiveMasterCopy ? (resolveVersionFromMasterCopy(effectiveMasterCopy) ?? "UNKNOWN") : "UNKNOWN");
 
+    const seenOwners = new Set<string>();
+    const mergedOwners: string[] = [];
+    for (const o of [...ownersArray, ...(existingSafe.owners ?? [])]) {
+      if (seenOwners.has(o)) continue;
+      seenOwners.add(o);
+      mergedOwners.push(o);
+    }
+
     const safe: Safe = {
       ...existingSafe,
-      owners: ownersArray,
+      owners: mergedOwners,
       threshold: Number(threshold),
       initializer,
       creationTxFrom,
