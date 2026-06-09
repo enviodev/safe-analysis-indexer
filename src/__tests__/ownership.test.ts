@@ -78,6 +78,49 @@ describe("AddedOwner", () => {
     expect([...safe.owners].sort()).toEqual([ownerA, ownerB].sort());
   });
 
+  it("AddedOwner BEFORE SafeSetup in same batch: SafeSetup must not clobber the pre-existing owner", async () => {
+    // Reproduces the setup()-time delegate-call pattern surfaced by the
+    // cross-reference suite (e.g. Gnosis Safe 0x7d436c85… on chain 100):
+    //   log[N]   AddedOwner(B)     ← multiSend delegate-call inside setup()
+    //   log[N+1] AddedOwner(A)     ← (sometimes — but here we model just one)
+    //   log[N+M] SafeSetup(owners=[A])  ← reports the INITIAL set passed to
+    //                                     setup(), not the post-delegate-
+    //                                     call state.
+    //
+    // Without the merge fix, SafeSetup's `owners: ownersArray` overwrites
+    // the stub's owners with [A], dropping B. Final on-chain Safe storage
+    // is the union {A, B} (Safe's `addOwnerWithThreshold` appends to the
+    // linked list, never removes). The handler must mirror that.
+    resetBlockCounter();
+    const indexer = createIndexer();
+    const proxy = addr("add-then-setup");
+    const ownerA = addr("setup-initial-owner");
+    const ownerB = addr("delegate-call-added");
+
+    await processOnChain(indexer, CHAIN_ID, [
+      simulateAddedOwner({
+        contract: "GnosisSafeL2",
+        safeAddress: proxy,
+        owner: ownerB,
+        v4: true,
+      }),
+      simulateSafeSetup({ safeAddress: proxy, owners: [ownerA], threshold: 1n }),
+    ]);
+
+    const safe = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, proxy));
+    expect([...safe.owners].sort()).toEqual([ownerA, ownerB].sort());
+    // Owner-side bookkeeping survives the merge — both should be in the
+    // Owner table and both should have this safeId in their `safes` array.
+    await expectOwnerMembership(indexer, {
+      owner: ownerA,
+      safeIds: [safeId(CHAIN_ID, proxy)],
+    });
+    await expectOwnerMembership(indexer, {
+      owner: ownerB,
+      safeIds: [safeId(CHAIN_ID, proxy)],
+    });
+  });
+
   it("dedups AddedOwner + AddedOwnerV4 fired at the same event (owners array length 1)", async () => {
     resetBlockCounter();
     const indexer = createIndexer();
