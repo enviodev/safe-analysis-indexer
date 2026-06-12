@@ -1,6 +1,6 @@
 import { indexer, type Entity } from "envio";
 import { addOwner, removeOwner, addSafeToOwner, executionSuccess, executionFailure, incrementSafeCount, incrementTransactionCount, incrementModuleTransactionCount, getOrCreateVersion, ensureSafeStub } from "./helpers";
-import { getSetupTrace, decodeSetupInput, getMasterCopyFromTrace, getSafeMasterCopyViaRpc, resolveVersionFromMasterCopy, decodeCreateProxyWithNonceInitializer, getSafeCreatorViaTraceTransaction, CREATOR_TRACE_CHAINS } from "./hypersync";
+import { getSetupTrace, decodeSetupInput, getMasterCopyFromTrace, getSafeMasterCopyViaRpc, resolveVersionFromMasterCopy, decodeCreateProxyWithNonceInitializer, getSafeCreatorViaTraceTransaction, CREATOR_TRACE_CHAINS, isRpcConfigured } from "./hypersync";
 import { LEGACY_V1_0_0_PROXY } from "./consts";
 import type { SafeVersion } from "./consts";
 import { decodeAbiParameters, zeroAddress } from "viem";
@@ -348,7 +348,14 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "SafeSetup", wildcard: true }
   // having to enumerate every 3rd-party factory.
   let rpcMasterCopy: string | null = null;
   let resolvedVersion: SafeVersion | null = null;
-  if (!existingSafe || !existingSafe.masterCopy) {
+  // Gate the RPC fallback on chain configuration: a chain that's active
+  // in config.yaml but without a DRPC mapping (or without
+  // ENVIO_DRPC_API_KEY set) runs the canonical ProxyCreation path
+  // unchanged but skips this orphan backfill. Result: orphan Safes on
+  // those chains stay at version=UNKNOWN, masterCopy=undefined — degraded
+  // but doesn't crash the handler. Chains where the operator wants the
+  // backfill can be added to DRPC_NETWORKS in src/hypersync.ts.
+  if ((!existingSafe || !existingSafe.masterCopy) && isRpcConfigured(chainId)) {
     rpcMasterCopy = await context.effect(getSafeMasterCopyViaRpc, {
       chainId,
       safeAddress: srcAddress,

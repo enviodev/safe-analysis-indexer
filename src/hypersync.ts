@@ -503,24 +503,41 @@ const execTransactionSelector = execTransactionInterface.getFunction("execTransa
 // ------------------------------------------------------------------------------------
 
 // DRPC network slug per chain — drpc keys on a network name in the URL,
-// not the chain id. Add chains here as they're enabled in config.yaml.
+// not the chain id. RPC backfill is OPT-IN per chain: a chain that's
+// active in `config.yaml` but missing from this map runs without RPC
+// fallback, which means orphan Safes (no ProxyCreation, no known
+// singleton) end up with `version: UNKNOWN` and `masterCopy: undefined`.
+// That's degraded coverage but the canonical ProxyCreation path still
+// produces the correct entity. To enable backfill for a chain, add its
+// drpc.org network slug here AND ensure `ENVIO_DRPC_API_KEY` is set on
+// the deploying instance.
 const DRPC_NETWORKS: Record<number, string> = {
     1: "ethereum",
     100: "gnosis",
     480: "worldchain",
 };
 
+// True when both prerequisites for an RPC call are met: chain has a DRPC
+// slug declared above AND `ENVIO_DRPC_API_KEY` is set. Callers gate
+// expensive context.effect() calls on this so unmapped chains don't pay
+// the effect dispatch cost (or crash the handler — `getRpcUrl` below
+// throws if either prerequisite is missing).
+export function isRpcConfigured(chainId: number): boolean {
+    return Boolean(DRPC_NETWORKS[chainId] && process.env.ENVIO_DRPC_API_KEY);
+}
+
 // Build a drpc.org URL for the chain. Throws (loudly) when prerequisites
-// aren't met — this is deliberate: RPC-backfill is required for orphan
-// masterCopy resolution and L1 trace fallbacks, and silently degrading to
-// public RPCs would mask the requirement and let stats / coverage drift.
-// Sign up at https://drpc.org/ and export ENVIO_DRPC_API_KEY.
+// aren't met — this matches the contract of "callers MUST gate on
+// `isRpcConfigured(chainId)` first". Inside the effect handlers below,
+// reaching this with missing prerequisites is a programmer error and
+// the loud throw makes it obvious in dev.
 function getRpcUrl(chainId: number): string {
     const network = DRPC_NETWORKS[chainId];
     if (!network) {
         throw new Error(
             `RPC endpoint not configured for chainId=${chainId}. ` +
-            `Add the chain to DRPC_NETWORKS in src/hypersync.ts.`
+            `Add the chain to DRPC_NETWORKS in src/hypersync.ts ` +
+            `(or gate the call on isRpcConfigured(chainId) at the callsite).`
         );
     }
     const apiKey = process.env.ENVIO_DRPC_API_KEY;

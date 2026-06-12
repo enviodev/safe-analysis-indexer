@@ -15,6 +15,7 @@ import {
   decodeExecTransaction,
   decodeCreateProxyWithNonceInitializer,
   findCreatorFromTraceList,
+  isRpcConfigured,
   type TraceTransactionItem,
 } from "../hypersync";
 import { addr, MASTER_COPIES } from "./fixtures/addresses";
@@ -718,5 +719,32 @@ describe("findCreatorFromTraceList", () => {
       createTrace(factory, safe.toUpperCase().replace("0X", "0x"), [0]),
     ];
     expect(findCreatorFromTraceList(traces, safe)).toBe(userEOA);
+  });
+});
+
+describe("isRpcConfigured (chain-by-chain RPC opt-in)", () => {
+  // Ensure handler callsites that depend on the gate don't silently
+  // regress if someone bulk-adds chains to DRPC_NETWORKS in the future.
+  // The .env in this repo sets ENVIO_DRPC_API_KEY, so the only variable
+  // here is whether the chainId is mapped.
+  const mappedChains = [1, 100, 480]; // ethereum, gnosis, worldchain
+  const unmappedChains = [10, 137, 143, 204, 324, 999, 1101, 5000, 8453, 42220, 43114, 59144, 81457, 534352, 1313161554];
+
+  it.each(mappedChains)("chainId=%i (mapped) → true", (chainId) => {
+    expect(isRpcConfigured(chainId)).toBe(true);
+  });
+
+  it.each(unmappedChains)("chainId=%i (unmapped) → false", (chainId) => {
+    expect(isRpcConfigured(chainId)).toBe(false);
+  });
+
+  it("returns false when the env key is unset, even for a mapped chain", () => {
+    const original = process.env.ENVIO_DRPC_API_KEY;
+    try {
+      delete process.env.ENVIO_DRPC_API_KEY;
+      expect(isRpcConfigured(1)).toBe(false);
+    } finally {
+      if (original !== undefined) process.env.ENVIO_DRPC_API_KEY = original;
+    }
   });
 });
