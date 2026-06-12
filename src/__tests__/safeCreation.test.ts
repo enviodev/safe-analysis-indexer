@@ -493,6 +493,34 @@ describe("SafeSetup ↔ ProxyCreation ordering (1.3.0+)", () => {
     expect(safe.owners).toEqual([addr("only-owner")]);
   });
 
+  it("orphan SafeSetup on a chain without DRPC config does NOT crash the handler", async () => {
+    // Regression for the hosted-service crash observed when chains like
+    // optimism (10) / monad / scroll / etc. were enabled in config.yaml
+    // but not added to DRPC_NETWORKS in src/hypersync.ts. Pre-fix the
+    // SafeSetup wildcard fired `getSafeMasterCopyViaRpc` unconditionally,
+    // which threw `RPC endpoint not configured for chainId=10`, taking
+    // down the handler. Post-fix the orphan-RPC branch is gated on
+    // isRpcConfigured(chainId) — unmapped chains skip the backfill, the
+    // Safe entity lands with masterCopy=undefined / version=UNKNOWN, and
+    // the indexer continues processing.
+    const optimism = 10;
+    const indexer = createIndexer();
+    const proxy = addr("orphan-no-rpc-chain");
+    // Deliberately no setEffectFixtures call — the gate skips the effect.
+    await processOnChain(indexer, optimism, [
+      simulateSafeSetup({
+        safeAddress: proxy,
+        owners: [addr("optimism-owner")],
+        threshold: 1n,
+      }),
+    ]);
+
+    const safe = await indexer.Safe.getOrThrow(safeId(optimism, proxy));
+    expect(safe.version).toBe("UNKNOWN");
+    expect(safe.masterCopy).toBeUndefined();
+    expect(safe.owners).toEqual([addr("optimism-owner")]);
+  });
+
   it("orphan SafeSetup + RPC returns known masterCopy → version and masterCopy backfilled", async () => {
     // Models 3rd-party-factory deployments: SafeSetup fires (wildcard catches
     // it) but ProxyCreation never arrives because the factory isn't in our
