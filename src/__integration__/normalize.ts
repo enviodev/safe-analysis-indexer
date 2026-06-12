@@ -202,7 +202,10 @@ export function normaliseCreationFromIndexer(raw: IndexerSafeCreation): Normalis
 // Multisig tx — Safe Transaction Service shape.
 export interface SafeApiMultisigTx {
   safe: string;
-  nonce: number;
+  // STS spec types nonce as integer but the live REST API returns it as a
+  // JSON string in newer versions. Accept both shapes; we canonicalise via
+  // `bigIntStr` on the way out.
+  nonce: number | string;
   safeTxHash: string;
   transactionHash: string | null;
   executionDate: string | null; // ISO 8601
@@ -237,7 +240,7 @@ export function normaliseMultisigFromApi(
       ? Math.floor(new Date(raw.executionDate).getTime() / 1000)
       : 0,
     success: raw.isSuccessful,
-    nonce: raw.nonce,
+    nonce: bigIntStr(raw.nonce),
     to: raw.to.toLowerCase(),
     value: bigIntStr(raw.value),
     data: hexOrEmpty(raw.data),
@@ -285,7 +288,7 @@ export function normaliseMultisigFromIndexer(raw: IndexerMultisigTx): Normalised
     txHash: raw.txHash.toLowerCase(),
     executionDate: Number(raw.executionDate),
     success: raw.success,
-    nonce: Number(raw.nonce),
+    nonce: bigIntStr(raw.nonce),
     to: raw.to.toLowerCase(),
     value: bigIntStr(raw.value),
     data: hexOrEmpty(raw.data),
