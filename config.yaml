@@ -176,7 +176,6 @@ chains:
       - name: SafeErc721Watcher
   - id: 1 # ethereum
     start_block: 0
-    skip: ${ENVIO_ETH_AND_GNOSIS_ONLY:-false}
     hypersync_config:
       # Traces endpoint keeps the head in sync with trace data availability
       url: https://1-traces.hypersync.xyz
@@ -197,7 +196,6 @@ chains:
       - name: SafeErc721Watcher
   - id: 100 # gnosis
     start_block: 0
-    skip: ${ENVIO_ETH_AND_GNOSIS_ONLY:-false}
     hypersync_config:
       url: https://100-traces.hypersync.xyz
     contracts:
