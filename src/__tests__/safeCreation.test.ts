@@ -493,32 +493,39 @@ describe("SafeSetup ↔ ProxyCreation ordering (1.3.0+)", () => {
     expect(safe.owners).toEqual([addr("only-owner")]);
   });
 
-  it("orphan SafeSetup on a chain without DRPC config does NOT crash the handler", async () => {
-    // Regression for the hosted-service crash observed when chains like
-    // optimism (10) / monad / scroll / etc. were enabled in config.yaml
-    // but not added to DRPC_NETWORKS in src/hypersync.ts. Pre-fix the
-    // SafeSetup wildcard fired `getSafeMasterCopyViaRpc` unconditionally,
-    // which threw `RPC endpoint not configured for chainId=10`, taking
-    // down the handler. Post-fix the orphan-RPC branch is gated on
-    // isRpcConfigured(chainId) — unmapped chains skip the backfill, the
-    // Safe entity lands with masterCopy=undefined / version=UNKNOWN, and
-    // the indexer continues processing.
-    const optimism = 10;
-    const indexer = createIndexer();
-    const proxy = addr("orphan-no-rpc-chain");
-    // Deliberately no setEffectFixtures call — the gate skips the effect.
-    await processOnChain(indexer, optimism, [
-      simulateSafeSetup({
-        safeAddress: proxy,
-        owners: [addr("optimism-owner")],
-        threshold: 1n,
-      }),
-    ]);
+  it("orphan SafeSetup without DRPC config does NOT crash the handler", async () => {
+    // Regression: an orphan SafeSetup on a chain where RPC backfill isn't
+    // configured must NOT crash the handler. The masterCopy backfill is
+    // gated on isRpcConfigured(chainId); when that's false the Safe simply
+    // lands as version=UNKNOWN / masterCopy=undefined and indexing continues.
+    //
+    // isRpcConfigured is false when the chain is absent from DRPC_NETWORKS OR
+    // ENVIO_DRPC_API_KEY is unset. We trigger it via the key here (the only
+    // configured chains are DRPC-mapped). Clear it before createIndexer() —
+    // the TestIndexer worker snapshots env at spawn — and restore it after.
+    const ethereum = 1;
+    const prevKey = process.env.ENVIO_DRPC_API_KEY;
+    delete process.env.ENVIO_DRPC_API_KEY;
+    try {
+      const indexer = createIndexer();
+      const proxy = addr("orphan-no-rpc-chain");
+      // Deliberately no setEffectFixtures call — the gate skips the effect.
+      await processOnChain(indexer, ethereum, [
+        simulateSafeSetup({
+          safeAddress: proxy,
+          owners: [addr("no-rpc-owner")],
+          threshold: 1n,
+        }),
+      ]);
 
-    const safe = await indexer.Safe.getOrThrow(safeId(optimism, proxy));
-    expect(safe.version).toBe("UNKNOWN");
-    expect(safe.masterCopy).toBeUndefined();
-    expect(safe.owners).toEqual([addr("optimism-owner")]);
+      const safe = await indexer.Safe.getOrThrow(safeId(ethereum, proxy));
+      expect(safe.version).toBe("UNKNOWN");
+      expect(safe.masterCopy).toBeUndefined();
+      expect(safe.owners).toEqual([addr("no-rpc-owner")]);
+    } finally {
+      if (prevKey === undefined) delete process.env.ENVIO_DRPC_API_KEY;
+      else process.env.ENVIO_DRPC_API_KEY = prevKey;
+    }
   });
 
   it("orphan SafeSetup + RPC returns known masterCopy → version and masterCopy backfilled", async () => {
