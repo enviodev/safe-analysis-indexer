@@ -1,17 +1,23 @@
 import { describe, it, expect } from "vitest";
 import { addr } from "./fixtures/addresses";
 import { createIndexer, processOnChain, seedSafe } from "./fixtures/indexer";
-import { simulateErc721Transfer } from "./fixtures/events";
+import { simulateErc721Transfer, simulateSafeRegistration } from "./fixtures/events";
 
 const CHAIN_ID = 1;
 
-// Same simulator-bypass caveat as the ERC20 watcher tests: the production
-// `where` filter on chain.SafeErc721Watcher.addresses runs at HyperSync source
-// only, so simulate() delivers every event regardless of whether either
-// endpoint is a known Safe. The handler is the only thing under test here.
+// Same address-pool gating as the ERC20 watcher tests: the production `where`
+// filter on chain.SafeErc721Watcher.addresses now runs in-process under envio
+// 3.2.1, so a Safe must be registered into the pool (via a ProxyCreation event
+// — see `simulateSafeRegistration`) before a Transfer touching it reaches the
+// handler. `seedSafe` only writes the Safe entity, so the seeded-Safe tests
+// prepend a registration item.
 
 describe("SafeErc721Watcher.Transfer", () => {
-  it("writes an ERC721Transfer row but no SafeNftHolding when neither side is a Safe", async () => {
+  it("a Transfer where neither side is a registered Safe is filtered out (no rows)", async () => {
+    // Pre-3.2.1 the simulate path bypassed the address-pool filter, so this
+    // event reached the handler and wrote an ERC721Transfer log. 3.2.1 enforces
+    // the filter in-process: with neither endpoint in the watcher pool the
+    // event is dropped before the handler — no ERC721Transfer, no holding.
     const indexer = createIndexer();
     await processOnChain(indexer, CHAIN_ID, [
       simulateErc721Transfer({
@@ -21,8 +27,7 @@ describe("SafeErc721Watcher.Transfer", () => {
         tokenId: 1n,
       }),
     ]);
-    const transfers = await indexer.ERC721Transfer.getAll();
-    expect(transfers.length).toBe(1);
+    expect(await indexer.ERC721Transfer.getAll()).toEqual([]);
     expect(await indexer.SafeNftHolding.getAll()).toEqual([]);
   });
 
@@ -32,6 +37,7 @@ describe("SafeErc721Watcher.Transfer", () => {
     seedSafe(indexer, { chainId: CHAIN_ID, address: safeAddr });
 
     await processOnChain(indexer, CHAIN_ID, [
+      simulateSafeRegistration(safeAddr),
       simulateErc721Transfer({
         token: addr("nft"),
         from: addr("external"),
@@ -53,6 +59,7 @@ describe("SafeErc721Watcher.Transfer", () => {
     seedSafe(indexer, { chainId: CHAIN_ID, address: safeAddr });
 
     await processOnChain(indexer, CHAIN_ID, [
+      simulateSafeRegistration(safeAddr),
       simulateErc721Transfer({
         token: addr("nft"),
         from: addr("external"),
@@ -78,6 +85,7 @@ describe("SafeErc721Watcher.Transfer", () => {
     seedSafe(indexer, { chainId: CHAIN_ID, address: safeAddr });
 
     await processOnChain(indexer, CHAIN_ID, [
+      simulateSafeRegistration(safeAddr),
       simulateErc721Transfer({
         token: addr("nft"),
         from: addr("external"),
@@ -114,6 +122,8 @@ describe("SafeErc721Watcher.Transfer", () => {
     seedSafe(indexer, { chainId: CHAIN_ID, address: safeB });
 
     await processOnChain(indexer, CHAIN_ID, [
+      simulateSafeRegistration(safeA),
+      simulateSafeRegistration(safeB),
       simulateErc721Transfer({
         token: addr("nft"),
         from: addr("external"),
@@ -146,6 +156,7 @@ describe("SafeErc721Watcher.Transfer", () => {
 
     // Seed the holding first via a normal inbound, then issue a self-transfer.
     await processOnChain(indexer, CHAIN_ID, [
+      simulateSafeRegistration(safeAddr),
       simulateErc721Transfer({
         token: addr("nft"),
         from: addr("external"),
@@ -174,6 +185,7 @@ describe("SafeErc721Watcher.Transfer", () => {
     seedSafe(indexer, { chainId: CHAIN_ID, address: safeAddr });
 
     await processOnChain(indexer, CHAIN_ID, [
+      simulateSafeRegistration(safeAddr),
       simulateErc721Transfer({ token: addr("nft"), from: addr("ext"), to: safeAddr, tokenId: 1n }),
       simulateErc721Transfer({ token: addr("nft"), from: addr("ext"), to: safeAddr, tokenId: 2n }),
       simulateErc721Transfer({ token: addr("nft"), from: addr("ext"), to: safeAddr, tokenId: 3n }),

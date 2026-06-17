@@ -124,11 +124,7 @@ describe("creation-context fields — modern ProxyCreation", () => {
     expect(safe.setupData).toBeUndefined();
   });
 
-  // SKIPPED-ENVIO-3.2: envio 3.2.0 TestIndexer regression — handleLoad crashes
-  // with "Cannot read properties of undefined (reading 'table')" when a handler
-  // reads an entity that a prior simulated event populated. Reverts to working
-  // when envio patches it; this whole comment block goes once that lands.
-  it.skip("SafeSetup-first → ProxyCreation: ProxyCreation's block + factory win", async () => {
+  it("SafeSetup-first → ProxyCreation: ProxyCreation's block + factory win", async () => {
     const indexer = createIndexer();
     const proxy = addr("setup-then-proxy");
     const factory = addr("merge-factory");

@@ -1,4 +1,5 @@
 import { encodeAbiParameters, keccak256, toBytes, zeroAddress } from "viem";
+import { MASTER_COPIES } from "./addresses";
 
 // Monotonically increasing block + logIndex counters so events line up in a
 // sensible order without callers having to think about it. Each test can call
@@ -111,6 +112,26 @@ export function simulateProxyCreationModern(args: ProxyCreationModern) {
     transaction: autoTx(args.tx, block.number, li),
     params: { proxy: args.proxy, singleton: args.singleton },
   };
+}
+
+// ---------------------------------------------------------------------------
+// Watcher address-pool registration
+//
+// envio 3.2.1 runs the wildcard `where: { params: [{ from/to: chain.X.addresses }] }`
+// filter in-process (not just at the HyperSync source). A Safe is only added to
+// the SafeErc20Watcher / SafeErc721Watcher pools by a ProxyCreation event's
+// contractRegister, so wildcard Transfer events touching a Safe are dropped
+// before the handler unless that registration has happened. Tests that seed a
+// Safe with `seedSafe` (which bypasses ProxyCreation) must prepend this item to
+// the simulate stream so the from/to Safe is in the pool. Block auto-advances,
+// so a prepended registration always precedes the transfers that follow it.
+// ---------------------------------------------------------------------------
+export function simulateSafeRegistration(safe: `0x${string}`) {
+  return simulateProxyCreationModern({
+    contract: "GnosisSafeProxy1_3_0",
+    proxy: safe,
+    singleton: MASTER_COPIES.V1_3_0_L2 as `0x${string}`,
+  });
 }
 
 // ---------------------------------------------------------------------------
