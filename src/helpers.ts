@@ -1,10 +1,29 @@
 import { zeroAddress } from "viem";
+import type { Entity, EvmEvent, EvmOnEventContext } from "envio";
 import { isL1Safe } from "./consts";
 import { decodeExecTransaction, getExecTransactionViaRpcTrace } from "./hypersync";
 import { publishIfRealtime } from "./rabbitmqEffect";
 import { buildExecutedMultisigTransaction } from "./safeEvents";
 
 const GLOBAL_STATS_ID = "global";
+
+type Safe = Entity<"Safe">;
+
+// The four execution events share the same handler logic and payload shape
+// (txHash + payment params, plus the hash/input/from transaction fields).
+// Typing against the codegen'd event union means the compiler catches dropped
+// `field_selection` entries — e.g. removing `input` makes `transaction.input`
+// a type error here instead of silently breaking the direct-decode path.
+type ExecutionEvent = EvmEvent<
+  "GnosisSafeL2",
+  "ExecutionSuccess" | "ExecutionSuccessV4" | "ExecutionFailure" | "ExecutionFailureV4"
+>;
+// AddedOwner/RemovedOwner fire from the pre-1.3.0 ABI (non-indexed) and the
+// v1.4.0+ ABI (indexed, suffixed V4); both contracts route into the shared
+// owner handlers below.
+type AddedOwnerEvent = EvmEvent<"SafePre1_3_0" | "GnosisSafeL2", "AddedOwner" | "AddedOwnerV4">;
+type RemovedOwnerEvent = EvmEvent<"SafePre1_3_0" | "GnosisSafeL2", "RemovedOwner" | "RemovedOwnerV4">;
+type HandlerContext = EvmOnEventContext;
 
 // Create a minimal Safe entity stub when a state-mutation event fires for a
 // Safe we haven't seen yet. The canonical case: bundled setup deploys (e.g.
@@ -34,13 +53,13 @@ export const ensureSafeStub = async (
     block: { number: number; timestamp: number };
     transaction: { hash: string; from?: string };
   },
-  context: any,
+  context: HandlerContext,
 ) => {
   const safeId = `${event.chainId}-${event.srcAddress}`;
   const existing = await context.Safe.get(safeId);
   if (existing) return existing;
 
-  const stub = {
+  const stub: Safe = {
     id: safeId,
     chainId: event.chainId,
     address: event.srcAddress,
@@ -77,7 +96,7 @@ export const ensureSafeStub = async (
 };
 
 // Get or create GlobalStats entity
-export const getOrCreateGlobalStats = async (context: any) => {
+export const getOrCreateGlobalStats = async (context: HandlerContext) => {
   let stats = await context.GlobalStats.get(GLOBAL_STATS_ID);
   if (!stats) {
     stats = {
@@ -91,7 +110,7 @@ export const getOrCreateGlobalStats = async (context: any) => {
 };
 
 // Get or create Network entity
-export const getOrCreateNetwork = async (chainId: number, context: any) => {
+export const getOrCreateNetwork = async (chainId: number, context: HandlerContext) => {
   const networkId = chainId.toString();
   let network = await context.Network.get(networkId);
   if (!network) {
@@ -106,7 +125,7 @@ export const getOrCreateNetwork = async (chainId: number, context: any) => {
 };
 
 // Get or create Version entity
-export const getOrCreateVersion = async (version: string, context: any) => {
+export const getOrCreateVersion = async (version: string, context: HandlerContext) => {
   let versionEntity = await context.Version.get(version);
   if (!versionEntity) {
     versionEntity = {
@@ -120,7 +139,7 @@ export const getOrCreateVersion = async (version: string, context: any) => {
 };
 
 // Increment safe count for GlobalStats, Network, and Version
-export const incrementSafeCount = async (chainId: number, version: string, context: any) => {
+export const incrementSafeCount = async (chainId: number, version: string, context: HandlerContext) => {
   const stats = await getOrCreateGlobalStats(context);
   context.GlobalStats.set({
     ...stats,
@@ -141,7 +160,7 @@ export const incrementSafeCount = async (chainId: number, version: string, conte
 };
 
 // Increment transaction count for GlobalStats, Network, and Version
-export const incrementTransactionCount = async (chainId: number, version: string, context: any) => {
+export const incrementTransactionCount = async (chainId: number, version: string, context: HandlerContext) => {
   const stats = await getOrCreateGlobalStats(context);
   context.GlobalStats.set({
     ...stats,
@@ -162,7 +181,7 @@ export const incrementTransactionCount = async (chainId: number, version: string
 };
 
 // Increment module transaction count for GlobalStats, Network, and Version
-export const incrementModuleTransactionCount = async (chainId: number, version: string, context: any) => {
+export const incrementModuleTransactionCount = async (chainId: number, version: string, context: HandlerContext) => {
   const stats = await getOrCreateGlobalStats(context);
   context.GlobalStats.set({
     ...stats,
@@ -182,7 +201,7 @@ export const incrementModuleTransactionCount = async (chainId: number, version: 
   });
 };
 
-export const addSafeToOwner = async (ownerAddress: string, safeId: string, context: any) => {
+export const addSafeToOwner = async (ownerAddress: string, safeId: string, context: HandlerContext) => {
   const existingOwner = await context.Owner.get(ownerAddress);
 
   if (existingOwner) {
@@ -210,7 +229,7 @@ export const addSafeToOwner = async (ownerAddress: string, safeId: string, conte
   });
 };
 
-export const removeSafeFromOwner = async (ownerAddress: string, safeId: string, context: any) => {
+export const removeSafeFromOwner = async (ownerAddress: string, safeId: string, context: HandlerContext) => {
   const existingOwner = await context.Owner.get(ownerAddress);
 
   if (existingOwner) {
@@ -225,7 +244,7 @@ export const removeSafeFromOwner = async (ownerAddress: string, safeId: string, 
   context.SafeOwner.deleteUnsafe(safeOwnerId);
 };
 
-export const addOwner = async (event: any, context: any) => {
+export const addOwner = async (event: AddedOwnerEvent, context: HandlerContext) => {
   const { owner } = event.params;
   const { srcAddress, chainId } = event;
   const safeId = chainId + "-" + srcAddress;
@@ -246,7 +265,7 @@ export const addOwner = async (event: any, context: any) => {
   await addSafeToOwner(owner, safeId, context);
 };
 
-export const removeOwner = async (event: any, context: any) => {
+export const removeOwner = async (event: RemovedOwnerEvent, context: HandlerContext) => {
   const { owner } = event.params;
   const { srcAddress, chainId } = event;
   const safeId = chainId + "-" + srcAddress;
@@ -285,7 +304,7 @@ export const removeOwner = async (event: any, context: any) => {
 // stays at 0), surfaced by the cross-reference integration suite.
 const processedExecutions = new Set<string>();
 
-function executionDedup(event: any, isPreload: boolean): boolean {
+function executionDedup(event: ExecutionEvent, isPreload: boolean): boolean {
   // Preload pass mustn't touch the dedup set — see comment above.
   // We still want both V4/non-V4 handlers to discover their reads during
   // preload, so we just no-op the dedup there.
@@ -301,7 +320,7 @@ function executionDedup(event: any, isPreload: boolean): boolean {
   return false;
 }
 
-export const executionSuccess = async (event: any, context: any, enableTraces: boolean = false) => {
+export const executionSuccess = async (event: ExecutionEvent, context: HandlerContext, enableTraces: boolean = false) => {
   if (executionDedup(event, context.isPreload)) return;
 
   const { payment, txHash: safeTxHash } = event.params;
@@ -350,7 +369,7 @@ export const executionSuccess = async (event: any, context: any, enableTraces: b
   }
 };
 
-export const executionFailure = async (event: any, context: any, enableTraces: boolean = false) => {
+export const executionFailure = async (event: ExecutionEvent, context: HandlerContext, enableTraces: boolean = false) => {
   if (executionDedup(event, context.isPreload)) return;
 
   const { payment, txHash: safeTxHash } = event.params;
@@ -402,7 +421,7 @@ export const executionFailure = async (event: any, context: any, enableTraces: b
 // Create a SafeTransaction entity for L1 Safes by decoding execTransaction.
 // Primary: decode directly from event.transaction.input (works for direct calls).
 // Fallback: fetch via RPC trace_transaction (works for relayed calls).
-async function createL1SafeTransaction(event: any, context: any, safe: any, nonce: bigint, isSuccess: boolean, safeTxHash: string) {
+async function createL1SafeTransaction(event: ExecutionEvent, context: HandlerContext, safe: Safe, nonce: bigint, isSuccess: boolean, safeTxHash: string) {
   const { srcAddress, chainId, block } = event;
   const { hash, input, from } = event.transaction;
   const safeId = `${chainId}-${srcAddress}`;

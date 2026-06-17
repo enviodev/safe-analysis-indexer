@@ -13,7 +13,7 @@
 // S.schema doesn't model discriminated unions directly). The publisher
 // receives the structured object on the other side.
 
-import { createEffect, S } from "envio";
+import { createEffect, S, type EvmOnEventContext } from "envio";
 import type { SafeEventPayload } from "./safeEvents";
 import { publishSafeEvent } from "./rabbitmq";
 
@@ -43,13 +43,8 @@ export const publishSafeEventEffect = createEffect(
 // up to head, see Envio 3.1.0-rc.2 types) AND we're outside the preload
 // pass. This is the single place that knowledge lives — handlers just call
 // publishIfRealtime(context, buildXxx(...)).
-//
-// Context is typed `any` to match the existing handler-helper convention
-// in this codebase (see helpers.ts addOwner/executionSuccess) — the
-// EffectCaller / EntityOperations shapes that codegen produces are strict
-// and noisy to mirror in a generic helper.
 export async function publishIfRealtime(
-    context: any,
+    context: EvmOnEventContext,
     payload: SafeEventPayload,
 ): Promise<void> {
     if (context.isPreload) return;
@@ -63,7 +58,7 @@ export async function publishIfRealtime(
 // the historical-sync code path in unit tests, set the env var
 // `ENVIO_TEST_FORCE_REALTIME=false` before invoking the handler. The check
 // is single-env-var-read overhead; production never sets it.
-function isInRealtime(context: any): boolean {
+function isInRealtime(context: EvmOnEventContext): boolean {
     const forced = process.env.ENVIO_TEST_FORCE_REALTIME;
     if (forced === "true") return true;
     if (forced === "false") return false;

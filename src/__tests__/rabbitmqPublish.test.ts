@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import type { EvmOnEventContext } from "envio";
 import { getAddress } from "viem";
 import { addr } from "./fixtures/addresses";
 import { publishIfRealtime, publishSafeEventEffect } from "../rabbitmqEffect";
@@ -27,6 +28,8 @@ function makeContext(opts: { isPreload: boolean; isRealtime: boolean }) {
   const calls: CapturedInvocation[] = [];
   return {
     calls,
+    // Only the surface publishIfRealtime touches (isPreload / chain / effect);
+    // cast to the full handler context type at the boundary.
     context: {
       isPreload: opts.isPreload,
       chain: { id: 1, isRealtime: opts.isRealtime },
@@ -34,7 +37,7 @@ function makeContext(opts: { isPreload: boolean; isRealtime: boolean }) {
         calls.push({ effect, input });
         return null;
       },
-    },
+    } as unknown as EvmOnEventContext,
   };
 }
 
