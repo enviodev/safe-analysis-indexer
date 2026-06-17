@@ -54,13 +54,15 @@ const list = await context.Entity.getWhere({ fieldName: { _lt: value } });
 const list = await context.Entity.getWhere({ fieldName: { _gte: value } });
 const list = await context.Entity.getWhere({ fieldName: { _lte: value } });
 const list = await context.Entity.getWhere({ fieldName: { _in: [value1, value2] } });
+const list = await context.Entity.getWhere({ fieldName: { _gte: min, _lte: max } });
+const list = await context.Entity.getWhere({ fieldA: { _eq: a }, fieldB: { _eq: b } });
 
 // Write
 context.Entity.set(entity);          // create or update (sync — no await)
 context.Entity.deleteUnsafe(id);     // delete (sync — no await)
 ```
 
-`getWhere` operators: `_eq`, `_gt`, `_lt`, `_gte`, `_lte`, `_in`. Only `@index` fields are queryable. See `indexer-schema` for @index syntax.
+`getWhere` operators: `_eq`, `_gt`, `_lt`, `_gte`, `_lte`, `_in`. Multiple fields and operators combine with AND semantics. Only `id` and `@index` fields are queryable. See `indexer-schema` for @index syntax.
 
 ### Context Properties
 
@@ -126,6 +128,4 @@ This is globally unique across chains and blocks. Use it as the default unless t
 
 **Schema & config** — see `indexer-schema` and `indexer-configuration` skills for full reference.
 
-## Deep Documentation
-
-Full reference: https://docs.envio.dev/docs/HyperIndex-LLM/hyperindex-complete
+> If something is unclear, use the `envio-docs` skill to search and read the latest documentation.
