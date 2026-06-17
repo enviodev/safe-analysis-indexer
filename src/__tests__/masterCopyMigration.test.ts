@@ -247,8 +247,7 @@ describe("ChangedMasterCopy", () => {
 });
 
 describe("ProxyCreation does not clobber a pre-arrived ChangedMasterCopy (L1→L2 migration during setup)", () => {
-  // SKIPPED-ENVIO-3.2: see creationContext.test.ts.
-  it.skip("ChangedMasterCopy(L2) before ProxyCreation(L1): final masterCopy = L2 (the post-delegate-call state)", async () => {
+  it("ChangedMasterCopy(L2) before ProxyCreation(L1): final masterCopy = L2 (the post-delegate-call state)", async () => {
     // Repro for the production bug surfaced on Gnosis Safes
     // 0x2e94924a…8496a5e3 and 0xf55a8b…227b50f9. Real on-chain log order:
     //   [0] ChangedMasterCopy(L2 singleton)  ← from setup()-time delegate-call

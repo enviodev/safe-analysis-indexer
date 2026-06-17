@@ -227,8 +227,7 @@ describe("EnabledModuleV4 / DisabledModuleV4 (v1.4.0+, indexed)", () => {
 });
 
 describe("Pre-creation delegate-call emissions (Safe 4337 module installer pattern)", () => {
-  // SKIPPED-ENVIO-3.2: see creationContext.test.ts.
-  it.skip("EnabledModule → SafeSetup → ProxyCreation in one batch yields the canonical Safe + module", async () => {
+  it("EnabledModule → SafeSetup → ProxyCreation in one batch yields the canonical Safe + module", async () => {
     // This mirrors the exact production tx layout observed on Gnosis Safe
     // 0xb9881a… (creation tx 0x4ab99adf…): the Safe-4337 module is enabled
     // via a multiSend delegate-call inside setup(), so EnabledModule fires
@@ -260,8 +259,7 @@ describe("Pre-creation delegate-call emissions (Safe 4337 module installer patte
     expect(row.module).toBe(module);
   });
 
-  // SKIPPED-ENVIO-3.2: see creationContext.test.ts.
-  it.skip("two EnabledModule pre-creation + one post-creation: all three modules captured", async () => {
+  it("two EnabledModule pre-creation + one post-creation: all three modules captured", async () => {
     // The other observed pattern on Gnosis Safe 0xb9881a…: three modules
     // enabled in the creation tx — one inside setup() (pre-ProxyCreation),
     // two after via post-setup execs in the same tx (post-ProxyCreation).

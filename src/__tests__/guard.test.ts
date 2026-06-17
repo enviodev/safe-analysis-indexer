@@ -41,8 +41,7 @@ describe("Safe.guard defaults to the zero address on every creation path", () =>
     expect(safe.guard).toBe(zeroAddress);
   });
 
-  // SKIPPED-ENVIO-3.2: see creationContext.test.ts.
-  it.skip("SafeSetup-first branch → guard is 0x0…0 (then preserved through ProxyCreation merge)", async () => {
+  it("SafeSetup-first branch → guard is 0x0…0 (then preserved through ProxyCreation merge)", async () => {
     const indexer = createIndexer();
     const proxy = addr("guard-setup-first");
     await processOnChain(indexer, CHAIN_ID, [

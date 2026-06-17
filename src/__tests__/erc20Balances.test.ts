@@ -1,22 +1,26 @@
 import { describe, it, expect } from "vitest";
 import { addr } from "./fixtures/addresses";
 import { createIndexer, processOnChain, seedSafe } from "./fixtures/indexer";
-import { simulateErc20Transfer } from "./fixtures/events";
+import { simulateErc20Transfer, simulateSafeRegistration } from "./fixtures/events";
 
 const CHAIN_ID = 1;
 
-// IMPORTANT — the production wildcard filter
+// The production wildcard filter
 //   where: ({ chain }) => ({ params: [{ from: chain.SafeErc20Watcher.addresses },
 //                                     { to:   chain.SafeErc20Watcher.addresses }] })
-// runs at HyperSync source, NOT inside the handler. envio's TestIndexer
-// simulate path bypasses that filter — every simulate item reaches the
-// handler. So tests CANNOT exercise the address-pool gating behaviour
-// (covered only by integration / production indexing). What we CAN test
-// is the handler's own per-event behaviour (applyBalanceDelta + the
-// ERC20Transfer write).
+// gates these Transfers to ones touching a known Safe. As of envio 3.2.1 the
+// TestIndexer applies that filter in-process too, so a Safe must first be
+// registered into the watcher pool (via a ProxyCreation event — see
+// `simulateSafeRegistration`) before a Transfer touching it reaches the
+// handler. `seedSafe` only writes the Safe entity, not the pool, so the
+// seeded-Safe tests below prepend a registration item.
 
 describe("SafeErc20Watcher.Transfer", () => {
-  it("writes an ERC20Transfer row but no SafeTokenBalance when neither side is a Safe", async () => {
+  it("a Transfer where neither side is a registered Safe is filtered out (no rows)", async () => {
+    // Pre-3.2.1 the simulate path bypassed the address-pool filter, so this
+    // event reached the handler and wrote an ERC20Transfer log. 3.2.1 enforces
+    // the filter in-process: with neither from nor to in the watcher pool the
+    // event is dropped before the handler runs — no ERC20Transfer, no balance.
     const indexer = createIndexer();
     await processOnChain(indexer, CHAIN_ID, [
       simulateErc20Transfer({
@@ -27,8 +31,7 @@ describe("SafeErc20Watcher.Transfer", () => {
       }),
     ]);
 
-    const transfers = await indexer.ERC20Transfer.getAll();
-    expect(transfers.length).toBe(1);
+    expect(await indexer.ERC20Transfer.getAll()).toEqual([]);
     expect(await indexer.SafeTokenBalance.getAll()).toEqual([]);
   });
 
@@ -38,6 +41,7 @@ describe("SafeErc20Watcher.Transfer", () => {
     seedSafe(indexer, { chainId: CHAIN_ID, address: safeAddr });
 
     await processOnChain(indexer, CHAIN_ID, [
+      simulateSafeRegistration(safeAddr),
       simulateErc20Transfer({
         token: addr("token"),
         from: safeAddr,
@@ -60,6 +64,7 @@ describe("SafeErc20Watcher.Transfer", () => {
     seedSafe(indexer, { chainId: CHAIN_ID, address: safeAddr });
 
     await processOnChain(indexer, CHAIN_ID, [
+      simulateSafeRegistration(safeAddr),
       simulateErc20Transfer({
         token: addr("token"),
         from: addr("external"),
@@ -84,6 +89,8 @@ describe("SafeErc20Watcher.Transfer", () => {
     seedSafe(indexer, { chainId: CHAIN_ID, address: safeB });
 
     await processOnChain(indexer, CHAIN_ID, [
+      simulateSafeRegistration(safeA),
+      simulateSafeRegistration(safeB),
       simulateErc20Transfer({
         token: addr("token"),
         from: safeA,
@@ -112,6 +119,7 @@ describe("SafeErc20Watcher.Transfer", () => {
 
     // 3 inbound + 1 outbound → balance = +200+100+50-30 = 320, counts 3/1
     await processOnChain(indexer, CHAIN_ID, [
+      simulateSafeRegistration(safeAddr),
       simulateErc20Transfer({ token, from: addr("ext-1"), to: safeAddr, value: 200n }),
       simulateErc20Transfer({ token, from: addr("ext-2"), to: safeAddr, value: 100n }),
       simulateErc20Transfer({ token, from: addr("ext-3"), to: safeAddr, value: 50n }),
@@ -138,6 +146,7 @@ describe("SafeErc20Watcher.Transfer", () => {
 
     // Seed a real balance first via a normal inbound, then issue a self-transfer.
     await processOnChain(indexer, CHAIN_ID, [
+      simulateSafeRegistration(safeAddr),
       simulateErc20Transfer({ token, from: addr("ext"), to: safeAddr, value: 100n }),
       simulateErc20Transfer({ token, from: safeAddr, to: safeAddr, value: 50n }),
     ]);
@@ -164,6 +173,7 @@ describe("SafeErc20Watcher.Transfer", () => {
     // lowercase, so we synthesize one here by uppercasing some chars.
     const tokenMixed = "0xAaBbCcDdEeFf0011223344556677889900aAbBcC" as `0x${string}`;
     await processOnChain(indexer, CHAIN_ID, [
+      simulateSafeRegistration(safeAddr),
       simulateErc20Transfer({
         token: tokenMixed,
         from: addr("from"),
