@@ -1,4 +1,4 @@
-import { indexer, type Entity } from "envio";
+import { indexer, type Entity, type EvmOnEventContext } from "envio";
 import { addOwner, removeOwner, addSafeToOwner, executionSuccess, executionFailure, incrementSafeCount, incrementTransactionCount, incrementModuleTransactionCount, getOrCreateVersion, ensureSafeStub } from "./helpers";
 import { getSetupTrace, decodeSetupInput, getMasterCopyFromTrace, getSafeMasterCopyViaRpc, resolveVersionFromMasterCopy, decodeCreateProxyWithNonceInitializer, getSafeCreatorViaTraceTransaction, CREATOR_TRACE_CHAINS, isRpcConfigured } from "./hypersync";
 import { LEGACY_V1_0_0_PROXY } from "./consts";
@@ -8,6 +8,7 @@ import { publishIfRealtime } from "./rabbitmqEffect";
 import { buildIncomingEther, buildErc20Token, buildErc721Token } from "./safeEvents";
 
 type Safe = Entity<"Safe">;
+type HandlerContext = EvmOnEventContext;
 
 // The default transaction guard for any newly-created Safe. Pre-1.3.0 Safes
 // have no guard concept at all; v1.3.0+ Safes can later mutate via
@@ -25,7 +26,7 @@ async function resolveCreator(
   txHash: string,
   safeAddress: string,
   fallbackTxFrom: string,
-  context: any,
+  context: HandlerContext,
 ): Promise<string> {
   if (!CREATOR_TRACE_CHAINS.has(chainId)) return fallbackTxFrom;
   const traced = await context.effect(getSafeCreatorViaTraceTransaction, {
@@ -64,10 +65,8 @@ indexer.onEvent({ contract: "GnosisSafeProxyPre1_3_0", event: "ProxyCreation" },
   const creationTxFrom = (txFrom ?? zeroAddress).toLowerCase();
   const { chainId, block, srcAddress: factoryAddress } = event;
 
-  // 1.0.0 is still detected by the legacy special-cased proxy address
-  // Note: we type this as `any` so it stays compatible with the generated SafeVersion_t
-  // until the schema/types are regenerated with the new enum values.
-  let version: any =
+  // 1.0.0 is still detected by the legacy special-cased proxy address.
+  let version: SafeVersion =
     proxy.toLowerCase() === LEGACY_V1_0_0_PROXY
       ? "V1_0_0"
       : "UNKNOWN";
@@ -197,7 +196,7 @@ indexer.onEvent({ contract: "SafePre1_3_0", event: "ChangedThreshold" }, async (
 // Resolves version from singleton address, falling back to factory-implied version.
 async function handleModernProxyCreation(
   event: { params: { proxy: string; singleton?: string }; transaction: { hash: string; from?: string; input?: string }; srcAddress: string; chainId: number; block: { number: number; timestamp: number } },
-  context: any,
+  context: HandlerContext,
   factoryImpliedVersion: SafeVersion
 ) {
   const { proxy, singleton } = event.params;
@@ -740,7 +739,7 @@ async function applyGuardChange(
     block: { number: number; timestamp: number };
     transaction: { hash: string; from?: string };
   },
-  context: any,
+  context: HandlerContext,
 ) {
   const { guard } = event.params;
   // Stub if missing — handles setup()-time delegate-call emission.
@@ -774,7 +773,7 @@ async function applyEnableModule(
     block: { number: number; timestamp: number };
     transaction: { hash: string; from?: string };
   },
-  context: any,
+  context: HandlerContext,
 ) {
   const { module } = event.params;
   const safeId = `${event.chainId}-${event.srcAddress}`;
@@ -799,7 +798,7 @@ async function applyEnableModule(
 
 async function applyDisableModule(
   event: { params: { module: string }; srcAddress: string; chainId: number },
-  context: any,
+  context: HandlerContext,
 ) {
   const { module } = event.params;
   const safeId = `${event.chainId}-${event.srcAddress}`;
@@ -983,7 +982,7 @@ indexer.onEvent({
 });
 
 async function applySafeNftHoldingDelta(
-  context: any,
+  context: HandlerContext,
   chainId: number,
   address: string,
   token: string,
@@ -1021,7 +1020,7 @@ async function applySafeNftHoldingDelta(
 }
 
 async function applyBalanceDelta(
-  context: any,
+  context: HandlerContext,
   chainId: number,
   address: string,
   token: string,
