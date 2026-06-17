@@ -13,7 +13,7 @@
     "dev": "envio dev",
     "test": "vitest run",
     "test:watch": "vitest",
-    "start": "ENVIO_ETH_AND_GNOSIS_ONLY=true envio start",
+    "start": "ENVIO_ETH_AND_GNOSIS_ONLY=false envio start",
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:all": "vitest run && vitest run --config vitest.integration.config.ts"
   },
