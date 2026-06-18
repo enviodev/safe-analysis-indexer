@@ -1,7 +1,7 @@
 import { zeroAddress } from "viem";
 import type { Entity, EvmEvent, EvmOnEventContext } from "envio";
 import { isL1Safe } from "./consts";
-import { decodeExecTransaction, getExecTransactionViaRpcTrace } from "./hypersync";
+import { decodeExecTransaction, getExecTransactionViaRpcTrace, isRpcConfigured } from "./hypersync";
 import { publishIfRealtime } from "./rabbitmqEffect";
 import { buildExecutedMultisigTransaction } from "./safeEvents";
 
@@ -430,8 +430,12 @@ async function createL1SafeTransaction(event: ExecutionEvent, context: HandlerCo
     // Try decoding directly from transaction input (direct execTransaction calls)
     let decoded = input ? decodeExecTransaction(input, from || "") : undefined;
 
-    // Fallback: RPC trace_transaction for relayed transactions
-    if (!decoded) {
+    // Fallback: RPC trace_transaction for relayed transactions. Gated on
+    // isRpcConfigured(chainId) — RPC backfill is opt-in per chain, and the
+    // effect throws for chains missing from DRPC_NETWORKS. Unmapped chains
+    // skip the fallback: relayed L1 txs just don't get a SafeTransaction
+    // entity (degraded coverage) rather than spamming caught errors.
+    if (!decoded && isRpcConfigured(chainId)) {
       const traceResult = await context.effect(getExecTransactionViaRpcTrace, {
         chainId,
         txHash: hash,
