@@ -13,7 +13,6 @@
     "dev": "envio dev",
     "test": "vitest run",
     "test:watch": "vitest",
-    "start": "ENVIO_ETH_AND_GNOSIS_ONLY=false envio start",
     "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:all": "vitest run && vitest run --config vitest.integration.config.ts"
   },
@@ -27,7 +26,7 @@
   "dependencies": {
     "@envio-dev/hypersync-client": "^0.7.2",
     "amqplib": "^2.0.1",
-    "envio": "3.2.1",
+    "envio": "3.3.0-alpha.0",
     "ethers": "6.8.0",
     "viem": "^2.46.2"
   }
