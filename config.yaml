@@ -17,6 +17,10 @@ contracts:
     handler: src/EventHandlers.ts
     events:
       - event: AddedOwner(address owner)
+        field_selection:
+          transaction_fields:
+            - hash
+            - from
       - event: RemovedOwner(address owner)
       - event: ChangedThreshold(uint256 threshold)
   - name: GnosisSafeL2
@@ -54,16 +58,48 @@ contracts:
             - input
             - from
       - event: ChangedThreshold(uint256 threshold)
+        field_selection:
+          transaction_fields:
+            - hash
+            - from
       - event: ChangedMasterCopy(address singleton)
+        field_selection:
+          transaction_fields:
+            - hash
+            - from
       - event: ChangedFallbackHandler(address indexed handler)
+        field_selection:
+          transaction_fields:
+            - hash
+            - from
       - event: ChangedGuard(address guard)
+        field_selection:
+          transaction_fields:
+            - hash
+            - from
       - event: ChangedGuard(address indexed guard)
         name: ChangedGuardV4
+        field_selection:
+          transaction_fields:
+            - hash
+            - from
       # v1.5.0+ only — earlier versions have no moduleGuard concept.
       - event: ChangedModuleGuard(address indexed moduleGuard)
+        field_selection:
+          transaction_fields:
+            - hash
+            - from
       - event: EnabledModule(address module)
+        field_selection:
+          transaction_fields:
+            - hash
+            - from
       - event: EnabledModule(address indexed module)
         name: EnabledModuleV4
+        field_selection:
+          transaction_fields:
+            - hash
+            - from
       - event: DisabledModule(address module)
       - event: DisabledModule(address indexed module)
         name: DisabledModuleV4
@@ -76,8 +112,16 @@ contracts:
           transaction_fields:
             - hash
       - event: AddedOwner(address owner)
+        field_selection:
+          transaction_fields:
+            - hash
+            - from
       - event: AddedOwner(address indexed owner)
         name: AddedOwnerV4
+        field_selection:
+          transaction_fields:
+            - hash
+            - from
       - event: RemovedOwner(address owner)
       - event: RemovedOwner(address indexed owner)
         name: RemovedOwnerV4
