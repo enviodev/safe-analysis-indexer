@@ -1,7 +1,7 @@
 import { zeroAddress } from "viem";
 import type { Entity, EvmEvent, EvmOnEventContext } from "envio";
 import { isL1Safe } from "./consts";
-import { decodeExecTransaction, getExecTransactionViaRpcTrace } from "./hypersync";
+import { decodeExecTransaction, getExecTransactionViaRpcTrace, isRpcConfigured } from "./hypersync";
 import { publishIfRealtime } from "./rabbitmqEffect";
 import { buildExecutedMultisigTransaction } from "./safeEvents";
 
@@ -430,8 +430,13 @@ async function createL1SafeTransaction(event: ExecutionEvent, context: HandlerCo
     // Try decoding directly from transaction input (direct execTransaction calls)
     let decoded = input ? decodeExecTransaction(input, from || "") : undefined;
 
-    // Fallback: RPC trace_transaction for relayed transactions
-    if (!decoded) {
+    // Fallback: RPC trace_transaction for relayed transactions. Gated on
+    // isRpcConfigured(chainId) — without it, getRpcUrl throws for chains
+    // absent from DRPC_NETWORKS (e.g. Optimism), so unmapped chains would
+    // log a noisy `[L1 TX] Failed...` on every relayed L1 tx that can't be
+    // decoded from calldata directly. Gating degrades quietly instead: the
+    // direct-calldata path still covers non-relayed L1 txs on those chains.
+    if (!decoded && isRpcConfigured(chainId)) {
       const traceResult = await context.effect(getExecTransactionViaRpcTrace, {
         chainId,
         txHash: hash,
