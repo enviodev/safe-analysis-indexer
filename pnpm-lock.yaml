@@ -15,8 +15,8 @@ importers:
         specifier: ^2.0.1
         version: 2.0.1
       envio:
-        specifier: 3.3.0-alpha.0
-        version: 3.3.0-alpha.0(@types/react@19.2.10)(react-dom@19.2.3(react@19.2.5))(typescript@5.9.3)(zod@4.3.6)
+        specifier: 3.3.0-alpha.1
+        version: 3.3.0-alpha.1(@types/react@19.2.10)(react-dom@19.2.3(react@19.2.5))(typescript@5.9.3)(zod@4.3.6)
       ethers:
         specifier: 6.8.0
         version: 6.8.0
@@ -1744,36 +1744,36 @@ packages:
     resolution: {integrity: sha512-LgQMM4WXU3QI+SYgEc2liRgznaD5ojbmY3sb8LxyguVkIg5FxdpTkvk72te2R38/TGKxH634oLxXRGY6d7AP+Q==}
     engines: {node: '>=10.13.0'}
 
-  envio-darwin-arm64@3.3.0-alpha.0:
-    resolution: {integrity: sha512-G5pz0pP2PuBgJu/Wh3Yf/ZNDM99Stfttq6dsY4TwqUrlS7D9x1gu1aTgArS2ixbCHDYDQ0Fy2LYmlh8HOT2e4g==}
+  envio-darwin-arm64@3.3.0-alpha.1:
+    resolution: {integrity: sha512-1+MbzvRrT2G4tuUagQ4eQpkrSHaTnyIxR9pbdgdF5yY4kgmf9Q2LLraVO23WRL4FVoDDJWB720+NHbJZbwGYMQ==}
     cpu: [arm64]
     os: [darwin]
 
-  envio-darwin-x64@3.3.0-alpha.0:
-    resolution: {integrity: sha512-r56C2nXD0yFcwga8L23+uEQ2BNzV/0EUVEfGdzSfHipMx8SEpoc575SywGKGSI19xGp9LdWhzrpg0M/voyfy7A==}
+  envio-darwin-x64@3.3.0-alpha.1:
+    resolution: {integrity: sha512-QYFIq501eBAp0E9MeoSOWPcTKdZDQeutuShZsMCKWzRNzbsiJkE3pPoa4Eh+utKTonDDR3yNk+k+BGEkY9ZONQ==}
     cpu: [x64]
     os: [darwin]
 
-  envio-linux-arm64@3.3.0-alpha.0:
-    resolution: {integrity: sha512-r8HCWi/xd38lii+V/JSHwc7mC4tmAKpIJrUguowz2tp5hiW5POOMs/2tw7rNF9Vxwm0/06RIicX2C3uBLioMKw==}
+  envio-linux-arm64@3.3.0-alpha.1:
+    resolution: {integrity: sha512-1YoSCMl1vEytxFJudXvXu6xOEMYWIVPjBxh1AffdZWOkh3GqvLPzN3mfq76gE8wvOM9IcQjF6XVTNfPZwHjrpg==}
     cpu: [arm64]
     os: [linux]
     libc: [glibc]
 
-  envio-linux-x64-musl@3.3.0-alpha.0:
-    resolution: {integrity: sha512-PZFgSLD3ZsT3xW2OuIz5KeQr8jiGoDzv6VV3VgtZUSoHIO+rl+B4+OMK5ToDX9x6mBXQjJA6k/PDMRTW2ABrTQ==}
+  envio-linux-x64-musl@3.3.0-alpha.1:
+    resolution: {integrity: sha512-WuezlPOJGCKG4Bg3QgR0J1zUvE4bfGvuBE5/FDGxd9rAc7hzSSZWf71QO8kAFOPUS+XWj5u50Ir4+801WtT2Rg==}
     cpu: [x64]
     os: [linux]
     libc: [musl]
 
-  envio-linux-x64@3.3.0-alpha.0:
-    resolution: {integrity: sha512-OxBAT1fG8EOyCW/8LlG/jPF7pd6+vZQLqkYSHS3oXbfZh8spKu8SafbZDP1qu6AoSYaVb8DAQuc7zB7HQEWXtg==}
+  envio-linux-x64@3.3.0-alpha.1:
+    resolution: {integrity: sha512-1LmxMmDzTxQXZH7uCeBTm8c1teR47od38Ps3UDyFFUNlMhD8pn4tnA2TkNbWgn9dJNayni3Ta4+XvIODSGLp+A==}
     cpu: [x64]
     os: [linux]
     libc: [glibc]
 
-  envio@3.3.0-alpha.0:
-    resolution: {integrity: sha512-E13Oc8Pa0oHGvhTdUh3yN0sXMZt3h9v+/pnN0AASwpdI9Jl+ZEA9sOmPxkvwMvXqmttwG5KjRgrO2QBreo89Tw==}
+  envio@3.3.0-alpha.1:
+    resolution: {integrity: sha512-HO+UxjCN1YVxlGLuWzGJJgkWtBfnyc6eFWtwj5jZ4Vm3sUxnmBpfr91NpwZFnc8D1XslQvvuCk6t78la2gS4iw==}
     engines: {node: '>=22.0.0'}
     hasBin: true
 
@@ -5047,22 +5047,22 @@ snapshots:
       graceful-fs: 4.2.11
       tapable: 2.3.0
 
-  envio-darwin-arm64@3.3.0-alpha.0:
+  envio-darwin-arm64@3.3.0-alpha.1:
     optional: true
 
-  envio-darwin-x64@3.3.0-alpha.0:
+  envio-darwin-x64@3.3.0-alpha.1:
     optional: true
 
-  envio-linux-arm64@3.3.0-alpha.0:
+  envio-linux-arm64@3.3.0-alpha.1:
     optional: true
 
-  envio-linux-x64-musl@3.3.0-alpha.0:
+  envio-linux-x64-musl@3.3.0-alpha.1:
     optional: true
 
-  envio-linux-x64@3.3.0-alpha.0:
+  envio-linux-x64@3.3.0-alpha.1:
     optional: true
 
-  envio@3.3.0-alpha.0(@types/react@19.2.10)(react-dom@19.2.3(react@19.2.5))(typescript@5.9.3)(zod@4.3.6):
+  envio@3.3.0-alpha.1(@types/react@19.2.10)(react-dom@19.2.3(react@19.2.5))(typescript@5.9.3)(zod@4.3.6):
     dependencies:
       '@clickhouse/client': 1.17.0
       '@elastic/ecs-pino-format': 1.4.0
@@ -5092,11 +5092,11 @@ snapshots:
       viem: 2.46.2(typescript@5.9.3)(zod@4.3.6)
       yargs: 17.7.2
     optionalDependencies:
-      envio-darwin-arm64: 3.3.0-alpha.0
-      envio-darwin-x64: 3.3.0-alpha.0
-      envio-linux-arm64: 3.3.0-alpha.0
-      envio-linux-x64: 3.3.0-alpha.0
-      envio-linux-x64-musl: 3.3.0-alpha.0
+      envio-darwin-arm64: 3.3.0-alpha.1
+      envio-darwin-x64: 3.3.0-alpha.1
+      envio-linux-arm64: 3.3.0-alpha.1
+      envio-linux-x64: 3.3.0-alpha.1
+      envio-linux-x64-musl: 3.3.0-alpha.1
     transitivePeerDependencies:
       - '@types/react'
       - bufferutil
