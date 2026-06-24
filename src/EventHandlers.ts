@@ -694,13 +694,37 @@ indexer.onEvent({ contract: "GnosisSafeL2", event: "ChangedModuleGuard", wildcar
   });
 });
 
-indexer.onEvent({ contract: "GnosisSafeL2", event: "ChangedFallbackHandler", wildcard: true }, async ({ event, context }) => {
+// ChangedFallbackHandler — two ABI variants share the same topic0:
+//   v1.3.0:  ChangedFallbackHandler(address handler)          -- non-indexed
+//   v1.4.0+: ChangedFallbackHandler(address indexed handler)  -- indexed (named V4 in config)
+// Mirrors ChangedGuard / ChangedGuardV4. Before both variants were subscribed,
+// only the indexed (v1.4.0+) form was captured, so fallback-handler changes on
+// v1.3.0 Safes were silently dropped and Safe.fallbackHandler went stale
+// (surfaced by cross-referencing on-chain storage). A given Safe only emits the
+// variant matching its version, so the two handlers never fire for the same
+// on-chain event. Both delegate to the same idempotent in-place update.
+async function applyFallbackHandlerChange(
+  event: {
+    params: { handler: string };
+    srcAddress: string;
+    chainId: number;
+    block: { number: number; timestamp: number };
+    transaction: { hash: string; from?: string };
+  },
+  context: HandlerContext,
+) {
   const { handler } = event.params;
-
   // Stub if missing — handles setup()-time delegate-call emission.
   const safe = await ensureSafeStub(event, context);
-
   context.Safe.set({ ...safe, fallbackHandler: handler.toLowerCase() });
+}
+
+indexer.onEvent({ contract: "GnosisSafeL2", event: "ChangedFallbackHandler", wildcard: true }, async ({ event, context }) => {
+  await applyFallbackHandlerChange(event, context);
+});
+
+indexer.onEvent({ contract: "GnosisSafeL2", event: "ChangedFallbackHandlerV4", wildcard: true }, async ({ event, context }) => {
+  await applyFallbackHandlerChange(event, context);
 });
 
 // ChangedThreshold — modern Safes (v1.3.0+) emit this on

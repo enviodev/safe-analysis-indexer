@@ -271,24 +271,29 @@ export function simulateChangedMasterCopy(args: {
 // ChangedFallbackHandler (GnosisSafeL2, wildcard) — emitted when the Safe's
 // fallback handler is rotated post-creation.
 // ---------------------------------------------------------------------------
+// Two variants share topic0:
+//   v1.3.0:  ChangedFallbackHandler(address handler)          -- non-indexed
+//   v1.4.0+: ChangedFallbackHandler(address indexed handler)  -- indexed, named V4.
 export function simulateChangedFallbackHandler(args: {
   safeAddress: `0x${string}`;
   handler: `0x${string}`;
+  v4?: boolean;
   block?: { number?: number; timestamp?: number; hash?: string };
   tx?: { hash?: string };
   logIndex?: number;
 }) {
   const block = autoBlock(args.block);
   const li = args.logIndex ?? nextLogIndex();
+  const event = args.v4 ? "ChangedFallbackHandlerV4" : "ChangedFallbackHandler";
   return {
     contract: "GnosisSafeL2" as const,
-    event: "ChangedFallbackHandler" as const,
+    event,
     srcAddress: args.safeAddress,
     logIndex: li,
     block,
     transaction: autoTx(args.tx, block.number, li),
     params: { handler: args.handler },
-  };
+  } as const;
 }
 
 // ---------------------------------------------------------------------------

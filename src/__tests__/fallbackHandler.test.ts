@@ -174,7 +174,7 @@ describe("Pre-1.3.0 ProxyCreation derives fallbackHandler from initializer", () 
   });
 });
 
-describe("ChangedFallbackHandler", () => {
+describe("ChangedFallbackHandler (v1.3.0 non-indexed)", () => {
   it("auto-stubs the Safe when ChangedFallbackHandler fires before SafeSetup / ProxyCreation", async () => {
     // Same pre-setup wildcard pattern as EnabledModule — a setup()-time
     // delegate-call could emit ChangedFallbackHandler ahead of SafeSetup.
@@ -289,5 +289,46 @@ describe("ChangedFallbackHandler", () => {
 
     const safe = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, safeAddr));
     expect(safe.fallbackHandler).toBe(handlerFromSetup.toLowerCase());
+  });
+});
+
+// Regression for the production gap where only the indexed (v1.4.0+) variant
+// was subscribed: v1.3.0 Safes emit the NON-indexed ChangedFallbackHandler
+// (covered by the block above), and on-chain cross-referencing found Safes
+// whose fallbackHandler had gone stale because their change event was dropped.
+// The config now subscribes to both variants; this block locks in the indexed
+// handler. (Topic-level filtering can't be exercised by the simulator — see the
+// note in indexer.ts — so codegen + these handlers passing is what proves both
+// variants are wired.)
+describe("ChangedFallbackHandlerV4 (v1.4.0+ indexed)", () => {
+  it("indexed variant updates Safe.fallbackHandler in-place", async () => {
+    const indexer = createIndexer();
+    const safeAddr = addr("fh-update-v4");
+    const id = seedSafe(indexer, {
+      chainId: CHAIN_ID,
+      address: safeAddr,
+      version: "V1_4_1",
+      fallbackHandler: addr("old-handler-v4"),
+    });
+
+    const newHandler = "0xBeefBeefBeefBeefBeefBeefBeefBeefBeefBeef" as `0x${string}`;
+    await processOnChain(indexer, CHAIN_ID, [
+      simulateChangedFallbackHandler({ safeAddress: safeAddr, handler: newHandler, v4: true }),
+    ]);
+
+    const safe = await indexer.Safe.getOrThrow(id);
+    expect(safe.fallbackHandler).toBe(newHandler.toLowerCase());
+    expect(safe.version).toBe("V1_4_1");
+  });
+
+  it("auto-stubs the Safe when the indexed variant fires before SafeSetup / ProxyCreation", async () => {
+    const indexer = createIndexer();
+    const safeAddr = addr("ghost-fh-v4");
+    const newHandler = addr("new-handler-v4");
+    await processOnChain(indexer, CHAIN_ID, [
+      simulateChangedFallbackHandler({ safeAddress: safeAddr, handler: newHandler, v4: true }),
+    ]);
+    const stub = await indexer.Safe.getOrThrow(safeId(CHAIN_ID, safeAddr));
+    expect(stub.fallbackHandler).toBe(newHandler);
   });
 });

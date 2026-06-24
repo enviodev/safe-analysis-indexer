@@ -67,7 +67,13 @@ contracts:
           transaction_fields:
             - hash
             - from
+      - event: ChangedFallbackHandler(address handler)
+        field_selection:
+          transaction_fields:
+            - hash
+            - from
       - event: ChangedFallbackHandler(address indexed handler)
+        name: ChangedFallbackHandlerV4
         field_selection:
           transaction_fields:
             - hash
